@@ -67,7 +67,7 @@ Main files you will care about first:
 
 Make sure you have these installed:
 
-- **Node.js 20 or newer**
+- **Node.js 18 or newer**
 - **npm**
 - **Git**
 
