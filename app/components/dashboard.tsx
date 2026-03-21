@@ -75,7 +75,7 @@ import { AppUser, CipRecord, CipType, EntryStatus, OperatorDailyEntry, Productio
 
 const drawerWidth = 260;
 const shifts: Shift[] = ['Morning', 'Afternoon', 'Night'];
-const cipTypes: CipType[] = ['Pre-rinse', 'Caustic wash', 'Acid wash', 'Final rinse'];
+const cipTypes: CipType[] = ['Caustic wash', 'Caustic and Acid wash'];
 
 type SectionKey = 'dashboard' | 'intake' | 'cip' | 'operators' | 'operator-entry';
 type KpiTone = 'good' | 'bad' | 'warning' | 'neutral';
@@ -112,7 +112,14 @@ function deriveProductionRecords(entries: OperatorDailyEntry[]): ProductionRecor
     pasteurizationOperator: entry.operatorName,
     totalMilkOffloaded: entry.milkOffloaded,
     totalMilkPasteurized: entry.milkPasteurized,
-    remarks: entry.notes,
+    remarks:
+      entry.milkPasteurized > entry.milkOffloaded
+        ? 'Possible meter variance flagged for review.'
+        : entry.milkOffloaded - entry.milkPasteurized > 300
+          ? 'Higher-than-normal milk loss observed.'
+          : entry.cipDone
+            ? 'Routine production and CIP record completed.'
+            : 'Production completed; no CIP logged for this date.',
   }));
 }
 
@@ -132,11 +139,10 @@ function deriveCipRecords(entries: OperatorDailyEntry[]): CipRecord[] {
             : 'Caustic',
       causticJerrycansUsed: entry.causticJerrycansUsed,
       nitricAcidJerrycansUsed: entry.nitricJerrycansUsed,
-      notes: entry.notes,
     }));
 }
 
-function getMonthlyDays(monthKey: string, operatorName: string, entries: OperatorDailyEntry[]) {
+function getMonthlyDays(monthKey: string, operatorName: string, entries: OperatorDailyEntry[]): OperatorDailyEntry[] {
   const start = dayjs(`${monthKey}-01`);
   const days = start.daysInMonth();
 
@@ -148,15 +154,14 @@ function getMonthlyDays(monthKey: string, operatorName: string, entries: Operato
         id: `${operatorName.toLowerCase().replace(/\s+/g, '-')}-${date}`,
         date,
         operatorName,
-        offloadingShift: 'Morning',
-        pasteurizationShift: 'Afternoon',
+        offloadingShift: 'Morning' as Shift,
+        pasteurizationShift: 'Afternoon' as Shift,
         milkOffloaded: 0,
         milkPasteurized: 0,
         cipDone: false,
-        cipType: 'Pre-rinse',
+        cipType: 'Caustic wash' as CipType,
         causticJerrycansUsed: 0,
         nitricJerrycansUsed: 0,
-        notes: '',
       }
     );
   });
@@ -168,7 +173,6 @@ function getEntryStatus(entry: OperatorDailyEntry, pendingIds: Set<string>, touc
     entry.milkPasteurized > 0 ||
     entry.causticJerrycansUsed > 0 ||
     entry.nitricJerrycansUsed > 0 ||
-    entry.notes.trim().length > 0 ||
     entry.cipDone;
 
   if (!hasData && !touchedIds.has(entry.id)) return 'missing';
@@ -185,7 +189,6 @@ type OperatorEntryDraft = {
   cipType: CipType;
   causticJerrycansUsed: string;
   nitricJerrycansUsed: string;
-  notes: string;
 };
 
 type OperatorEditableField =
@@ -196,8 +199,7 @@ type OperatorEditableField =
   | 'cipDone'
   | 'cipType'
   | 'causticJerrycansUsed'
-  | 'nitricJerrycansUsed'
-  | 'notes';
+  | 'nitricJerrycansUsed';
 
 const editableFieldOrder: OperatorEditableField[] = [
   'offloadingShift',
@@ -208,7 +210,6 @@ const editableFieldOrder: OperatorEditableField[] = [
   'cipType',
   'causticJerrycansUsed',
   'nitricJerrycansUsed',
-  'notes',
 ];
 
 function createDraftFromEntry(entry: OperatorDailyEntry): OperatorEntryDraft {
@@ -221,7 +222,6 @@ function createDraftFromEntry(entry: OperatorDailyEntry): OperatorEntryDraft {
     cipType: entry.cipType,
     causticJerrycansUsed: String(entry.causticJerrycansUsed),
     nitricJerrycansUsed: String(entry.nitricJerrycansUsed),
-    notes: entry.notes,
   };
 }
 
@@ -229,6 +229,26 @@ function parseNumberInput(value: string) {
   if (value.trim() === '' || value === '-' || value === '.') return 0;
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function normalizeCipDraft(draft: OperatorEntryDraft): OperatorEntryDraft {
+  if (!draft.cipDone) {
+    return {
+      ...draft,
+      cipType: 'Caustic wash',
+      causticJerrycansUsed: '0',
+      nitricJerrycansUsed: '0',
+    };
+  }
+
+  if (draft.cipType === 'Caustic wash') {
+    return {
+      ...draft,
+      nitricJerrycansUsed: '0',
+    };
+  }
+
+  return draft;
 }
 
 function CompactMetricCard({
@@ -400,18 +420,19 @@ const OperatorEntryRow = memo(function OperatorEntryRow({
 
   const commit = useCallback(() => {
     if (!isDirty) return;
+    const nextDraft = normalizeCipDraft(draft);
     onCommitRow({
       ...row,
       offloadingShift: draft.offloadingShift,
       pasteurizationShift: draft.pasteurizationShift,
-      milkOffloaded: parseNumberInput(draft.milkOffloaded),
-      milkPasteurized: parseNumberInput(draft.milkPasteurized),
-      cipDone: draft.cipDone,
-      cipType: draft.cipType,
-      causticJerrycansUsed: parseNumberInput(draft.causticJerrycansUsed),
-      nitricJerrycansUsed: parseNumberInput(draft.nitricJerrycansUsed),
-      notes: draft.notes,
+      milkOffloaded: parseNumberInput(nextDraft.milkOffloaded),
+      milkPasteurized: parseNumberInput(nextDraft.milkPasteurized),
+      cipDone: nextDraft.cipDone,
+      cipType: nextDraft.cipType,
+      causticJerrycansUsed: parseNumberInput(nextDraft.causticJerrycansUsed),
+      nitricJerrycansUsed: parseNumberInput(nextDraft.nitricJerrycansUsed),
     });
+    setDraft(nextDraft);
     setIsDirty(false);
   }, [draft, isDirty, onCommitRow, row]);
 
@@ -420,11 +441,12 @@ const OperatorEntryRow = memo(function OperatorEntryRow({
   }, [commit, isDirty, registerCommitter, row.id]);
 
   const commitOnEnter = useCallback(
-    (event: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    (event: React.KeyboardEvent<HTMLElement>) => {
       if (event.key === 'Enter') {
         event.preventDefault();
         commit();
-        onNavigate(row.id, event.currentTarget.name as OperatorEditableField, 'down');
+        const field = (event.target as HTMLInputElement | HTMLTextAreaElement).name as OperatorEditableField;
+        onNavigate(row.id, field, 'down');
       }
     },
     [commit, onNavigate, row.id],
@@ -432,7 +454,7 @@ const OperatorEntryRow = memo(function OperatorEntryRow({
 
   const navigateOnArrow = useCallback(
     (field: OperatorEditableField) =>
-      (event: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      (event: React.KeyboardEvent<HTMLElement>) => {
         if (event.key === 'ArrowUp') {
           event.preventDefault();
           onNavigate(row.id, field, 'up');
@@ -440,7 +462,7 @@ const OperatorEntryRow = memo(function OperatorEntryRow({
           event.preventDefault();
           onNavigate(row.id, field, 'down');
         } else if ((event.key === 'ArrowLeft' || event.key === 'ArrowRight') && rowOrder.length > 0) {
-          const input = event.currentTarget;
+          const input = event.target as HTMLInputElement | HTMLTextAreaElement;
           const start = input.selectionStart ?? 0;
           const end = input.selectionEnd ?? 0;
           const atStart = start === 0 && end === 0;
@@ -460,15 +482,18 @@ const OperatorEntryRow = memo(function OperatorEntryRow({
 
   const handleTextNavigation = useCallback(
     (field: OperatorEditableField) =>
-      (event: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      (event: React.KeyboardEvent<HTMLElement>) => {
         if (event.key === 'Enter') {
-        commitOnEnter(event);
-        return;
-      }
+          commitOnEnter(event);
+          return;
+        }
         navigateOnArrow(field)(event);
       },
     [commitOnEnter, navigateOnArrow],
   );
+
+  const cipInputsDisabled = !draft.cipDone;
+  const nitricDisabled = cipInputsDisabled || draft.cipType === 'Caustic wash';
 
   return (
     <TableRow hover sx={{ bgcolor: rowColor, '& td': { py: 0.7 } }}>
@@ -532,9 +557,13 @@ const OperatorEntryRow = memo(function OperatorEntryRow({
         <Select
           size="small"
           value={draft.cipDone ? 'yes' : 'no'}
-          onChange={(event) => { setDraft((current) => ({ ...current, cipDone: event.target.value === 'yes' })); setIsDirty(true); }}
+          onChange={(event) => {
+            setDraft((current) => normalizeCipDraft({ ...current, cipDone: event.target.value === 'yes' }));
+            setIsDirty(true);
+          }}
           onBlur={commit}
           inputRef={(element) => registerCell(row.id, 'cipDone', element)}
+          sx={{ minWidth: 110 }}
         >
           <MenuItem value="yes">Yes</MenuItem>
           <MenuItem value="no">No</MenuItem>
@@ -546,10 +575,15 @@ const OperatorEntryRow = memo(function OperatorEntryRow({
           size="small"
           name="cipType"
           value={draft.cipType}
-          onChange={(event) => { setDraft((current) => ({ ...current, cipType: event.target.value as CipType })); setIsDirty(true); }}
+          onChange={(event) => {
+            setDraft((current) => normalizeCipDraft({ ...current, cipType: event.target.value as CipType }));
+            setIsDirty(true);
+          }}
           onBlur={commit}
           onKeyDown={navigateOnArrow('cipType')}
           inputRef={(element) => registerCell(row.id, 'cipType', element)}
+          disabled={cipInputsDisabled}
+          sx={{ minWidth: 180 }}
         >
           {cipTypes.map((type) => <MenuItem key={type} value={type}>{type}</MenuItem>)}
         </TextField>
@@ -564,6 +598,8 @@ const OperatorEntryRow = memo(function OperatorEntryRow({
           onBlur={commit}
           onKeyDown={handleTextNavigation('causticJerrycansUsed')}
           inputRef={(element) => registerCell(row.id, 'causticJerrycansUsed', element)}
+          disabled={cipInputsDisabled}
+          sx={{ minWidth: 96 }}
         />
       </TableCell>
       <TableCell>
@@ -576,17 +612,8 @@ const OperatorEntryRow = memo(function OperatorEntryRow({
           onBlur={commit}
           onKeyDown={handleTextNavigation('nitricJerrycansUsed')}
           inputRef={(element) => registerCell(row.id, 'nitricJerrycansUsed', element)}
-        />
-      </TableCell>
-      <TableCell>
-        <TextField
-          name="notes"
-          size="small"
-          value={draft.notes}
-          onChange={(event) => { setDraft((current) => ({ ...current, notes: event.target.value })); setIsDirty(true); }}
-          onBlur={commit}
-          onKeyDown={handleTextNavigation('notes')}
-          inputRef={(element) => registerCell(row.id, 'notes', element)}
+          disabled={nitricDisabled}
+          sx={{ minWidth: 96 }}
         />
       </TableCell>
     </TableRow>
@@ -665,7 +692,7 @@ function OperatorMonthlyEntryTable({
         <Table size="small" stickyHeader>
           <TableHead>
             <TableRow>
-              {['Date', 'Status', 'Offloading shift', 'Pasteurization shift', 'Milk offloaded', 'Milk pasteurized', 'Milk loss', 'Loss %', 'CIP done?', 'CIP type', 'Caustic', 'Nitric', 'Notes'].map((header) => (
+              {['Date', 'Status', 'Offloading shift', 'Pasteurization shift', 'Milk offloaded', 'Milk pasteurized', 'Milk loss', 'Loss %', 'CIP done?', 'CIP type', 'Caustic', 'Nitric'].map((header) => (
                 <TableCell key={header} sx={{ fontWeight: 800, bgcolor: '#f8fafc', py: 1.1, whiteSpace: 'nowrap' }}>{header}</TableCell>
               ))}
             </TableRow>
@@ -853,7 +880,7 @@ function DashboardOverview({ summary, chartData, ranking }: { summary: ReturnTyp
 }
 
 export function Dashboard({ user, onLogout }: { user: AppUser; onLogout: () => void }) {
-  const [entries, setEntries] = useState(demoOperatorEntries);
+  const [entries, setEntries] = useState<OperatorDailyEntry[]>(demoOperatorEntries);
   const months = useMemo(() => getAvailableMonths(entries), [entries]);
   const [selectedMonth, setSelectedMonth] = useState(months[0] ?? '2026-03');
   const [operatorFilters, setOperatorFilters] = useState<string[]>([]);
@@ -1001,7 +1028,7 @@ export function Dashboard({ user, onLogout }: { user: AppUser; onLogout: () => v
                   <Table size="small">
                     <TableHead>
                       <TableRow>
-                        {['Date', 'Operator', 'CIP type', 'Chemical used', 'Caustic', 'Nitric', 'Notes'].map((header) => <TableCell key={header} sx={{ fontWeight: 800, py: 1.1 }}>{header}</TableCell>)}
+                        {['Date', 'Operator', 'CIP type', 'Chemical used', 'Caustic', 'Nitric'].map((header) => <TableCell key={header} sx={{ fontWeight: 800, py: 1.1 }}>{header}</TableCell>)}
                       </TableRow>
                     </TableHead>
                     <TableBody>
@@ -1013,7 +1040,6 @@ export function Dashboard({ user, onLogout }: { user: AppUser; onLogout: () => v
                           <TableCell>{record.chemicalUsed}</TableCell>
                           <TableCell>{record.causticJerrycansUsed}</TableCell>
                           <TableCell>{record.nitricAcidJerrycansUsed}</TableCell>
-                          <TableCell>{record.notes}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>

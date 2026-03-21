@@ -37,11 +37,18 @@ create table if not exists public.operator_daily_entries (
     end
   ) stored,
   cip_done boolean not null default false,
-  cip_type text,
+  cip_type text default 'Caustic wash' check (cip_type in ('Caustic wash', 'Caustic and Acid wash')),
   caustic_jerrycans_used integer not null default 0,
   nitric_jerrycans_used integer not null default 0,
-  notes text,
   status text not null default 'saved' check (status in ('saved', 'pending', 'missing')),
+  check (
+    cip_done
+    or (caustic_jerrycans_used = 0 and nitric_jerrycans_used = 0)
+  ),
+  check (
+    cip_type = 'Caustic and Acid wash'
+    or nitric_jerrycans_used = 0
+  ),
   created_at timestamptz not null default now(),
   unique (department_id, operator_name, entry_date)
 );
@@ -66,12 +73,15 @@ create table if not exists public.cip_records (
   department_id uuid not null references public.departments(id) on delete cascade,
   record_date date not null,
   operator_name text not null,
-  cip_type text not null,
+  cip_type text not null check (cip_type in ('Caustic wash', 'Caustic and Acid wash')),
   chemical_used text not null,
   caustic_jerrycans_used integer not null default 0,
   nitric_acid_jerrycans_used integer not null default 0,
-  notes text,
   created_by uuid references public.profiles(id),
+  check (
+    cip_type = 'Caustic and Acid wash'
+    or nitric_acid_jerrycans_used = 0
+  ),
   created_at timestamptz not null default now()
 );
 

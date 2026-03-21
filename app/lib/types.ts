@@ -7,7 +7,7 @@ export type AppUser = {
 };
 
 export type Shift = 'Morning' | 'Afternoon' | 'Night';
-export type CipType = 'Pre-rinse' | 'Caustic wash' | 'Acid wash' | 'Final rinse';
+export type CipType = 'Caustic wash' | 'Caustic and Acid wash';
 export type ChemicalUsed = 'Caustic' | 'Nitric Acid' | 'Both';
 export type EntryStatus = 'saved' | 'pending' | 'missing';
 
@@ -31,7 +31,6 @@ export type CipRecord = {
   chemicalUsed: ChemicalUsed;
   causticJerrycansUsed: number;
   nitricAcidJerrycansUsed: number;
-  notes: string;
 };
 
 export type OperatorDailyEntry = {
@@ -46,5 +45,4 @@ export type OperatorDailyEntry = {
   cipType: CipType;
   causticJerrycansUsed: number;
   nitricJerrycansUsed: number;
-  notes: string;
 };

@@ -9,7 +9,7 @@ export const operators = [
 ];
 
 const shiftCycle: Shift[] = ['Morning', 'Afternoon', 'Night'];
-const cipCycle: CipType[] = ['Pre-rinse', 'Caustic wash', 'Acid wash', 'Final rinse'];
+const cipCycle: CipType[] = ['Caustic wash', 'Caustic and Acid wash'];
 const monthStart = dayjs('2026-03-01');
 const daysInDemoMonth = monthStart.daysInMonth();
 
@@ -27,14 +27,11 @@ function buildEntry(operatorName: string, operatorIndex: number, day: number): O
   const cipDone = day % 2 === 0 || day % 5 === operatorIndex % 5;
   const cipType = cipCycle[(day + operatorIndex) % cipCycle.length];
   const causticJerrycansUsed = cipDone ? 1 + ((day + operatorIndex) % 4) : 0;
-  const nitricJerrycansUsed = cipDone && (cipType === 'Acid wash' || cipType === 'Final rinse') ? 1 + ((day + operatorIndex + 1) % 3) : cipDone && day % 7 === 0 ? 1 : 0;
-  const notes = anomalyBoost > 0
-    ? 'Higher-than-normal losses observed during transfer and balancing.'
-    : gainCase < 0
-      ? 'Possible gain or meter anomaly flagged for review.'
-      : cipDone
-        ? 'Routine production and CIP record completed.'
-        : 'Production completed; no CIP logged for this date.';
+  const nitricJerrycansUsed = !cipDone
+    ? 0
+    : cipType === 'Caustic and Acid wash'
+      ? 1 + ((day + operatorIndex + 1) % 3)
+      : 0;
 
   return {
     id: `${operatorName.toLowerCase().replace(/\s+/g, '-')}-${date}`,
@@ -48,7 +45,6 @@ function buildEntry(operatorName: string, operatorIndex: number, day: number): O
     cipType,
     causticJerrycansUsed,
     nitricJerrycansUsed,
-    notes,
   };
 }
 
@@ -65,7 +61,14 @@ export const demoProductionData: ProductionRecord[] = demoOperatorEntries.map((e
   pasteurizationOperator: entry.operatorName,
   totalMilkOffloaded: entry.milkOffloaded,
   totalMilkPasteurized: entry.milkPasteurized,
-  remarks: entry.notes,
+  remarks:
+    entry.milkPasteurized > entry.milkOffloaded
+      ? 'Possible meter variance flagged for review.'
+      : entry.milkOffloaded - entry.milkPasteurized > 300
+        ? 'Higher-than-normal milk loss observed.'
+        : entry.cipDone
+          ? 'Routine production and CIP record completed.'
+          : 'Production completed; no CIP logged for this date.',
 }));
 
 export const demoCipData: CipRecord[] = demoOperatorEntries
@@ -83,5 +86,4 @@ export const demoCipData: CipRecord[] = demoOperatorEntries
           : 'Caustic',
     causticJerrycansUsed: entry.causticJerrycansUsed,
     nitricAcidJerrycansUsed: entry.nitricJerrycansUsed,
-    notes: entry.notes,
   }));

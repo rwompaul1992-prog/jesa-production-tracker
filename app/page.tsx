@@ -71,7 +71,7 @@ export default function HomePage() {
     <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', py: 4 }}>
       <Container maxWidth="lg">
         <Grid container spacing={4} alignItems="center">
-          <Grid size={{ xs: 12, md: 6 }}>
+          <Grid item xs={12} md={6}>
             <Stack spacing={2.5}>
               <Chip icon={<PrecisionManufacturingRounded />} label="Dairy plant production tracking" color="primary" sx={{ alignSelf: 'flex-start' }} />
               <Typography variant="h3">Production Tracker v1 for Intake and Pasteurization</Typography>
@@ -97,7 +97,7 @@ export default function HomePage() {
             </Stack>
           </Grid>
 
-          <Grid size={{ xs: 12, md: 6 }}>
+          <Grid item xs={12} md={6}>
             <Card>
               <CardContent sx={{ p: 4 }}>
                 <Stack spacing={2.5}>
