@@ -413,18 +413,6 @@ const OperatorEntryRow = memo(function OperatorEntryRow({
     [commit, onNavigate, row.id],
   );
 
-  const handleTextNavigation = useCallback(
-    (field: OperatorEditableField) =>
-      (event: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-        if (event.key === 'Enter') {
-          commitOnEnter(event);
-          return;
-        }
-        navigateOnArrow(field)(event);
-      },
-    [commitOnEnter, navigateOnArrow],
-  );
-
   const navigateOnArrow = useCallback(
     (field: OperatorEditableField) =>
       (event: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -451,6 +439,18 @@ const OperatorEntryRow = memo(function OperatorEntryRow({
         }
       },
     [onNavigate, row.id, rowOrder.length],
+  );
+
+  const handleTextNavigation = useCallback(
+    (field: OperatorEditableField) =>
+      (event: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+        if (event.key === 'Enter') {
+          commitOnEnter(event);
+          return;
+        }
+        navigateOnArrow(field)(event);
+      },
+    [commitOnEnter, navigateOnArrow],
   );
 
   return (
