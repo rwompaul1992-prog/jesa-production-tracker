@@ -6,11 +6,16 @@ export type AppUser = {
   role: UserRole;
 };
 
+export type Shift = 'Morning' | 'Afternoon' | 'Night';
+export type CipType = 'Pre-rinse' | 'Caustic wash' | 'Acid wash' | 'Final rinse';
+export type ChemicalUsed = 'Caustic' | 'Nitric Acid' | 'Both';
+export type EntryStatus = 'saved' | 'pending' | 'missing';
+
 export type ProductionRecord = {
   id: string;
   date: string;
-  offloadingShift: 'Morning' | 'Afternoon' | 'Night';
-  pasteurizationShift: 'Morning' | 'Afternoon' | 'Night';
+  offloadingShift: Shift;
+  pasteurizationShift: Shift;
   offloadingOperator: string;
   pasteurizationOperator: string;
   totalMilkOffloaded: number;
@@ -22,9 +27,24 @@ export type CipRecord = {
   id: string;
   date: string;
   operatorName: string;
-  cipType: 'Pre-rinse' | 'Caustic wash' | 'Acid wash' | 'Final rinse';
-  chemicalUsed: 'Caustic' | 'Nitric Acid' | 'Both';
+  cipType: CipType;
+  chemicalUsed: ChemicalUsed;
   causticJerrycansUsed: number;
   nitricAcidJerrycansUsed: number;
+  notes: string;
+};
+
+export type OperatorDailyEntry = {
+  id: string;
+  date: string;
+  operatorName: string;
+  offloadingShift: Shift;
+  pasteurizationShift: Shift;
+  milkOffloaded: number;
+  milkPasteurized: number;
+  cipDone: boolean;
+  cipType: CipType;
+  causticJerrycansUsed: number;
+  nitricJerrycansUsed: number;
   notes: string;
 };

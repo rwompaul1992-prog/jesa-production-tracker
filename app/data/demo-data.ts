@@ -1,4 +1,5 @@
-import { CipRecord, ProductionRecord } from '@/app/lib/types';
+import dayjs from 'dayjs';
+import { CipRecord, CipType, OperatorDailyEntry, ProductionRecord, Shift } from '@/app/lib/types';
 
 export const operators = [
   'Mpima Abubakar',
@@ -7,176 +8,80 @@ export const operators = [
   'Manano Vicent',
 ];
 
-export const demoProductionData: ProductionRecord[] = [
-  {
-    id: 'p1',
-    date: '2026-03-01',
-    offloadingShift: 'Morning',
-    pasteurizationShift: 'Afternoon',
-    offloadingOperator: 'Mpima Abubakar',
-    pasteurizationOperator: 'Saadi Wakabi',
-    totalMilkOffloaded: 12450,
-    totalMilkPasteurized: 12120,
-    remarks: 'Smooth intake; minor transfer lag.',
-  },
-  {
-    id: 'p2',
-    date: '2026-03-02',
-    offloadingShift: 'Morning',
-    pasteurizationShift: 'Afternoon',
-    offloadingOperator: 'Robert Bakwatanisa',
-    pasteurizationOperator: 'Manano Vicent',
-    totalMilkOffloaded: 13200,
-    totalMilkPasteurized: 12880,
-    remarks: 'Stable temperature profile.',
-  },
-  {
-    id: 'p3',
-    date: '2026-03-03',
-    offloadingShift: 'Afternoon',
-    pasteurizationShift: 'Night',
-    offloadingOperator: 'Saadi Wakabi',
-    pasteurizationOperator: 'Mpima Abubakar',
-    totalMilkOffloaded: 11890,
-    totalMilkPasteurized: 11670,
-    remarks: 'Good line readiness.',
-  },
-  {
-    id: 'p4',
-    date: '2026-03-04',
-    offloadingShift: 'Night',
-    pasteurizationShift: 'Morning',
-    offloadingOperator: 'Manano Vicent',
-    pasteurizationOperator: 'Robert Bakwatanisa',
-    totalMilkOffloaded: 14110,
-    totalMilkPasteurized: 13620,
-    remarks: 'High volume day; flushing losses noted.',
-  },
-  {
-    id: 'p5',
-    date: '2026-03-05',
-    offloadingShift: 'Morning',
-    pasteurizationShift: 'Afternoon',
-    offloadingOperator: 'Mpima Abubakar',
-    pasteurizationOperator: 'Manano Vicent',
-    totalMilkOffloaded: 12780,
-    totalMilkPasteurized: 12590,
-    remarks: 'Excellent batch balancing.',
-  },
-  {
-    id: 'p6',
-    date: '2026-03-06',
-    offloadingShift: 'Afternoon',
-    pasteurizationShift: 'Night',
-    offloadingOperator: 'Robert Bakwatanisa',
-    pasteurizationOperator: 'Saadi Wakabi',
-    totalMilkOffloaded: 13550,
-    totalMilkPasteurized: 13080,
-    remarks: 'Valve leak fixed mid-shift.',
-  },
-  {
-    id: 'p7',
-    date: '2026-03-07',
-    offloadingShift: 'Morning',
-    pasteurizationShift: 'Afternoon',
-    offloadingOperator: 'Saadi Wakabi',
-    pasteurizationOperator: 'Robert Bakwatanisa',
-    totalMilkOffloaded: 12920,
-    totalMilkPasteurized: 12610,
-    remarks: 'Normal run.',
-  },
-  {
-    id: 'p8',
-    date: '2026-03-08',
-    offloadingShift: 'Night',
-    pasteurizationShift: 'Morning',
-    offloadingOperator: 'Manano Vicent',
-    pasteurizationOperator: 'Mpima Abubakar',
-    totalMilkOffloaded: 13800,
-    totalMilkPasteurized: 13480,
-    remarks: 'Improved priming performance.',
-  },
-];
+const shiftCycle: Shift[] = ['Morning', 'Afternoon', 'Night'];
+const cipCycle: CipType[] = ['Pre-rinse', 'Caustic wash', 'Acid wash', 'Final rinse'];
+const monthStart = dayjs('2026-03-01');
+const daysInDemoMonth = monthStart.daysInMonth();
 
-export const demoCipData: CipRecord[] = [
-  {
-    id: 'c1',
-    date: '2026-03-01',
-    operatorName: 'Mpima Abubakar',
-    cipType: 'Caustic wash',
-    chemicalUsed: 'Caustic',
-    causticJerrycansUsed: 3,
-    nitricAcidJerrycansUsed: 0,
-    notes: 'Standard line clean.',
-  },
-  {
-    id: 'c2',
-    date: '2026-03-02',
-    operatorName: 'Manano Vicent',
-    cipType: 'Acid wash',
-    chemicalUsed: 'Nitric Acid',
-    causticJerrycansUsed: 0,
-    nitricAcidJerrycansUsed: 2,
-    notes: 'Post high-volume sanitation.',
-  },
-  {
-    id: 'c3',
-    date: '2026-03-03',
-    operatorName: 'Saadi Wakabi',
-    cipType: 'Final rinse',
-    chemicalUsed: 'Both',
-    causticJerrycansUsed: 2,
-    nitricAcidJerrycansUsed: 1,
-    notes: 'Balanced usage within target.',
-  },
-  {
-    id: 'c4',
-    date: '2026-03-04',
-    operatorName: 'Robert Bakwatanisa',
-    cipType: 'Caustic wash',
-    chemicalUsed: 'Both',
-    causticJerrycansUsed: 4,
-    nitricAcidJerrycansUsed: 1,
-    notes: 'Deep clean after loss spike.',
-  },
-  {
-    id: 'c5',
-    date: '2026-03-05',
-    operatorName: 'Mpima Abubakar',
-    cipType: 'Pre-rinse',
-    chemicalUsed: 'Caustic',
-    causticJerrycansUsed: 2,
-    nitricAcidJerrycansUsed: 0,
-    notes: 'Fast turnaround.',
-  },
-  {
-    id: 'c6',
-    date: '2026-03-06',
-    operatorName: 'Saadi Wakabi',
-    cipType: 'Acid wash',
-    chemicalUsed: 'Nitric Acid',
-    causticJerrycansUsed: 0,
-    nitricAcidJerrycansUsed: 3,
-    notes: 'Extra wash for line recovery.',
-  },
-  {
-    id: 'c7',
-    date: '2026-03-07',
-    operatorName: 'Robert Bakwatanisa',
-    cipType: 'Final rinse',
-    chemicalUsed: 'Caustic',
-    causticJerrycansUsed: 2,
-    nitricAcidJerrycansUsed: 0,
-    notes: 'Within expected range.',
-  },
-  {
-    id: 'c8',
-    date: '2026-03-08',
-    operatorName: 'Manano Vicent',
-    cipType: 'Acid wash',
-    chemicalUsed: 'Both',
-    causticJerrycansUsed: 1,
-    nitricAcidJerrycansUsed: 2,
-    notes: 'Follow-up after heavy intake run.',
-  },
-];
+function buildEntry(operatorName: string, operatorIndex: number, day: number): OperatorDailyEntry {
+  const date = monthStart.date(day).format('YYYY-MM-DD');
+  const offloadingShift = shiftCycle[(day + operatorIndex) % shiftCycle.length];
+  const pasteurizationShift = shiftCycle[(day + operatorIndex + 1) % shiftCycle.length];
+  const baseline = 11600 + operatorIndex * 320 + day * 92;
+  const variation = ((day + 1) * (operatorIndex + 2) * 17) % 470;
+  const milkOffloaded = baseline + variation;
+  const lossBase = 120 + (day % 6) * 22 + operatorIndex * 18;
+  const anomalyBoost = day === 11 && operatorIndex === 2 ? 210 : day === 18 && operatorIndex === 1 ? 180 : 0;
+  const gainCase = day === 24 && operatorIndex === 3 ? -55 : 0;
+  const milkPasteurized = milkOffloaded - lossBase - anomalyBoost - gainCase;
+  const cipDone = day % 2 === 0 || day % 5 === operatorIndex % 5;
+  const cipType = cipCycle[(day + operatorIndex) % cipCycle.length];
+  const causticJerrycansUsed = cipDone ? 1 + ((day + operatorIndex) % 4) : 0;
+  const nitricJerrycansUsed = cipDone && (cipType === 'Acid wash' || cipType === 'Final rinse') ? 1 + ((day + operatorIndex + 1) % 3) : cipDone && day % 7 === 0 ? 1 : 0;
+  const notes = anomalyBoost > 0
+    ? 'Higher-than-normal losses observed during transfer and balancing.'
+    : gainCase < 0
+      ? 'Possible gain or meter anomaly flagged for review.'
+      : cipDone
+        ? 'Routine production and CIP record completed.'
+        : 'Production completed; no CIP logged for this date.';
+
+  return {
+    id: `${operatorName.toLowerCase().replace(/\s+/g, '-')}-${date}`,
+    date,
+    operatorName,
+    offloadingShift,
+    pasteurizationShift,
+    milkOffloaded,
+    milkPasteurized,
+    cipDone,
+    cipType,
+    causticJerrycansUsed,
+    nitricJerrycansUsed,
+    notes,
+  };
+}
+
+export const demoOperatorEntries: OperatorDailyEntry[] = operators.flatMap((operatorName, operatorIndex) =>
+  Array.from({ length: daysInDemoMonth }, (_, index) => buildEntry(operatorName, operatorIndex, index + 1)),
+);
+
+export const demoProductionData: ProductionRecord[] = demoOperatorEntries.map((entry) => ({
+  id: `prod-${entry.id}`,
+  date: entry.date,
+  offloadingShift: entry.offloadingShift,
+  pasteurizationShift: entry.pasteurizationShift,
+  offloadingOperator: entry.operatorName,
+  pasteurizationOperator: entry.operatorName,
+  totalMilkOffloaded: entry.milkOffloaded,
+  totalMilkPasteurized: entry.milkPasteurized,
+  remarks: entry.notes,
+}));
+
+export const demoCipData: CipRecord[] = demoOperatorEntries
+  .filter((entry) => entry.cipDone)
+  .map((entry) => ({
+    id: `cip-${entry.id}`,
+    date: entry.date,
+    operatorName: entry.operatorName,
+    cipType: entry.cipType,
+    chemicalUsed:
+      entry.causticJerrycansUsed > 0 && entry.nitricJerrycansUsed > 0
+        ? 'Both'
+        : entry.nitricJerrycansUsed > 0
+          ? 'Nitric Acid'
+          : 'Caustic',
+    causticJerrycansUsed: entry.causticJerrycansUsed,
+    nitricAcidJerrycansUsed: entry.nitricJerrycansUsed,
+    notes: entry.notes,
+  }));
