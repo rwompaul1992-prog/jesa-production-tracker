@@ -85,6 +85,34 @@ create table if not exists public.cip_records (
   created_at timestamptz not null default now()
 );
 
+create or replace view public.operator_monthly_performance as
+select
+  operator_name,
+  month_key,
+  count(*) filter (
+    where milk_offloaded > 0
+      or milk_pasteurized > 0
+      or cip_done
+      or caustic_jerrycans_used > 0
+      or nitric_jerrycans_used > 0
+  ) as filled_days,
+  sum(milk_offloaded) as total_milk_handled,
+  sum(greatest(milk_loss, 0)) as total_milk_loss,
+  case
+    when sum(milk_offloaded) = 0 then 0
+    else (sum(greatest(milk_loss, 0)) / sum(milk_offloaded)) * 100
+  end as average_loss_percentage,
+  case
+    when sum(milk_offloaded) = 0 then 0
+    else (sum(caustic_jerrycans_used) / sum(milk_offloaded)) * 1000
+  end as caustic_per_1000_litres,
+  case
+    when sum(milk_offloaded) = 0 then 0
+    else (sum(nitric_jerrycans_used) / sum(milk_offloaded)) * 1000
+  end as nitric_per_1000_litres
+from public.operator_daily_entries
+group by operator_name, month_key;
+
 alter table public.profiles enable row level security;
 alter table public.operator_daily_entries enable row level security;
 alter table public.production_records enable row level security;

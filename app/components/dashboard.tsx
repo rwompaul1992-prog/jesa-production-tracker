@@ -47,6 +47,12 @@ import FilterAltRounded from '@mui/icons-material/FilterAltRounded';
 import SaveRounded from '@mui/icons-material/SaveRounded';
 import AssignmentTurnedInRounded from '@mui/icons-material/AssignmentTurnedInRounded';
 import PendingRounded from '@mui/icons-material/PendingRounded';
+import TrendingUpRounded from '@mui/icons-material/TrendingUpRounded';
+import TrendingDownRounded from '@mui/icons-material/TrendingDownRounded';
+import BoltRounded from '@mui/icons-material/BoltRounded';
+import FlagRounded from '@mui/icons-material/FlagRounded';
+import ShowChartRounded from '@mui/icons-material/ShowChartRounded';
+import TimelineRounded from '@mui/icons-material/TimelineRounded';
 import {
   Area,
   AreaChart,
@@ -67,11 +73,12 @@ import {
   buildChemicalUsageByOperator,
   buildInsights,
   buildMonthlySummary,
+  buildOperatorPerformance,
   buildOperatorRanking,
   getLossPercentage,
   getMilkLoss,
 } from '@/app/lib/analytics';
-import { AppUser, CipRecord, CipType, EntryStatus, OperatorDailyEntry, ProductionRecord, Shift } from '@/app/lib/types';
+import { AppUser, CipRecord, CipType, EntryStatus, OperatorDailyEntry, OperatorPerformanceEntry, ProductionRecord, Shift } from '@/app/lib/types';
 
 const drawerWidth = 260;
 const shifts: Shift[] = ['Morning', 'Afternoon', 'Night'];
@@ -397,6 +404,358 @@ function SectionCard({
         </Stack>
       </CardContent>
     </Card>
+  );
+}
+
+function getPerformanceBadgeMeta(badge: OperatorPerformanceEntry['badge']) {
+  switch (badge) {
+    case 'best':
+      return { label: 'Best', color: 'success' as const, icon: <LeaderboardRounded fontSize="small" /> };
+    case 'worst':
+      return { label: 'Worst', color: 'error' as const, icon: <FlagRounded fontSize="small" /> };
+    case 'improving':
+      return { label: 'Improving', color: 'info' as const, icon: <TrendingUpRounded fontSize="small" /> };
+    case 'risky':
+      return { label: 'Risky', color: 'warning' as const, icon: <WarningAmberRounded fontSize="small" /> };
+    default:
+      return { label: 'Steady', color: 'primary' as const, icon: <BoltRounded fontSize="small" /> };
+  }
+}
+
+function OperatorPerformancePage({
+  performance,
+  selectedOperator,
+  onSelectOperator,
+}: {
+  performance: ReturnType<typeof buildOperatorPerformance>;
+  selectedOperator: string;
+  onSelectOperator: (operator: string) => void;
+}) {
+  const selectedEntry =
+    performance.operators.find((entry) => entry.operator === selectedOperator) ??
+    performance.operators[0];
+
+  if (!selectedEntry) {
+    return (
+      <SectionCard
+        title="Operator performance command"
+        description="Performance scores will appear once operator records are available for the selected month."
+      >
+        <Typography variant="body2" color="text.secondary">
+          No operator records are available in the current review window.
+        </Typography>
+      </SectionCard>
+    );
+  }
+
+  return (
+    <Stack spacing={2}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)', xl: 'repeat(4, 1fr)' }, gap: 1.4 }}>
+        {performance.operators.map((entry) => {
+          const badge = getPerformanceBadgeMeta(entry.badge);
+          const isActive = entry.operator === selectedEntry.operator;
+          return (
+            <Card
+              key={entry.operator}
+              onClick={() => onSelectOperator(entry.operator)}
+              sx={{
+                cursor: 'pointer',
+                border: '1px solid',
+                borderColor: isActive ? 'primary.main' : 'rgba(148,163,184,0.16)',
+                background: isActive
+                  ? 'linear-gradient(135deg, rgba(47,109,246,0.12), rgba(255,255,255,0.98))'
+                  : 'linear-gradient(180deg, rgba(255,255,255,0.98), rgba(248,250,252,0.95))',
+                transition: 'transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease',
+                '&:hover': {
+                  transform: 'translateY(-2px)',
+                  boxShadow: '0 16px 28px rgba(15,23,42,0.08)',
+                  borderColor: 'rgba(47,109,246,0.28)',
+                },
+              }}
+            >
+              <CardContent sx={{ p: 2 }}>
+                <Stack spacing={1.2}>
+                  <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
+                    <Box>
+                      <Typography variant="body2" fontWeight={900}>
+                        {entry.operator}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary" fontWeight={700}>
+                        Position {entry.positionLabel}
+                      </Typography>
+                    </Box>
+                    <Chip
+                      size="small"
+                      color={badge.color}
+                      icon={badge.icon}
+                      label={badge.label}
+                    />
+                  </Stack>
+                  <Stack direction="row" spacing={1.5} alignItems="baseline">
+                    <Typography variant="h4" sx={{ fontWeight: 900, letterSpacing: '-0.04em' }}>
+                      {entry.score.toFixed(1)}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary" fontWeight={800}>
+                      / 100 score
+                    </Typography>
+                  </Stack>
+                  <Stack direction="row" spacing={0.8} flexWrap="wrap" useFlexGap>
+                    <Chip size="small" label={`${entry.totalMilkHandled.toLocaleString()} L handled`} />
+                    <Chip size="small" color={entry.averageLossPercentage > 2.6 ? 'error' : 'success'} label={`${entry.averageLossPercentage.toFixed(2)}% avg loss`} />
+                  </Stack>
+                  <LinearProgress
+                    variant="determinate"
+                    value={entry.score}
+                    sx={{
+                      height: 8,
+                      borderRadius: 999,
+                      bgcolor: 'rgba(148,163,184,0.16)',
+                      '& .MuiLinearProgress-bar': {
+                        borderRadius: 999,
+                        background: entry.rank === 1
+                          ? 'linear-gradient(90deg, #14b8a6, #2dd4bf)'
+                          : entry.badge === 'risky' || entry.rank === performance.operators.length
+                            ? 'linear-gradient(90deg, #ef4444, #f97316)'
+                            : 'linear-gradient(90deg, #2563eb, #38bdf8)',
+                      },
+                    }}
+                  />
+                </Stack>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </Box>
+
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', xl: '1.1fr 0.9fr' }, gap: 1.8 }}>
+        <Stack spacing={1.8}>
+          <SectionCard
+            title="Operator score ranking"
+            description="Weighted monthly score with fair per-1000L chemical normalization and completeness discipline."
+          >
+            <Stack spacing={1.1}>
+              {performance.operators.map((entry) => {
+                const badge = getPerformanceBadgeMeta(entry.badge);
+                return (
+                  <Paper
+                    key={entry.operator}
+                    onClick={() => onSelectOperator(entry.operator)}
+                    sx={{
+                      p: 1.5,
+                      borderRadius: 4,
+                      cursor: 'pointer',
+                      border: '1px solid rgba(148,163,184,0.14)',
+                      background:
+                        entry.operator === selectedEntry.operator
+                          ? 'linear-gradient(135deg, rgba(47,109,246,0.12), rgba(255,255,255,0.98))'
+                          : 'linear-gradient(180deg, rgba(255,255,255,0.98), rgba(248,250,252,0.92))',
+                    }}
+                  >
+                    <Stack spacing={1}>
+                      <Stack direction="row" justifyContent="space-between" alignItems="center">
+                        <Stack direction="row" spacing={1} alignItems="center">
+                          <Avatar sx={{ width: 32, height: 32, bgcolor: alpha('#2563eb', 0.1), color: 'primary.main' }}>
+                            #{entry.rank}
+                          </Avatar>
+                          <Box>
+                            <Typography variant="body2" fontWeight={900}>{entry.operator}</Typography>
+                            <Typography variant="caption" color="text.secondary" fontWeight={700}>
+                              {entry.positionLabel}
+                            </Typography>
+                          </Box>
+                        </Stack>
+                        <Stack direction="row" spacing={0.8} alignItems="center">
+                          <Chip size="small" color={badge.color} icon={badge.icon} label={badge.label} />
+                          <Chip
+                            size="small"
+                            color={entry.rank === 1 ? 'success' : entry.rank === performance.operators.length ? 'error' : 'primary'}
+                            label={`${entry.score.toFixed(1)} pts`}
+                          />
+                        </Stack>
+                      </Stack>
+                      <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 0.9 }}>
+                        <Chip size="small" variant="outlined" label={`Loss ${entry.averageLossPercentage.toFixed(2)}%`} color={entry.averageLossPercentage > 2.6 ? 'error' : 'success'} />
+                        <Chip size="small" variant="outlined" label={`Completeness ${entry.dataCompleteness.toFixed(0)}%`} color="primary" />
+                        <Chip size="small" variant="outlined" label={`Caustic ${entry.causticPer1000Litres.toFixed(3)}/1000L`} color="warning" />
+                        <Chip size="small" variant="outlined" label={`Nitric ${entry.nitricPer1000Litres.toFixed(3)}/1000L`} color="info" />
+                      </Box>
+                      <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 0.8 }}>
+                        {[
+                          { label: 'Loss', value: entry.lossPerformanceScore, color: '#14b8a6' },
+                          { label: 'Chem', value: entry.chemicalEfficiencyScore, color: '#2563eb' },
+                          { label: 'Data', value: entry.dataCompleteness, color: '#38bdf8' },
+                          { label: 'Consistency', value: entry.consistency, color: '#f59e0b' },
+                        ].map((metric) => (
+                          <Box key={metric.label}>
+                            <Typography variant="caption" color="text.secondary" fontWeight={800}>
+                              {metric.label}
+                            </Typography>
+                            <LinearProgress
+                              variant="determinate"
+                              value={metric.value}
+                              sx={{
+                                mt: 0.6,
+                                height: 7,
+                                borderRadius: 999,
+                                bgcolor: 'rgba(148,163,184,0.16)',
+                                '& .MuiLinearProgress-bar': {
+                                  borderRadius: 999,
+                                  bgcolor: metric.color,
+                                },
+                              }}
+                            />
+                          </Box>
+                        ))}
+                      </Box>
+                    </Stack>
+                  </Paper>
+                );
+              })}
+            </Stack>
+          </SectionCard>
+
+          <SectionCard
+            title={`${selectedEntry.operator} detail`}
+            description="Monthly loss trend, chemistry intensity, and anomaly watch for the selected operator."
+            action={<Chip size="small" color="primary" icon={<TimelineRounded fontSize="small" />} label={`Viewing ${selectedEntry.positionLabel}`} />}
+          >
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', xl: '1fr 1fr' }, gap: 1.6 }}>
+              <Paper sx={{ p: 1.2, borderRadius: 4, border: '1px solid rgba(148,163,184,0.12)' }}>
+                <Typography variant="caption" color="text.secondary" fontWeight={800}>
+                  Loss trend
+                </Typography>
+                <Box sx={{ height: 230, mt: 0.8 }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={selectedEntry.trend}>
+                      <defs>
+                        <linearGradient id="operatorLossFill" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#ef4444" stopOpacity={0.24} />
+                          <stop offset="95%" stopColor="#ef4444" stopOpacity={0.03} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid {...chartGridProps} />
+                      <XAxis dataKey="date" {...chartAxisProps} />
+                      <YAxis {...chartAxisProps} />
+                      <Tooltip content={<ChartTooltipCard />} />
+                      <Area type="monotone" dataKey="lossPercentage" name="Loss %" stroke="#ef4444" strokeWidth={3} fill="url(#operatorLossFill)" />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </Box>
+              </Paper>
+              <Paper sx={{ p: 1.2, borderRadius: 4, border: '1px solid rgba(148,163,184,0.12)' }}>
+                <Typography variant="caption" color="text.secondary" fontWeight={800}>
+                  Chemical usage trend
+                </Typography>
+                <Box sx={{ height: 230, mt: 0.8 }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={selectedEntry.trend}>
+                      <CartesianGrid {...chartGridProps} />
+                      <XAxis dataKey="date" {...chartAxisProps} />
+                      <YAxis {...chartAxisProps} />
+                      <Tooltip content={<ChartTooltipCard />} />
+                      <Legend wrapperStyle={{ fontSize: 12 }} />
+                      <Line type="monotone" dataKey="causticPer1000L" name="Caustic / 1000L" stroke="#2563eb" strokeWidth={3} dot={false} />
+                      <Line type="monotone" dataKey="nitricPer1000L" name="Nitric / 1000L" stroke="#14b8a6" strokeWidth={3} dot={false} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </Box>
+              </Paper>
+            </Box>
+          </SectionCard>
+        </Stack>
+
+        <Stack spacing={1.8}>
+          <SectionCard title="Supervisor insights" description="Immediate flags for risky behavior, missing records, and improvement momentum.">
+            <Stack spacing={1.1}>
+              <Paper sx={{ p: 1.5, borderRadius: 4, background: 'linear-gradient(135deg, rgba(20,184,166,0.12), rgba(255,255,255,0.98))' }}>
+                <Typography variant="caption" color="success.main" fontWeight={800}>Best operator</Typography>
+                <Typography variant="body2" fontWeight={800}>{performance.bestOperator ?? 'N/A'}</Typography>
+              </Paper>
+              <Paper sx={{ p: 1.5, borderRadius: 4, background: 'linear-gradient(135deg, rgba(239,68,68,0.12), rgba(255,255,255,0.98))' }}>
+                <Typography variant="caption" color="error.main" fontWeight={800}>Worst operator</Typography>
+                <Typography variant="body2" fontWeight={800}>{performance.worstOperator ?? 'N/A'}</Typography>
+              </Paper>
+              <Paper sx={{ p: 1.5, borderRadius: 4, background: 'linear-gradient(135deg, rgba(245,158,11,0.12), rgba(255,255,255,0.98))' }}>
+                <Typography variant="caption" color="warning.main" fontWeight={800}>Risk watch</Typography>
+                <Typography variant="body2">{performance.riskyOperators.length ? performance.riskyOperators.join(', ') : 'No operators are currently flagged as risky.'}</Typography>
+              </Paper>
+              <Paper sx={{ p: 1.5, borderRadius: 4, background: 'linear-gradient(135deg, rgba(37,99,235,0.12), rgba(255,255,255,0.98))' }}>
+                <Typography variant="caption" color="primary.main" fontWeight={800}>Improvement trend</Typography>
+                <Typography variant="body2">{performance.improvingOperators.length ? performance.improvingOperators.join(', ') : 'No clear improvement trend detected in this review window.'}</Typography>
+              </Paper>
+            </Stack>
+          </SectionCard>
+
+          <SectionCard title="Daily performance ledger" description="Daily volume, loss, and chemical intensity for the selected operator.">
+            <TableContainer component={Paper} sx={{ borderRadius: 4, maxHeight: 420, border: '1px solid rgba(148,163,184,0.16)' }}>
+              <Table size="small" stickyHeader>
+                <TableHead>
+                  <TableRow>
+                    {['Date', 'Handled', 'Loss', 'Loss %', 'Caustic / 1000L', 'Nitric / 1000L'].map((header) => (
+                      <TableCell key={header} sx={{ fontWeight: 800, bgcolor: '#f8fbff', py: 1.1, fontSize: '0.72rem' }}>{header}</TableCell>
+                    ))}
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {selectedEntry.trend.map((point, index) => {
+                    const highLoss = point.lossPercentage > 2.8;
+                    return (
+                      <TableRow key={`${point.date}-${index}`} hover sx={{ bgcolor: highLoss ? 'rgba(254,226,226,0.42)' : index % 2 === 0 ? 'rgba(248,250,252,0.82)' : 'white' }}>
+                        <TableCell>{point.date}</TableCell>
+                        <TableCell>{point.milkHandled.toLocaleString()} L</TableCell>
+                        <TableCell>{point.milkLoss.toLocaleString()} L</TableCell>
+                        <TableCell>
+                          <Chip size="small" color={highLoss ? 'error' : 'success'} label={`${point.lossPercentage.toFixed(2)}%`} />
+                        </TableCell>
+                        <TableCell>{point.causticPer1000L.toFixed(3)}</TableCell>
+                        <TableCell>{point.nitricPer1000L.toFixed(3)}</TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </SectionCard>
+
+          <SectionCard title="Anomaly log" description="Auto-detected high loss, abnormal chemical usage, missing records, and unusual spikes.">
+            <Stack spacing={1}>
+              {selectedEntry.anomalies.length ? (
+                selectedEntry.anomalies.map((anomaly, index) => (
+                  <Paper
+                    key={`${anomaly.date}-${anomaly.type}-${index}`}
+                    sx={{
+                      p: 1.35,
+                      borderRadius: 4,
+                      border: '1px solid rgba(148,163,184,0.12)',
+                      background:
+                        anomaly.severity === 'high'
+                          ? 'linear-gradient(135deg, rgba(239,68,68,0.12), rgba(255,255,255,0.98))'
+                          : 'linear-gradient(135deg, rgba(245,158,11,0.12), rgba(255,255,255,0.98))',
+                    }}
+                  >
+                    <Stack direction="row" spacing={1} alignItems="flex-start">
+                      <Avatar sx={{ width: 28, height: 28, bgcolor: anomaly.severity === 'high' ? 'rgba(239,68,68,0.14)' : 'rgba(245,158,11,0.16)', color: anomaly.severity === 'high' ? 'error.main' : 'warning.main' }}>
+                        {anomaly.severity === 'high' ? <WarningAmberRounded fontSize="small" /> : <ShowChartRounded fontSize="small" />}
+                      </Avatar>
+                      <Box>
+                        <Typography variant="caption" fontWeight={900} color={anomaly.severity === 'high' ? 'error.main' : 'warning.main'}>
+                          {dayjs(anomaly.date).format('DD MMM')} • {anomaly.type.replace(/_/g, ' ')}
+                        </Typography>
+                        <Typography variant="body2">{anomaly.message}</Typography>
+                      </Box>
+                    </Stack>
+                  </Paper>
+                ))
+              ) : (
+                <Typography variant="body2" color="text.secondary">
+                  No anomalies detected for this operator in the selected month.
+                </Typography>
+              )}
+            </Stack>
+          </SectionCard>
+        </Stack>
+      </Box>
+    </Stack>
   );
 }
 
@@ -995,12 +1354,25 @@ export function Dashboard({ user, onLogout }: { user: AppUser; onLogout: () => v
   const chemicalByOperator = useMemo(() => buildChemicalUsageByOperator(cipRecords), [cipRecords]);
   const ranking = useMemo(() => buildOperatorRanking(productionRecords, cipRecords), [productionRecords, cipRecords]);
   const insights = useMemo(() => buildInsights(productionRecords, cipRecords), [productionRecords, cipRecords]);
+  const performance = useMemo(() => buildOperatorPerformance(entries, selectedMonth), [entries, selectedMonth]);
+  const [selectedPerformanceOperator, setSelectedPerformanceOperator] = useState<string>('');
   const operatorRows = useMemo(() => getMonthlyDays(selectedMonth, user.name, entries), [entries, selectedMonth, user.name]);
   const currentSection = availableSections.find((section) => section.key === activeSection) ?? availableSections[0];
   const commitOperatorRows = useCallback((updatedRows: OperatorDailyEntry[]) => {
     const updates = new Map(updatedRows.map((row) => [row.id, row]));
     setEntries((current) => current.map((entry) => updates.get(entry.id) ?? entry));
   }, []);
+
+  useEffect(() => {
+    if (!performance.operators.length) {
+      setSelectedPerformanceOperator('');
+      return;
+    }
+
+    if (!selectedPerformanceOperator || !performance.operators.some((entry) => entry.operator === selectedPerformanceOperator)) {
+      setSelectedPerformanceOperator(performance.operators[0].operator);
+    }
+  }, [performance.operators, selectedPerformanceOperator]);
 
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: '#edf3fb' }}>
@@ -1137,19 +1509,11 @@ export function Dashboard({ user, onLogout }: { user: AppUser; onLogout: () => v
               </SectionCard>
             ) : null}
             {user.role === 'admin' && activeSection === 'operators' ? (
-              <SectionCard title="Operator performance ranking" description="Efficiency, completeness, and consistency by operator.">
-                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', xl: '1fr 1fr' }, gap: 1.5 }}>
-                  {ranking.map((entry) => (
-                    <Paper key={entry.operator} sx={{ p: 1.6, borderRadius: 3 }}>
-                      <Stack spacing={1}>
-                        <Stack direction="row" justifyContent="space-between"><Typography variant="body2" fontWeight={800}>{entry.operator}</Typography><Chip size="small" color={entry.rank === 1 ? 'success' : entry.rank === ranking.length ? 'error' : 'primary'} label={`#${entry.rank}`} /></Stack>
-                        <Typography variant="caption" color="text.secondary">Loss {entry.lossRate.toFixed(2)}% • Chem {entry.chemicalIntensity.toFixed(2)} • Data {entry.completeness.toFixed(0)}%</Typography>
-                        <LinearProgress variant="determinate" value={entry.consistency} sx={{ height: 7, borderRadius: 10 }} />
-                      </Stack>
-                    </Paper>
-                  ))}
-                </Box>
-              </SectionCard>
+              <OperatorPerformancePage
+                performance={performance}
+                selectedOperator={selectedPerformanceOperator}
+                onSelectOperator={setSelectedPerformanceOperator}
+              />
             ) : null}
             {user.role === 'operator' && activeSection === 'operator-entry' ? <OperatorMonthlyEntryTable rows={operatorRows} onCommitRows={commitOperatorRows} operatorName={user.name} /> : null}
           </Box>

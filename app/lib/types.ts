@@ -46,3 +46,51 @@ export type OperatorDailyEntry = {
   causticJerrycansUsed: number;
   nitricJerrycansUsed: number;
 };
+
+export type OperatorPerformanceBadge = 'best' | 'worst' | 'improving' | 'risky' | 'steady';
+
+export type OperatorPerformanceAnomaly = {
+  date: string;
+  severity: 'high' | 'medium';
+  type: 'high_loss' | 'high_chemical' | 'missing_entry' | 'gain' | 'spike';
+  message: string;
+};
+
+export type OperatorPerformanceTrendPoint = {
+  date: string;
+  lossPercentage: number;
+  causticPer1000L: number;
+  nitricPer1000L: number;
+  milkHandled: number;
+  milkLoss: number;
+};
+
+export type OperatorPerformanceEntry = {
+  operator: string;
+  rank: number;
+  score: number;
+  badge: OperatorPerformanceBadge;
+  positionLabel: string;
+  totalMilkHandled: number;
+  totalMilkLoss: number;
+  averageLossPercentage: number;
+  causticPer1000Litres: number;
+  nitricPer1000Litres: number;
+  chemicalEfficiencyScore: number;
+  dataCompleteness: number;
+  consistency: number;
+  lossPerformanceScore: number;
+  trendDelta: number;
+  filledDays: number;
+  missingDays: number;
+  anomalies: OperatorPerformanceAnomaly[];
+  trend: OperatorPerformanceTrendPoint[];
+};
+
+export type OperatorPerformanceSummary = {
+  operators: OperatorPerformanceEntry[];
+  bestOperator?: string;
+  worstOperator?: string;
+  riskyOperators: string[];
+  improvingOperators: string[];
+};
