@@ -88,15 +88,59 @@ const toneMap: Record<KpiTone, { accent: string; chip: 'success' | 'error' | 'wa
 };
 
 const adminSections: Array<{ key: SectionKey; label: string; description: string; icon: React.ReactNode }> = [
-  { key: 'dashboard', label: 'Dashboard', description: 'Compact executive overview', icon: <DashboardRounded fontSize="small" /> },
-  { key: 'intake', label: 'Intake & Pasteurization', description: 'Production analytics', icon: <LocalDrinkRounded fontSize="small" /> },
-  { key: 'cip', label: 'GEA CIP Usage', description: 'Chemical records', icon: <CleaningServicesRounded fontSize="small" /> },
-  { key: 'operators', label: 'Operator Performance', description: 'Rankings and review', icon: <LeaderboardRounded fontSize="small" /> },
+  { key: 'dashboard', label: 'Executive control', description: 'Executive control center', icon: <DashboardRounded fontSize="small" /> },
+  { key: 'intake', label: 'Production intelligence', description: 'Live production intelligence', icon: <LocalDrinkRounded fontSize="small" /> },
+  { key: 'cip', label: 'Sanitation usage', description: 'CIP chemistry visibility', icon: <CleaningServicesRounded fontSize="small" /> },
+  { key: 'operators', label: 'Operator ranking', description: 'Operator performance ranking', icon: <LeaderboardRounded fontSize="small" /> },
 ];
 
 const operatorSections: Array<{ key: SectionKey; label: string; description: string; icon: React.ReactNode }> = [
-  { key: 'operator-entry', label: 'Operator Monthly Entry', description: 'Your daily production log', icon: <AssignmentTurnedInRounded fontSize="small" /> },
+  { key: 'operator-entry', label: 'Daily operator log', description: 'Production entry and CIP logging', icon: <AssignmentTurnedInRounded fontSize="small" /> },
 ];
+
+const chartAxisProps = {
+  axisLine: false,
+  tickLine: false,
+  tickMargin: 10,
+  tick: { fontSize: 11, fill: '#64748b', fontWeight: 600 },
+};
+
+const chartGridProps = {
+  stroke: 'rgba(148,163,184,0.18)',
+  strokeDasharray: '3 6',
+  vertical: false,
+};
+
+function ChartTooltipCard({
+  active,
+  label,
+  payload,
+}: {
+  active?: boolean;
+  label?: string;
+  payload?: Array<{ name?: string; value?: number; color?: string }>;
+}) {
+  if (!active || !payload?.length) return null;
+
+  return (
+    <Paper sx={{ p: 1.4, borderRadius: 3, border: '1px solid rgba(148,163,184,0.14)', minWidth: 160 }}>
+      <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 800 }}>
+        {label}
+      </Typography>
+      <Stack spacing={0.75} sx={{ mt: 0.8 }}>
+        {payload.map((item) => (
+          <Stack key={item.name} direction="row" justifyContent="space-between" spacing={1.5}>
+            <Stack direction="row" spacing={0.8} alignItems="center">
+              <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: item.color ?? 'primary.main' }} />
+              <Typography variant="caption" color="text.secondary">{item.name}</Typography>
+            </Stack>
+            <Typography variant="caption" fontWeight={800}>{Number(item.value ?? 0).toLocaleString()}</Typography>
+          </Stack>
+        ))}
+      </Stack>
+    </Paper>
+  );
+}
 
 function getAvailableMonths(entries: OperatorDailyEntry[]) {
   return Array.from(new Set(entries.map((entry) => entry.date.slice(0, 7)))).sort();
@@ -271,29 +315,39 @@ function CompactMetricCard({
     <Card
       sx={{
         border: '1px solid',
-        borderColor: alpha(colors.accent, 0.14),
-        transition: 'transform 0.18s ease, box-shadow 0.18s ease',
-        '&:hover': { transform: 'translateY(-2px)', boxShadow: `0 18px 34px ${alpha(colors.accent, 0.12)}` },
+        borderColor: alpha(colors.accent, 0.16),
+        position: 'relative',
+        overflow: 'hidden',
+        background: `linear-gradient(145deg, ${alpha(colors.accent, 0.14)}, rgba(255,255,255,0.96) 44%, rgba(255,255,255,1) 100%)`,
+        transition: 'transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease',
+        '&::before': {
+          content: '""',
+          position: 'absolute',
+          inset: '0 auto 0 0',
+          width: 5,
+          background: `linear-gradient(180deg, ${colors.accent}, ${alpha(colors.accent, 0.32)})`,
+        },
+        '&:hover': { transform: 'translateY(-3px)', boxShadow: `0 22px 36px ${alpha(colors.accent, 0.15)}`, borderColor: alpha(colors.accent, 0.28) },
       }}
     >
       <CardContent sx={{ p: 2.1 }}>
         <Stack spacing={1.4}>
           <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
             <Box>
-              <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700 }}>
+              <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
                 {title}
               </Typography>
-              <Typography variant="h6" sx={{ mt: 0.7, fontWeight: 800 }}>
+              <Typography variant="h5" sx={{ mt: 0.8, fontWeight: 900, letterSpacing: '-0.03em' }}>
                 {value}
               </Typography>
             </Box>
-            <Avatar sx={{ width: 42, height: 42, bgcolor: alpha(colors.accent, 0.1), color: colors.accent }}>{icon}</Avatar>
+            <Avatar sx={{ width: 44, height: 44, bgcolor: alpha(colors.accent, 0.12), color: colors.accent, boxShadow: `inset 0 1px 0 ${alpha('#fff', 0.6)}` }}>{icon}</Avatar>
           </Stack>
           <Stack direction="row" justifyContent="space-between" alignItems="center">
-            <Typography variant="caption" color="text.secondary">
+            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700 }}>
               {helper}
             </Typography>
-            <Chip size="small" color={colors.chip} label={trend} />
+            <Chip size="small" color={colors.chip} label={trend} sx={{ bgcolor: alpha(colors.accent, 0.12), color: colors.accent }} />
           </Stack>
         </Stack>
       </CardContent>
@@ -313,16 +367,26 @@ function SectionCard({
   action?: React.ReactNode;
 }) {
   return (
-    <Card sx={{ border: '1px solid rgba(148,163,184,0.14)' }}>
-      <CardContent sx={{ p: 2.2 }}>
+    <Card
+      sx={{
+        border: '1px solid rgba(148,163,184,0.14)',
+        background: 'linear-gradient(180deg, rgba(255,255,255,0.98), rgba(248,250,252,0.95))',
+      }}
+    >
+      <CardContent sx={{ p: 2.4 }}>
         <Stack spacing={2}>
           <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" spacing={1.5}>
             <Box>
-              <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>
+              <Chip
+                size="small"
+                label="Operations panel"
+                sx={{ mb: 1, bgcolor: 'rgba(47,109,246,0.08)', color: 'primary.main', borderColor: 'rgba(47,109,246,0.12)' }}
+              />
+              <Typography variant="subtitle1" sx={{ fontWeight: 900, letterSpacing: '-0.02em' }}>
                 {title}
               </Typography>
               {description ? (
-                <Typography variant="caption" color="text.secondary">
+                <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700 }}>
                   {description}
                 </Typography>
               ) : null}
@@ -342,12 +406,12 @@ function AdminProductionTable({
   records: ProductionRecord[];
 }) {
   return (
-    <TableContainer component={Paper} sx={{ borderRadius: 3, maxHeight: 420, border: '1px solid rgba(148,163,184,0.16)' }}>
+    <TableContainer component={Paper} sx={{ borderRadius: 4, maxHeight: 420, border: '1px solid rgba(148,163,184,0.16)', background: 'rgba(255,255,255,0.8)' }}>
       <Table size="small" stickyHeader>
         <TableHead>
           <TableRow>
             {['Date', 'Operator', 'Offload shift', 'Pasteurization shift', 'Offloaded', 'Pasteurized', 'Loss', 'Loss %', 'Remarks'].map((header) => (
-              <TableCell key={header} sx={{ fontWeight: 800, bgcolor: '#f8fafc', py: 1.2 }}>{header}</TableCell>
+              <TableCell key={header} sx={{ fontWeight: 800, bgcolor: '#f8fbff', py: 1.3, color: '#475569', letterSpacing: '0.04em', textTransform: 'uppercase', fontSize: '0.72rem' }}>{header}</TableCell>
             ))}
           </TableRow>
         </TableHead>
@@ -355,9 +419,9 @@ function AdminProductionTable({
           {records.map((record, index) => {
             const loss = getMilkLoss(record);
             const lossPercent = getLossPercentage(record);
-            const tone = lossPercent > 2.6 ? 'rgba(254,226,226,0.55)' : lossPercent < 1.8 ? 'rgba(220,252,231,0.45)' : index % 2 === 0 ? 'rgba(248,250,252,0.8)' : 'white';
+            const tone = lossPercent > 2.6 ? 'rgba(254,226,226,0.62)' : lossPercent < 1.8 ? 'rgba(204,251,241,0.42)' : index % 2 === 0 ? 'rgba(248,250,252,0.86)' : 'rgba(255,255,255,0.96)';
             return (
-              <TableRow key={record.id} hover sx={{ bgcolor: tone, '& td': { py: 0.9 } }}>
+              <TableRow key={record.id} hover sx={{ bgcolor: tone, transition: 'background-color 160ms ease', '& td': { py: 1 } }}>
                 <TableCell>{record.date}</TableCell>
                 <TableCell>{record.offloadingOperator}</TableCell>
                 <TableCell>{record.offloadingShift}</TableCell>
@@ -684,16 +748,16 @@ function OperatorMonthlyEntryTable({
 
   return (
     <SectionCard
-      title="Operator Monthly Entry"
-      description={`Daily production and CIP logging workspace for ${operatorName}. Changes stay local while typing and commit on Enter, blur, or Save all.`}
-      action={<Button startIcon={<SaveRounded />} onClick={commitAll}>Save all</Button>}
+      title="Daily operator log"
+      description={`Daily production and CIP entry for ${operatorName}. Changes stay local while typing and commit on Enter, blur, or Save all.`}
+      action={<Button startIcon={<SaveRounded />} onClick={commitAll}>Save all entries</Button>}
     >
-      <TableContainer component={Paper} sx={{ borderRadius: 3, maxHeight: 560, border: '1px solid rgba(148,163,184,0.16)' }}>
+      <TableContainer component={Paper} sx={{ borderRadius: 4, maxHeight: 560, border: '1px solid rgba(148,163,184,0.16)', background: 'rgba(255,255,255,0.84)' }}>
         <Table size="small" stickyHeader>
           <TableHead>
             <TableRow>
               {['Date', 'Status', 'Offloading shift', 'Pasteurization shift', 'Milk offloaded', 'Milk pasteurized', 'Milk loss', 'Loss %', 'CIP done?', 'CIP type', 'Caustic', 'Nitric'].map((header) => (
-                <TableCell key={header} sx={{ fontWeight: 800, bgcolor: '#f8fafc', py: 1.1, whiteSpace: 'nowrap' }}>{header}</TableCell>
+                <TableCell key={header} sx={{ fontWeight: 800, bgcolor: '#f8fbff', py: 1.15, whiteSpace: 'nowrap', color: '#475569', letterSpacing: '0.04em', textTransform: 'uppercase', fontSize: '0.72rem' }}>{header}</TableCell>
               ))}
             </TableRow>
           </TableHead>
@@ -739,34 +803,46 @@ function AdminIntakePage({
   return (
     <Stack spacing={2.2}>
       <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)', xl: 'repeat(6, 1fr)' }, gap: 1.6 }}>
-        <CompactMetricCard title="Milk Offloaded" value={`${summary.totalOffloaded.toLocaleString()} L`} helper="Monthly intake" icon={<OpacityRounded />} tone="neutral" trend="↑ active" />
-        <CompactMetricCard title="Milk Pasteurized" value={`${summary.totalPasteurized.toLocaleString()} L`} helper="Monthly output" icon={<LocalDrinkRounded />} tone="good" trend="↑ stable" />
-        <CompactMetricCard title="Milk Loss" value={`${summary.totalLoss.toLocaleString()} L`} helper="Derived variance" icon={<WarningAmberRounded />} tone={summary.lossPercentage > 2.6 ? 'bad' : 'warning'} trend={summary.lossPercentage > 2.6 ? '↑ risk' : '↓ contained'} />
-        <CompactMetricCard title="Loss %" value={`${summary.lossPercentage.toFixed(2)}%`} helper="Process efficiency" icon={<InsightsRounded />} tone={summary.lossPercentage > 2.6 ? 'bad' : summary.lossPercentage > 2 ? 'warning' : 'good'} trend={summary.lossPercentage > 2.6 ? '↑ high' : '↓ good'} />
-        <CompactMetricCard title="Caustic Used" value={`${summary.totalCaustic}`} helper="Jerrycans" icon={<ScienceRounded />} tone="warning" trend="→ monitored" />
-        <CompactMetricCard title="Nitric Used" value={`${summary.totalNitric}`} helper="Jerrycans" icon={<ScienceRounded />} tone="neutral" trend="→ monitored" />
+        <CompactMetricCard title="Milk offloaded" value={`${summary.totalOffloaded.toLocaleString()} L`} helper="Monthly intake volume" icon={<OpacityRounded />} tone="neutral" trend="Flow stable" />
+        <CompactMetricCard title="Milk pasteurized" value={`${summary.totalPasteurized.toLocaleString()} L`} helper="Finished output" icon={<LocalDrinkRounded />} tone="good" trend="Output healthy" />
+        <CompactMetricCard title="Milk loss" value={`${summary.totalLoss.toLocaleString()} L`} helper="Variance to review" icon={<WarningAmberRounded />} tone={summary.lossPercentage > 2.6 ? 'bad' : 'warning'} trend={summary.lossPercentage > 2.6 ? 'Action needed' : 'Contained'} />
+        <CompactMetricCard title="Loss rate" value={`${summary.lossPercentage.toFixed(2)}%`} helper="Process efficiency" icon={<InsightsRounded />} tone={summary.lossPercentage > 2.6 ? 'bad' : summary.lossPercentage > 2 ? 'warning' : 'good'} trend={summary.lossPercentage > 2.6 ? 'High loss' : 'Within range'} />
+        <CompactMetricCard title="Caustic usage" value={`${summary.totalCaustic}`} helper="Jerrycans logged" icon={<ScienceRounded />} tone="warning" trend="Chemical watch" />
+        <CompactMetricCard title="Nitric usage" value={`${summary.totalNitric}`} helper="Jerrycans logged" icon={<ScienceRounded />} tone="neutral" trend="Chemical watch" />
       </Box>
 
       <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', xl: '1.45fr 0.85fr' }, gap: 1.8 }}>
         <Stack spacing={1.8}>
-          <SectionCard title="Daily Offloaded vs Pasteurized" description="Compact throughput view for the selected month and filter set.">
-            <Box sx={{ height: 250 }}>
+          <SectionCard title="Throughput trend" description="Daily offloaded and pasteurized volume for the active review window.">
+            <Box sx={{ height: 270 }}>
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                  <XAxis dataKey="date" tick={{ fontSize: 11 }} />
-                  <YAxis tick={{ fontSize: 11 }} />
-                  <Tooltip />
+                  <defs>
+                    <linearGradient id="offloadedGlow" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#2f6df6" stopOpacity={0.2} />
+                      <stop offset="95%" stopColor="#2f6df6" stopOpacity={0.02} />
+                    </linearGradient>
+                    <linearGradient id="pasteurizedGlow" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#14b8a6" stopOpacity={0.18} />
+                      <stop offset="95%" stopColor="#14b8a6" stopOpacity={0.02} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid {...chartGridProps} />
+                  <XAxis dataKey="date" {...chartAxisProps} />
+                  <YAxis {...chartAxisProps} />
+                  <Tooltip content={<ChartTooltipCard />} />
                   <Legend wrapperStyle={{ fontSize: 12 }} />
-                  <Line type="monotone" dataKey="offloaded" stroke="#2563eb" strokeWidth={2.5} dot={{ r: 3 }} />
-                  <Line type="monotone" dataKey="pasteurized" stroke="#14b8a6" strokeWidth={2.5} dot={{ r: 3 }} />
+                  <Area type="monotone" dataKey="offloaded" fill="url(#offloadedGlow)" stroke="none" />
+                  <Area type="monotone" dataKey="pasteurized" fill="url(#pasteurizedGlow)" stroke="none" />
+                  <Line type="monotone" dataKey="offloaded" stroke="#2f6df6" strokeWidth={3} dot={false} activeDot={{ r: 5, strokeWidth: 0, fill: '#2f6df6' }} />
+                  <Line type="monotone" dataKey="pasteurized" stroke="#14b8a6" strokeWidth={3} dot={false} activeDot={{ r: 5, strokeWidth: 0, fill: '#14b8a6' }} />
                 </LineChart>
               </ResponsiveContainer>
             </Box>
           </SectionCard>
 
-          <SectionCard title="Daily Milk Loss Trend" description="Area chart for fast anomaly detection.">
-            <Box sx={{ height: 220 }}>
+          <SectionCard title="Loss surveillance" description="Trendline for milk loss and fast anomaly recognition.">
+            <Box sx={{ height: 240 }}>
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={chartData}>
                   <defs>
@@ -775,27 +851,27 @@ function AdminIntakePage({
                       <stop offset="95%" stopColor="#dc2626" stopOpacity={0.03} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                  <XAxis dataKey="date" tick={{ fontSize: 11 }} />
-                  <YAxis tick={{ fontSize: 11 }} />
-                  <Tooltip />
-                  <Area type="monotone" dataKey="loss" stroke="#dc2626" fill="url(#lossFillAdmin)" strokeWidth={2.5} />
+                  <CartesianGrid {...chartGridProps} />
+                  <XAxis dataKey="date" {...chartAxisProps} />
+                  <YAxis {...chartAxisProps} />
+                  <Tooltip content={<ChartTooltipCard />} />
+                  <Area type="monotone" dataKey="loss" stroke="#dc2626" fill="url(#lossFillAdmin)" strokeWidth={3} activeDot={{ r: 4, fill: '#dc2626', strokeWidth: 0 }} />
                 </AreaChart>
               </ResponsiveContainer>
             </Box>
           </SectionCard>
 
-          <SectionCard title="Chemical Usage by Operator" description="Caustic and nitric usage by operator for the selected month.">
-            <Box sx={{ height: 220 }}>
+          <SectionCard title="Chemical intensity" description="Caustic and nitric consumption by operator for the selected month.">
+            <Box sx={{ height: 240 }}>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chemicalByOperator}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                  <XAxis dataKey="operator" tick={{ fontSize: 11 }} />
-                  <YAxis tick={{ fontSize: 11 }} />
-                  <Tooltip />
+                  <CartesianGrid {...chartGridProps} />
+                  <XAxis dataKey="operator" {...chartAxisProps} />
+                  <YAxis {...chartAxisProps} />
+                  <Tooltip content={<ChartTooltipCard />} />
                   <Legend wrapperStyle={{ fontSize: 12 }} />
-                  <Bar dataKey="caustic" fill="#475569" radius={[6, 6, 0, 0]} />
-                  <Bar dataKey="nitric" fill="#f59e0b" radius={[6, 6, 0, 0]} />
+                  <Bar dataKey="caustic" fill="#2f6df6" radius={[8, 8, 0, 0]} />
+                  <Bar dataKey="nitric" fill="#14b8a6" radius={[8, 8, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </Box>
@@ -803,13 +879,25 @@ function AdminIntakePage({
         </Stack>
 
         <Stack spacing={1.8}>
-          <SectionCard title="Operator Ranking" description="Best-to-worst operator comparison for the filtered month.">
+          <SectionCard title="Operator performance ranking" description="Best-to-worst comparison across loss, chemistry discipline, and completeness.">
             <Stack spacing={1.2}>
               {ranking.map((entry) => (
-                <Paper key={entry.operator} sx={{ p: 1.5, borderRadius: 3, border: '1px solid rgba(148,163,184,0.12)' }}>
+                <Paper
+                  key={entry.operator}
+                  sx={{
+                    p: 1.6,
+                    borderRadius: 4,
+                    border: '1px solid rgba(148,163,184,0.12)',
+                    background: entry.rank === 1
+                      ? 'linear-gradient(135deg, rgba(20,184,166,0.14), rgba(255,255,255,0.96))'
+                      : entry.rank === ranking.length
+                        ? 'linear-gradient(135deg, rgba(248,113,113,0.14), rgba(255,255,255,0.96))'
+                        : 'linear-gradient(180deg, rgba(255,255,255,0.96), rgba(248,250,252,0.9))',
+                  }}
+                >
                   <Stack spacing={0.9}>
                     <Stack direction="row" justifyContent="space-between">
-                      <Typography variant="body2" fontWeight={800}>#{entry.rank} {entry.operator}</Typography>
+                      <Typography variant="body2" fontWeight={900}>#{entry.rank} {entry.operator}</Typography>
                       <Chip size="small" color={entry.rank === 1 ? 'success' : entry.rank === ranking.length ? 'error' : 'primary'} label={`${entry.score.toFixed(1)} pts`} />
                     </Stack>
                     <Stack direction="row" spacing={0.8} flexWrap="wrap" useFlexGap>
@@ -817,26 +905,26 @@ function AdminIntakePage({
                       <Chip size="small" label={`Chem ${entry.chemicalIntensity.toFixed(2)}`} color="warning" />
                       <Chip size="small" label={`Data ${entry.completeness.toFixed(0)}%`} color="primary" />
                     </Stack>
-                    <LinearProgress variant="determinate" value={entry.completeness} sx={{ height: 7, borderRadius: 10 }} />
+                    <LinearProgress variant="determinate" value={entry.completeness} sx={{ height: 9, borderRadius: 999, '& .MuiLinearProgress-bar': { borderRadius: 999, background: entry.rank === 1 ? 'linear-gradient(90deg, #14b8a6, #2dd4bf)' : entry.rank === ranking.length ? 'linear-gradient(90deg, #ef4444, #f87171)' : 'linear-gradient(90deg, #2f6df6, #60a5fa)' } }} />
                   </Stack>
                 </Paper>
               ))}
             </Stack>
           </SectionCard>
 
-          <SectionCard title="Insights" description="Warnings and operational review notes.">
+          <SectionCard title="Operational signals" description="Priority observations for review with the active filters.">
             <Stack spacing={1.2}>
-              <Paper sx={{ p: 1.5, borderRadius: 3 }}><Typography variant="caption" color="warning.main" fontWeight={800}>High milk loss days</Typography><Typography variant="body2">{insights.highMilkLoss}</Typography></Paper>
-              <Paper sx={{ p: 1.5, borderRadius: 3 }}><Typography variant="caption" color="error.main" fontWeight={800}>Abnormal operators</Typography><Typography variant="body2">{abnormalOperators.length ? abnormalOperators.join(', ') : 'No abnormal operators in current filters.'}</Typography></Paper>
-              <Paper sx={{ p: 1.5, borderRadius: 3 }}><Typography variant="caption" color="text.secondary" fontWeight={800}>Missing entries</Typography><Typography variant="body2">{insights.missingEntries}</Typography></Paper>
-              <Paper sx={{ p: 1.5, borderRadius: 3 }}><Typography variant="caption" color="success.main" fontWeight={800}>Best operator</Typography><Typography variant="body2">{insights.bestOperator}</Typography></Paper>
-              <Paper sx={{ p: 1.5, borderRadius: 3 }}><Typography variant="caption" color="error.main" fontWeight={800}>Worst operator</Typography><Typography variant="body2">{insights.worstOperator}</Typography></Paper>
+              <Paper sx={{ p: 1.6, borderRadius: 4, background: 'linear-gradient(135deg, rgba(251,191,36,0.12), rgba(255,255,255,0.95))' }}><Typography variant="caption" color="warning.main" fontWeight={800}>High-loss days</Typography><Typography variant="body2">{insights.highMilkLoss}</Typography></Paper>
+              <Paper sx={{ p: 1.6, borderRadius: 4, background: 'linear-gradient(135deg, rgba(248,113,113,0.12), rgba(255,255,255,0.95))' }}><Typography variant="caption" color="error.main" fontWeight={800}>Operators to review</Typography><Typography variant="body2">{abnormalOperators.length ? abnormalOperators.join(', ') : 'No abnormal operators in the current review scope.'}</Typography></Paper>
+              <Paper sx={{ p: 1.6, borderRadius: 4, background: 'linear-gradient(135deg, rgba(148,163,184,0.12), rgba(255,255,255,0.95))' }}><Typography variant="caption" color="text.secondary" fontWeight={800}>Missing entries</Typography><Typography variant="body2">{insights.missingEntries}</Typography></Paper>
+              <Paper sx={{ p: 1.6, borderRadius: 4, background: 'linear-gradient(135deg, rgba(20,184,166,0.12), rgba(255,255,255,0.95))' }}><Typography variant="caption" color="success.main" fontWeight={800}>Best operator</Typography><Typography variant="body2">{insights.bestOperator}</Typography></Paper>
+              <Paper sx={{ p: 1.6, borderRadius: 4, background: 'linear-gradient(135deg, rgba(239,68,68,0.12), rgba(255,255,255,0.95))' }}><Typography variant="caption" color="error.main" fontWeight={800}>Lowest score</Typography><Typography variant="body2">{insights.worstOperator}</Typography></Paper>
             </Stack>
           </SectionCard>
         </Stack>
       </Box>
 
-      <SectionCard title="Admin Review Table" description="Compact review of monthly production records. Filter by month, operator, and shift above to focus the review set.">
+      <SectionCard title="Production review ledger" description="Detailed monthly production records filtered by month, operator, and shift.">
         <AdminProductionTable records={productionRecords} />
       </SectionCard>
     </Stack>
@@ -846,32 +934,33 @@ function AdminIntakePage({
 function DashboardOverview({ summary, chartData, ranking }: { summary: ReturnType<typeof buildMonthlySummary>; chartData: ReturnType<typeof buildChartData>; ranking: ReturnType<typeof buildOperatorRanking>; }) {
   return (
     <Stack spacing={1.8}>
-      <Box sx={{ p: 2.2, borderRadius: 4, background: 'linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%)', color: 'white' }}>
-        <Typography variant="overline" sx={{ letterSpacing: '0.14em', opacity: 0.84 }}>Industrial operations system</Typography>
-        <Typography variant="h6" sx={{ mt: 0.5 }}>Executive production overview</Typography>
-        <Typography variant="body2" sx={{ mt: 0.8, opacity: 0.82 }}>Compact view of the current month’s dairy intake, pasteurization, and operator performance.</Typography>
+      <Box sx={{ p: 2.6, borderRadius: 5, background: 'linear-gradient(135deg, #081121 0%, #17367a 54%, #0f766e 100%)', color: 'white', position: 'relative', overflow: 'hidden' }}>
+        <Box sx={{ position: 'absolute', inset: 0, background: 'radial-gradient(circle at 18% 20%, rgba(96,165,250,0.22), transparent 24%)' }} />
+        <Typography variant="overline" sx={{ letterSpacing: '0.16em', opacity: 0.84, position: 'relative' }}>JESA industrial operations</Typography>
+        <Typography variant="h5" sx={{ mt: 0.8, position: 'relative' }}>Executive control center</Typography>
+        <Typography variant="body2" sx={{ mt: 0.9, opacity: 0.84, maxWidth: 560, position: 'relative' }}>A premium operational snapshot of intake throughput, loss discipline, and operator performance for the active month.</Typography>
       </Box>
       <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '1.4fr 1fr' }, gap: 1.8 }}>
-        <SectionCard title="Milk Movement" description="Daily offloaded vs pasteurized throughput.">
+        <SectionCard title="Milk movement" description="Throughput profile across daily offloaded and pasteurized volume.">
           <Box sx={{ height: 240 }}>
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="date" tick={{ fontSize: 11 }} />
-                <YAxis tick={{ fontSize: 11 }} />
-                <Tooltip />
+                <CartesianGrid {...chartGridProps} />
+                <XAxis dataKey="date" {...chartAxisProps} />
+                <YAxis {...chartAxisProps} />
+                <Tooltip content={<ChartTooltipCard />} />
                 <Legend wrapperStyle={{ fontSize: 12 }} />
-                <Line type="monotone" dataKey="offloaded" stroke="#2563eb" strokeWidth={2.5} dot={false} />
-                <Line type="monotone" dataKey="pasteurized" stroke="#16a34a" strokeWidth={2.5} dot={false} />
+                <Line type="monotone" dataKey="offloaded" stroke="#2f6df6" strokeWidth={3} dot={false} activeDot={{ r: 5, fill: '#2f6df6', strokeWidth: 0 }} />
+                <Line type="monotone" dataKey="pasteurized" stroke="#14b8a6" strokeWidth={3} dot={false} activeDot={{ r: 5, fill: '#14b8a6', strokeWidth: 0 }} />
               </LineChart>
             </ResponsiveContainer>
           </Box>
         </SectionCard>
         <SectionCard title="Quick status" description="Top-level control signals for the current month.">
           <Stack spacing={1.2}>
-            <CompactMetricCard title="Total offloaded" value={`${summary.totalOffloaded.toLocaleString()} L`} helper="Monthly" icon={<OpacityRounded />} tone="neutral" trend="active" />
-            <CompactMetricCard title="Loss %" value={`${summary.lossPercentage.toFixed(2)}%`} helper="Monthly" icon={<WarningAmberRounded />} tone={summary.lossPercentage > 2.6 ? 'bad' : 'good'} trend={summary.lossPercentage > 2.6 ? 'risk' : 'stable'} />
-            <Paper sx={{ p: 1.5, borderRadius: 3 }}><Typography variant="caption" fontWeight={800}>Top operator</Typography><Typography variant="body2">{ranking[0]?.operator ?? 'N/A'}</Typography></Paper>
+            <CompactMetricCard title="Total offloaded" value={`${summary.totalOffloaded.toLocaleString()} L`} helper="Month-to-date" icon={<OpacityRounded />} tone="neutral" trend="Running" />
+            <CompactMetricCard title="Loss rate" value={`${summary.lossPercentage.toFixed(2)}%`} helper="Month-to-date" icon={<WarningAmberRounded />} tone={summary.lossPercentage > 2.6 ? 'bad' : 'good'} trend={summary.lossPercentage > 2.6 ? 'Escalated' : 'Controlled'} />
+            <Paper sx={{ p: 1.7, borderRadius: 4, background: 'linear-gradient(135deg, rgba(47,109,246,0.08), rgba(255,255,255,0.96))' }}><Typography variant="caption" fontWeight={800}>Top operator</Typography><Typography variant="body2" sx={{ mt: 0.4 }}>{ranking[0]?.operator ?? 'N/A'}</Typography></Paper>
           </Stack>
         </SectionCard>
       </Box>
@@ -914,23 +1003,23 @@ export function Dashboard({ user, onLogout }: { user: AppUser; onLogout: () => v
   }, []);
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: '#f3f6fb' }}>
+    <Box sx={{ minHeight: '100vh', bgcolor: '#edf3fb' }}>
       <Box sx={{ display: 'flex', minHeight: '100vh' }}>
-        <Box sx={{ width: { xs: 88, md: drawerWidth }, flexShrink: 0, bgcolor: '#0f172a', color: 'white', p: { xs: 1.4, md: 1.8 }, display: 'flex', flexDirection: 'column', borderRight: '1px solid rgba(255,255,255,0.08)', position: 'sticky', top: 0, height: '100vh' }}>
+        <Box sx={{ width: { xs: 88, md: drawerWidth }, flexShrink: 0, background: 'linear-gradient(180deg, #081121 0%, #0f172a 38%, #111c34 100%)', color: 'white', p: { xs: 1.4, md: 1.8 }, display: 'flex', flexDirection: 'column', borderRight: '1px solid rgba(255,255,255,0.08)', position: 'sticky', top: 0, height: '100vh', boxShadow: 'inset -1px 0 0 rgba(255,255,255,0.04)' }}>
           <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.2} alignItems="center" sx={{ mb: 2.2 }}>
-            <Avatar sx={{ bgcolor: 'primary.main', width: 42, height: 42 }}><FactoryRounded /></Avatar>
+            <Avatar sx={{ bgcolor: 'primary.main', width: 46, height: 46, boxShadow: '0 10px 22px rgba(47,109,246,0.38)' }}><FactoryRounded /></Avatar>
             <Box sx={{ display: { xs: 'none', md: 'block' } }}>
               <Typography variant="body2" fontWeight={900}>JESA Operations</Typography>
-              <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.62)' }}>Production tracking</Typography>
+              <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.62)' }}>Industrial analytics platform</Typography>
             </Box>
           </Stack>
 
-          <Paper sx={{ p: 1.6, mb: 2, borderRadius: 3, color: 'white', background: 'linear-gradient(145deg, rgba(37,99,235,0.22), rgba(51,65,85,0.4))', border: '1px solid rgba(255,255,255,0.08)' }}>
+          <Paper sx={{ p: 1.7, mb: 2.2, borderRadius: 4, color: 'white', background: 'linear-gradient(145deg, rgba(47,109,246,0.26), rgba(15,118,110,0.18), rgba(51,65,85,0.42))', border: '1px solid rgba(255,255,255,0.08)' }}>
             <Stack spacing={0.8} alignItems={{ xs: 'center', md: 'flex-start' }}>
               <Avatar sx={{ width: 34, height: 34, bgcolor: 'rgba(255,255,255,0.14)' }}><GroupsRounded fontSize="small" /></Avatar>
               <Box sx={{ display: { xs: 'none', md: 'block' } }}>
                 <Typography variant="body2" fontWeight={800}>{user.name}</Typography>
-                <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.66)' }}>{user.role === 'admin' ? 'Admin / Supervisor' : 'Operator workspace'}</Typography>
+                <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.66)' }}>{user.role === 'admin' ? 'Admin / Supervisor' : 'Operator command view'}</Typography>
               </Box>
             </Stack>
           </Paper>
@@ -943,7 +1032,7 @@ export function Dashboard({ user, onLogout }: { user: AppUser; onLogout: () => v
                   key={section.key}
                   onClick={() => setActiveSection(section.key)}
                   startIcon={section.icon}
-                  sx={{ justifyContent: { xs: 'center', md: 'flex-start' }, px: { xs: 0.7, md: 1.3 }, py: 1, color: 'white', bgcolor: active ? 'rgba(255,255,255,0.12)' : 'transparent', border: active ? '1px solid rgba(255,255,255,0.12)' : '1px solid transparent', '&:hover': { bgcolor: 'rgba(255,255,255,0.08)' }, '& .MuiButton-startIcon': { mr: { xs: 0, md: 0.8 } } }}
+                  sx={{ justifyContent: { xs: 'center', md: 'flex-start' }, px: { xs: 0.7, md: 1.35 }, py: 1.25, color: 'white', bgcolor: active ? 'rgba(255,255,255,0.12)' : 'transparent', border: active ? '1px solid rgba(255,255,255,0.12)' : '1px solid transparent', boxShadow: active ? 'inset 0 1px 0 rgba(255,255,255,0.05)' : 'none', '&:hover': { bgcolor: 'rgba(255,255,255,0.08)' }, '& .MuiButton-startIcon': { mr: { xs: 0, md: 0.8 }, color: active ? '#7dd3fc' : 'rgba(255,255,255,0.72)' } }}
                 >
                   <Box sx={{ display: { xs: 'none', md: 'block' }, textAlign: 'left' }}>
                     <Typography variant="caption" fontWeight={800}>{section.label}</Typography>
@@ -954,11 +1043,11 @@ export function Dashboard({ user, onLogout }: { user: AppUser; onLogout: () => v
             })}
           </Stack>
 
-          <Button color="inherit" onClick={onLogout} sx={{ mt: 1.5, bgcolor: 'rgba(255,255,255,0.08)' }}>Logout</Button>
+          <Button color="inherit" onClick={onLogout} sx={{ mt: 1.5, bgcolor: 'rgba(255,255,255,0.08)' }}>Sign out</Button>
         </Box>
 
         <Box sx={{ flex: 1, minWidth: 0 }}>
-          <Box sx={{ position: 'sticky', top: 0, zIndex: 5, px: { xs: 1.8, md: 2.4 }, py: 1.6, borderBottom: '1px solid rgba(148,163,184,0.14)', backdropFilter: 'blur(18px)', bgcolor: 'rgba(243,246,251,0.92)' }}>
+          <Box sx={{ position: 'sticky', top: 0, zIndex: 5, px: { xs: 1.8, md: 2.4 }, py: 1.6, borderBottom: '1px solid rgba(148,163,184,0.14)', backdropFilter: 'blur(18px)', bgcolor: 'rgba(237,243,251,0.9)' }}>
             <Stack spacing={1.4}>
               <Stack direction={{ xs: 'column', lg: 'row' }} justifyContent="space-between" spacing={1.5}>
                 <Stack direction="row" spacing={1.2} alignItems="center">
@@ -970,14 +1059,14 @@ export function Dashboard({ user, onLogout }: { user: AppUser; onLogout: () => v
                   </Box>
                 </Stack>
                 <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.2}>
-                  <Chip icon={<WaterDropRounded />} size="small" color={summary.lossPercentage > 2.6 ? 'error' : 'warning'} label={`${summary.totalLoss.toLocaleString()} L loss`} />
-                  <Chip icon={<NotificationsActiveRounded />} size="small" color={user.role === 'operator' ? 'primary' : 'success'} label={user.role === 'operator' ? 'Commit on Enter / blur / Save all' : 'Filtered admin view'} />
+                  <Chip icon={<WaterDropRounded />} size="small" color={summary.lossPercentage > 2.6 ? 'error' : 'warning'} label={`${summary.totalLoss.toLocaleString()} L loss`} sx={{ bgcolor: summary.lossPercentage > 2.6 ? 'rgba(220,38,38,0.12)' : 'rgba(245,158,11,0.12)' }} />
+                  <Chip icon={<NotificationsActiveRounded />} size="small" color={user.role === 'operator' ? 'primary' : 'success'} label={user.role === 'operator' ? 'Commit on Enter / blur / Save all' : 'Filtered executive view'} sx={{ bgcolor: user.role === 'operator' ? 'rgba(47,109,246,0.1)' : 'rgba(20,184,166,0.12)' }} />
                 </Stack>
               </Stack>
 
-              <Paper sx={{ p: 1.4, borderRadius: 3, border: '1px solid rgba(148,163,184,0.16)' }}>
+              <Paper sx={{ p: 1.5, borderRadius: 4, border: '1px solid rgba(148,163,184,0.16)', background: 'linear-gradient(180deg, rgba(255,255,255,0.94), rgba(255,255,255,0.86))' }}>
                 <Stack direction={{ xs: 'column', xl: 'row' }} spacing={1.2} alignItems={{ xs: 'stretch', xl: 'center' }}>
-                  <Chip icon={<FilterAltRounded />} size="small" label={user.role === 'admin' ? 'Admin filters' : 'Month selector'} color="primary" sx={{ alignSelf: { xs: 'flex-start', xl: 'center' } }} />
+                  <Chip icon={<FilterAltRounded />} size="small" label={user.role === 'admin' ? 'Executive filters' : 'Month selector'} color="primary" sx={{ alignSelf: { xs: 'flex-start', xl: 'center' }, bgcolor: 'rgba(47,109,246,0.1)' }} />
                   <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.2} sx={{ flex: 1 }}>
                     <FormControl fullWidth size="small">
                       <InputLabel>Month</InputLabel>
@@ -1023,7 +1112,7 @@ export function Dashboard({ user, onLogout }: { user: AppUser; onLogout: () => v
             {user.role === 'admin' && activeSection === 'dashboard' ? <DashboardOverview summary={summary} chartData={chartData} ranking={ranking} /> : null}
             {user.role === 'admin' && activeSection === 'intake' ? <AdminIntakePage summary={summary} chartData={chartData} chemicalByOperator={chemicalByOperator} ranking={ranking} insights={insights} productionRecords={productionRecords} /> : null}
             {user.role === 'admin' && activeSection === 'cip' ? (
-              <SectionCard title="GEA CIP Usage" description="Compact sanitation record view for the selected month.">
+              <SectionCard title="Sanitation chemistry ledger" description="CIP chemistry records for the selected month.">
                 <TableContainer component={Paper} sx={{ borderRadius: 3, border: '1px solid rgba(148,163,184,0.16)' }}>
                   <Table size="small">
                     <TableHead>
@@ -1048,7 +1137,7 @@ export function Dashboard({ user, onLogout }: { user: AppUser; onLogout: () => v
               </SectionCard>
             ) : null}
             {user.role === 'admin' && activeSection === 'operators' ? (
-              <SectionCard title="Operator Performance" description="Compact comparison of operator efficiency, completeness, and consistency.">
+              <SectionCard title="Operator performance ranking" description="Efficiency, completeness, and consistency by operator.">
                 <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', xl: '1fr 1fr' }, gap: 1.5 }}>
                   {ranking.map((entry) => (
                     <Paper key={entry.operator} sx={{ p: 1.6, borderRadius: 3 }}>
