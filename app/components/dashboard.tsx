@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { memo, useCallback, useMemo, useRef, useState } from 'react';
 import dayjs from 'dayjs';
 import {
   Avatar,
@@ -45,7 +45,6 @@ import NotificationsActiveRounded from '@mui/icons-material/NotificationsActiveR
 import WaterDropRounded from '@mui/icons-material/WaterDropRounded';
 import FilterAltRounded from '@mui/icons-material/FilterAltRounded';
 import SaveRounded from '@mui/icons-material/SaveRounded';
-import CalendarMonthRounded from '@mui/icons-material/CalendarMonthRounded';
 import AssignmentTurnedInRounded from '@mui/icons-material/AssignmentTurnedInRounded';
 import PendingRounded from '@mui/icons-material/PendingRounded';
 import {
@@ -177,6 +176,61 @@ function getEntryStatus(entry: OperatorDailyEntry, pendingIds: Set<string>, touc
   return 'saved';
 }
 
+type OperatorEntryDraft = {
+  offloadingShift: Shift;
+  pasteurizationShift: Shift;
+  milkOffloaded: string;
+  milkPasteurized: string;
+  cipDone: boolean;
+  cipType: CipType;
+  causticJerrycansUsed: string;
+  nitricJerrycansUsed: string;
+  notes: string;
+};
+
+type OperatorEditableField =
+  | 'offloadingShift'
+  | 'pasteurizationShift'
+  | 'milkOffloaded'
+  | 'milkPasteurized'
+  | 'cipDone'
+  | 'cipType'
+  | 'causticJerrycansUsed'
+  | 'nitricJerrycansUsed'
+  | 'notes';
+
+const editableFieldOrder: OperatorEditableField[] = [
+  'offloadingShift',
+  'pasteurizationShift',
+  'milkOffloaded',
+  'milkPasteurized',
+  'cipDone',
+  'cipType',
+  'causticJerrycansUsed',
+  'nitricJerrycansUsed',
+  'notes',
+];
+
+function createDraftFromEntry(entry: OperatorDailyEntry): OperatorEntryDraft {
+  return {
+    offloadingShift: entry.offloadingShift,
+    pasteurizationShift: entry.pasteurizationShift,
+    milkOffloaded: String(entry.milkOffloaded),
+    milkPasteurized: String(entry.milkPasteurized),
+    cipDone: entry.cipDone,
+    cipType: entry.cipType,
+    causticJerrycansUsed: String(entry.causticJerrycansUsed),
+    nitricJerrycansUsed: String(entry.nitricJerrycansUsed),
+    notes: entry.notes,
+  };
+}
+
+function parseNumberInput(value: string) {
+  if (value.trim() === '' || value === '-' || value === '.') return 0;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
 function CompactMetricCard({
   title,
   value,
@@ -302,32 +356,340 @@ function AdminProductionTable({
   );
 }
 
+const OperatorEntryRow = memo(function OperatorEntryRow({
+  row,
+  draft,
+  status,
+  rowIndex,
+  rowOrder,
+  onDraftChange,
+  onCommitRow,
+  onNavigate,
+  registerCell,
+}: {
+  row: OperatorDailyEntry;
+  draft: OperatorEntryDraft | undefined;
+  status: EntryStatus;
+  rowIndex: number;
+  rowOrder: string[];
+  onDraftChange: <K extends keyof OperatorEntryDraft>(id: string, field: K, value: OperatorEntryDraft[K]) => void;
+  onCommitRow: (id: string) => void;
+  onNavigate: (rowId: string, field: OperatorEditableField, direction: 'up' | 'down' | 'left' | 'right') => void;
+  registerCell: (rowId: string, field: OperatorEditableField, element: HTMLElement | null) => void;
+}) {
+  const activeDraft = draft ?? createDraftFromEntry(row);
+  const milkOffloaded = parseNumberInput(activeDraft.milkOffloaded);
+  const milkPasteurized = parseNumberInput(activeDraft.milkPasteurized);
+  const milkLoss = milkOffloaded - milkPasteurized;
+  const lossPercentage = milkOffloaded === 0 ? 0 : (milkLoss / milkOffloaded) * 100;
+  const hasGain = milkPasteurized > milkOffloaded && milkOffloaded > 0;
+  const isHighLoss = lossPercentage > 2.6;
+  const rowColor = hasGain
+    ? 'rgba(254,240,138,0.35)'
+    : isHighLoss
+      ? 'rgba(254,226,226,0.5)'
+      : rowIndex % 2 === 0
+        ? 'rgba(248,250,252,0.86)'
+        : 'white';
+  const statusChip =
+    status === 'saved'
+      ? <Chip size="small" color="success" icon={<AssignmentTurnedInRounded />} label="saved" />
+      : status === 'pending'
+        ? <Chip size="small" color="warning" icon={<PendingRounded />} label="pending" />
+        : <Chip size="small" color="default" label="missing" />;
+
+  const commit = useCallback(() => {
+    onCommitRow(row.id);
+  }, [onCommitRow, row.id]);
+
+  const commitOnEnter = useCallback(
+    (event: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        commit();
+        onNavigate(row.id, event.currentTarget.name as OperatorEditableField, 'down');
+      }
+    },
+    [commit, onNavigate, row.id],
+  );
+
+  const handleTextNavigation = useCallback(
+    (field: OperatorEditableField) =>
+      (event: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+        if (event.key === 'Enter') {
+          commitOnEnter(event);
+          return;
+        }
+        navigateOnArrow(field)(event);
+      },
+    [commitOnEnter, navigateOnArrow],
+  );
+
+  const navigateOnArrow = useCallback(
+    (field: OperatorEditableField) =>
+      (event: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+        if (event.key === 'ArrowUp') {
+          event.preventDefault();
+          onNavigate(row.id, field, 'up');
+        } else if (event.key === 'ArrowDown') {
+          event.preventDefault();
+          onNavigate(row.id, field, 'down');
+        } else if ((event.key === 'ArrowLeft' || event.key === 'ArrowRight') && rowOrder.length > 0) {
+          const input = event.currentTarget;
+          const start = input.selectionStart ?? 0;
+          const end = input.selectionEnd ?? 0;
+          const atStart = start === 0 && end === 0;
+          const atEnd = start === input.value.length && end === input.value.length;
+          if (event.key === 'ArrowLeft' && atStart) {
+            event.preventDefault();
+            onNavigate(row.id, field, 'left');
+          }
+          if (event.key === 'ArrowRight' && atEnd) {
+            event.preventDefault();
+            onNavigate(row.id, field, 'right');
+          }
+        }
+      },
+    [onNavigate, row.id, rowOrder.length],
+  );
+
+  return (
+    <TableRow hover sx={{ bgcolor: rowColor, '& td': { py: 0.7 } }}>
+      <TableCell>{row.date}</TableCell>
+      <TableCell>{statusChip}</TableCell>
+      <TableCell>
+        <TextField
+          select
+          size="small"
+          name="offloadingShift"
+          value={activeDraft.offloadingShift}
+          onChange={(event) => onDraftChange(row.id, 'offloadingShift', event.target.value as Shift)}
+          onBlur={commit}
+          onKeyDown={navigateOnArrow('offloadingShift')}
+          inputRef={(element) => registerCell(row.id, 'offloadingShift', element)}
+        >
+          {shifts.map((shift) => <MenuItem key={shift} value={shift}>{shift}</MenuItem>)}
+        </TextField>
+      </TableCell>
+      <TableCell>
+        <TextField
+          select
+          size="small"
+          name="pasteurizationShift"
+          value={activeDraft.pasteurizationShift}
+          onChange={(event) => onDraftChange(row.id, 'pasteurizationShift', event.target.value as Shift)}
+          onBlur={commit}
+          onKeyDown={navigateOnArrow('pasteurizationShift')}
+          inputRef={(element) => registerCell(row.id, 'pasteurizationShift', element)}
+        >
+          {shifts.map((shift) => <MenuItem key={shift} value={shift}>{shift}</MenuItem>)}
+        </TextField>
+      </TableCell>
+      <TableCell>
+        <TextField
+          type="text"
+          size="small"
+          name="milkOffloaded"
+          value={activeDraft.milkOffloaded}
+          onChange={(event) => onDraftChange(row.id, 'milkOffloaded', event.target.value)}
+          onBlur={commit}
+          onKeyDown={handleTextNavigation('milkOffloaded')}
+          inputRef={(element) => registerCell(row.id, 'milkOffloaded', element)}
+        />
+      </TableCell>
+      <TableCell>
+        <TextField
+          type="text"
+          size="small"
+          name="milkPasteurized"
+          value={activeDraft.milkPasteurized}
+          onChange={(event) => onDraftChange(row.id, 'milkPasteurized', event.target.value)}
+          onBlur={commit}
+          onKeyDown={handleTextNavigation('milkPasteurized')}
+          inputRef={(element) => registerCell(row.id, 'milkPasteurized', element)}
+        />
+      </TableCell>
+      <TableCell><Chip size="small" color={hasGain ? 'warning' : isHighLoss ? 'error' : 'success'} label={`${milkLoss.toLocaleString()} L`} /></TableCell>
+      <TableCell><Chip size="small" color={hasGain ? 'warning' : isHighLoss ? 'error' : 'success'} label={`${lossPercentage.toFixed(2)}%`} /></TableCell>
+      <TableCell>
+        <Select
+          size="small"
+          value={activeDraft.cipDone ? 'yes' : 'no'}
+          onChange={(event) => onDraftChange(row.id, 'cipDone', event.target.value === 'yes')}
+          onBlur={commit}
+          inputRef={(element) => registerCell(row.id, 'cipDone', element)}
+        >
+          <MenuItem value="yes">Yes</MenuItem>
+          <MenuItem value="no">No</MenuItem>
+        </Select>
+      </TableCell>
+      <TableCell>
+        <TextField
+          select
+          size="small"
+          name="cipType"
+          value={activeDraft.cipType}
+          onChange={(event) => onDraftChange(row.id, 'cipType', event.target.value as CipType)}
+          onBlur={commit}
+          onKeyDown={navigateOnArrow('cipType')}
+          inputRef={(element) => registerCell(row.id, 'cipType', element)}
+        >
+          {cipTypes.map((type) => <MenuItem key={type} value={type}>{type}</MenuItem>)}
+        </TextField>
+      </TableCell>
+      <TableCell>
+        <TextField
+          type="text"
+          size="small"
+          name="causticJerrycansUsed"
+          value={activeDraft.causticJerrycansUsed}
+          onChange={(event) => onDraftChange(row.id, 'causticJerrycansUsed', event.target.value)}
+          onBlur={commit}
+          onKeyDown={handleTextNavigation('causticJerrycansUsed')}
+          inputRef={(element) => registerCell(row.id, 'causticJerrycansUsed', element)}
+        />
+      </TableCell>
+      <TableCell>
+        <TextField
+          type="text"
+          size="small"
+          name="nitricJerrycansUsed"
+          value={activeDraft.nitricJerrycansUsed}
+          onChange={(event) => onDraftChange(row.id, 'nitricJerrycansUsed', event.target.value)}
+          onBlur={commit}
+          onKeyDown={handleTextNavigation('nitricJerrycansUsed')}
+          inputRef={(element) => registerCell(row.id, 'nitricJerrycansUsed', element)}
+        />
+      </TableCell>
+      <TableCell>
+        <TextField
+          name="notes"
+          size="small"
+          value={activeDraft.notes}
+          onChange={(event) => onDraftChange(row.id, 'notes', event.target.value)}
+          onBlur={commit}
+          onKeyDown={handleTextNavigation('notes')}
+          inputRef={(element) => registerCell(row.id, 'notes', element)}
+        />
+      </TableCell>
+    </TableRow>
+  );
+});
+
 function OperatorMonthlyEntryTable({
   rows,
-  setEntries,
+  onCommitRows,
   operatorName,
-  pendingIds,
-  touchedIds,
-  onSaveAll,
 }: {
   rows: OperatorDailyEntry[];
-  setEntries: React.Dispatch<React.SetStateAction<OperatorDailyEntry[]>>;
+  onCommitRows: (rows: OperatorDailyEntry[]) => void;
   operatorName: string;
-  pendingIds: Set<string>;
-  touchedIds: Set<string>;
-  onSaveAll: () => void;
 }) {
-  const updateEntry = <K extends keyof OperatorDailyEntry>(id: string, field: K, value: OperatorDailyEntry[K]) => {
-    setEntries((current) =>
-      current.map((entry) => (entry.id === id ? { ...entry, [field]: value } : entry)),
-    );
-  };
+  const [drafts, setDrafts] = useState<Record<string, OperatorEntryDraft>>({});
+  const [savedIds, setSavedIds] = useState<Set<string>>(new Set(rows.map((row) => row.id)));
+  const cellRefs = useRef<Record<string, HTMLElement | null>>({});
+  const rowOrder = useMemo(() => rows.map((row) => row.id), [rows]);
+
+  const handleDraftChange = useCallback(
+    <K extends keyof OperatorEntryDraft>(id: string, field: K, value: OperatorEntryDraft[K]) => {
+      setDrafts((current) => ({
+        ...current,
+        [id]: {
+          ...(current[id] ?? createDraftFromEntry(rows.find((row) => row.id === id)!)),
+          [field]: value,
+        },
+      }));
+      setSavedIds((current) => {
+        const next = new Set(current);
+        next.delete(id);
+        return next;
+      });
+    },
+    [rows],
+  );
+
+  const buildCommittedEntry = useCallback(
+    (row: OperatorDailyEntry) => {
+      const draft = drafts[row.id];
+      if (!draft) return row;
+      return {
+        ...row,
+        offloadingShift: draft.offloadingShift,
+        pasteurizationShift: draft.pasteurizationShift,
+        milkOffloaded: parseNumberInput(draft.milkOffloaded),
+        milkPasteurized: parseNumberInput(draft.milkPasteurized),
+        cipDone: draft.cipDone,
+        cipType: draft.cipType,
+        causticJerrycansUsed: parseNumberInput(draft.causticJerrycansUsed),
+        nitricJerrycansUsed: parseNumberInput(draft.nitricJerrycansUsed),
+        notes: draft.notes,
+      };
+    },
+    [drafts],
+  );
+
+  const commitRow = useCallback(
+    (id: string) => {
+      const row = rows.find((entry) => entry.id === id);
+      if (!row) return;
+      const committed = buildCommittedEntry(row);
+      onCommitRows([committed]);
+      setDrafts((current) => {
+        if (!current[id]) return current;
+        const next = { ...current };
+        delete next[id];
+        return next;
+      });
+      setSavedIds((current) => new Set([...current, id]));
+    },
+    [buildCommittedEntry, onCommitRows, rows],
+  );
+
+  const commitAll = useCallback(() => {
+    const dirtyRows = rows.filter((row) => drafts[row.id]).map((row) => buildCommittedEntry(row));
+    if (dirtyRows.length === 0) return;
+    onCommitRows(dirtyRows);
+    setDrafts({});
+    setSavedIds((current) => new Set([...current, ...dirtyRows.map((row) => row.id)]));
+  }, [buildCommittedEntry, drafts, onCommitRows, rows]);
+
+  const registerCell = useCallback((rowId: string, field: OperatorEditableField, element: HTMLElement | null) => {
+    cellRefs.current[`${rowId}:${field}`] = element;
+  }, []);
+
+  const onNavigate = useCallback(
+    (rowId: string, field: OperatorEditableField, direction: 'up' | 'down' | 'left' | 'right') => {
+      const rowIndex = rowOrder.indexOf(rowId);
+      const fieldIndex = editableFieldOrder.indexOf(field);
+      let nextRowIndex = rowIndex;
+      let nextFieldIndex = fieldIndex;
+
+      if (direction === 'up') nextRowIndex = Math.max(0, rowIndex - 1);
+      if (direction === 'down') nextRowIndex = Math.min(rowOrder.length - 1, rowIndex + 1);
+      if (direction === 'left') nextFieldIndex = Math.max(0, fieldIndex - 1);
+      if (direction === 'right') nextFieldIndex = Math.min(editableFieldOrder.length - 1, fieldIndex + 1);
+
+      const nextRowId = rowOrder[nextRowIndex];
+      const nextField = editableFieldOrder[nextFieldIndex];
+      const nextElement = cellRefs.current[`${nextRowId}:${nextField}`];
+      if (nextElement) {
+        requestAnimationFrame(() => {
+          nextElement.focus();
+          if (nextElement instanceof HTMLInputElement) {
+            const input = nextElement;
+            input.setSelectionRange?.(input.value.length, input.value.length);
+          }
+        });
+      }
+    },
+    [rowOrder],
+  );
 
   return (
     <SectionCard
       title="Operator Monthly Entry"
-      description={`Daily production and CIP logging workspace for ${operatorName}. Milk loss and loss % are calculated automatically.`}
-      action={<Button startIcon={<SaveRounded />} onClick={onSaveAll}>Save all</Button>}
+      description={`Daily production and CIP logging workspace for ${operatorName}. Changes stay local while typing and commit on Enter, blur, or Save all.`}
+      action={<Button startIcon={<SaveRounded />} onClick={commitAll}>Save all</Button>}
     >
       <TableContainer component={Paper} sx={{ borderRadius: 3, maxHeight: 560, border: '1px solid rgba(148,163,184,0.16)' }}>
         <Table size="small" stickyHeader>
@@ -340,69 +702,25 @@ function OperatorMonthlyEntryTable({
           </TableHead>
           <TableBody>
             {rows.map((row, index) => {
-              const production: ProductionRecord = {
-                id: row.id,
-                date: row.date,
-                offloadingShift: row.offloadingShift,
-                pasteurizationShift: row.pasteurizationShift,
-                offloadingOperator: row.operatorName,
-                pasteurizationOperator: row.operatorName,
-                totalMilkOffloaded: row.milkOffloaded,
-                totalMilkPasteurized: row.milkPasteurized,
-                remarks: row.notes,
-              };
-              const loss = getMilkLoss(production);
-              const lossPercentage = getLossPercentage(production);
-              const hasGain = row.milkPasteurized > row.milkOffloaded && row.milkOffloaded > 0;
-              const isHighLoss = lossPercentage > 2.6;
-              const status = getEntryStatus(row, pendingIds, touchedIds);
-              const rowColor = hasGain
-                ? 'rgba(254,240,138,0.35)'
-                : isHighLoss
-                  ? 'rgba(254,226,226,0.5)'
-                  : index % 2 === 0
-                    ? 'rgba(248,250,252,0.86)'
-                    : 'white';
-              const statusChip =
-                status === 'saved'
-                  ? <Chip size="small" color="success" icon={<AssignmentTurnedInRounded />} label="saved" />
-                  : status === 'pending'
-                    ? <Chip size="small" color="warning" icon={<PendingRounded />} label="pending" />
-                    : <Chip size="small" color="default" label="missing" />;
+              const status: EntryStatus = drafts[row.id]
+                ? 'pending'
+                : savedIds.has(row.id)
+                  ? 'saved'
+                  : getEntryStatus(row, new Set(), new Set());
 
               return (
-                <TableRow key={row.id} hover sx={{ bgcolor: rowColor, '& td': { py: 0.7 } }}>
-                  <TableCell>{row.date}</TableCell>
-                  <TableCell>{statusChip}</TableCell>
-                  <TableCell>
-                    <TextField select size="small" value={row.offloadingShift} onChange={(event) => updateEntry(row.id, 'offloadingShift', event.target.value as Shift)}>
-                      {shifts.map((shift) => <MenuItem key={shift} value={shift}>{shift}</MenuItem>)}
-                    </TextField>
-                  </TableCell>
-                  <TableCell>
-                    <TextField select size="small" value={row.pasteurizationShift} onChange={(event) => updateEntry(row.id, 'pasteurizationShift', event.target.value as Shift)}>
-                      {shifts.map((shift) => <MenuItem key={shift} value={shift}>{shift}</MenuItem>)}
-                    </TextField>
-                  </TableCell>
-                  <TableCell><TextField type="number" size="small" value={row.milkOffloaded} onChange={(event) => updateEntry(row.id, 'milkOffloaded', Number(event.target.value))} /></TableCell>
-                  <TableCell><TextField type="number" size="small" value={row.milkPasteurized} onChange={(event) => updateEntry(row.id, 'milkPasteurized', Number(event.target.value))} /></TableCell>
-                  <TableCell><Chip size="small" color={hasGain ? 'warning' : isHighLoss ? 'error' : 'success'} label={`${(row.milkOffloaded - row.milkPasteurized).toLocaleString()} L`} /></TableCell>
-                  <TableCell><Chip size="small" color={hasGain ? 'warning' : isHighLoss ? 'error' : 'success'} label={`${row.milkOffloaded === 0 ? 0 : (((row.milkOffloaded - row.milkPasteurized) / row.milkOffloaded) * 100).toFixed(2)}%`} /></TableCell>
-                  <TableCell>
-                    <Select size="small" value={row.cipDone ? 'yes' : 'no'} onChange={(event) => updateEntry(row.id, 'cipDone', event.target.value === 'yes')}>
-                      <MenuItem value="yes">Yes</MenuItem>
-                      <MenuItem value="no">No</MenuItem>
-                    </Select>
-                  </TableCell>
-                  <TableCell>
-                    <TextField select size="small" value={row.cipType} onChange={(event) => updateEntry(row.id, 'cipType', event.target.value as CipType)}>
-                      {cipTypes.map((type) => <MenuItem key={type} value={type}>{type}</MenuItem>)}
-                    </TextField>
-                  </TableCell>
-                  <TableCell><TextField type="number" size="small" value={row.causticJerrycansUsed} onChange={(event) => updateEntry(row.id, 'causticJerrycansUsed', Number(event.target.value))} /></TableCell>
-                  <TableCell><TextField type="number" size="small" value={row.nitricJerrycansUsed} onChange={(event) => updateEntry(row.id, 'nitricJerrycansUsed', Number(event.target.value))} /></TableCell>
-                  <TableCell><TextField size="small" value={row.notes} onChange={(event) => updateEntry(row.id, 'notes', event.target.value)} /></TableCell>
-                </TableRow>
+                <OperatorEntryRow
+                  key={row.id}
+                  row={row}
+                  draft={drafts[row.id]}
+                  status={status}
+                  rowIndex={index}
+                  rowOrder={rowOrder}
+                  onDraftChange={handleDraftChange}
+                  onCommitRow={commitRow}
+                  onNavigate={onNavigate}
+                  registerCell={registerCell}
+                />
               );
             })}
           </TableBody>
@@ -419,7 +737,6 @@ function AdminIntakePage({
   ranking,
   insights,
   productionRecords,
-  setEntries,
 }: {
   summary: ReturnType<typeof buildMonthlySummary>;
   chartData: ReturnType<typeof buildChartData>;
@@ -427,7 +744,6 @@ function AdminIntakePage({
   ranking: ReturnType<typeof buildOperatorRanking>;
   insights: ReturnType<typeof buildInsights>;
   productionRecords: ProductionRecord[];
-  setEntries: React.Dispatch<React.SetStateAction<OperatorDailyEntry[]>>;
 }) {
   const abnormalOperators = ranking.filter((entry) => entry.lossRate > 2.5).map((entry) => entry.operator);
 
@@ -581,8 +897,6 @@ export function Dashboard({ user, onLogout }: { user: AppUser; onLogout: () => v
   const [operatorFilters, setOperatorFilters] = useState<string[]>([]);
   const [shiftFilters, setShiftFilters] = useState<string[]>([]);
   const [activeSection, setActiveSection] = useState<SectionKey>(user.role === 'admin' ? 'dashboard' : 'operator-entry');
-  const [pendingIds, setPendingIds] = useState<Set<string>>(new Set());
-  const [touchedIds, setTouchedIds] = useState<Set<string>>(new Set());
 
   const availableSections = user.role === 'admin' ? adminSections : operatorSections;
   const visibleEntries = useMemo(() => {
@@ -605,44 +919,10 @@ export function Dashboard({ user, onLogout }: { user: AppUser; onLogout: () => v
   const insights = useMemo(() => buildInsights(productionRecords, cipRecords), [productionRecords, cipRecords]);
   const operatorRows = useMemo(() => getMonthlyDays(selectedMonth, user.name, entries), [entries, selectedMonth, user.name]);
   const currentSection = availableSections.find((section) => section.key === activeSection) ?? availableSections[0];
-
-  useEffect(() => {
-    const changedIds = new Set<string>();
-    const currentIds = new Set(entries.map((entry) => entry.id));
-    currentIds.forEach((id) => {
-      if (!touchedIds.has(id)) return;
-      changedIds.add(id);
-    });
-    if (changedIds.size === 0) return;
-
-    setPendingIds(changedIds);
-    const timer = setTimeout(() => {
-      setPendingIds(new Set());
-    }, 900);
-    return () => clearTimeout(timer);
-  }, [entries, touchedIds]);
-
-  const setEntriesWithTouch: React.Dispatch<React.SetStateAction<OperatorDailyEntry[]>> = (value) => {
-    setEntries((current) => {
-      const next = typeof value === 'function' ? value(current) : value;
-      const changed = next
-        .filter((entry, index) => {
-          const previous = current[index];
-          return !previous || JSON.stringify(previous) !== JSON.stringify(entry);
-        })
-        .map((entry) => entry.id);
-      if (changed.length) {
-        setTouchedIds((prev) => new Set([...prev, ...changed]));
-        setPendingIds((prev) => new Set([...prev, ...changed]));
-      }
-      return next;
-    });
-  };
-
-  const handleSaveAll = () => {
-    setPendingIds(new Set());
-    setTouchedIds((prev) => new Set([...prev]));
-  };
+  const commitOperatorRows = useCallback((updatedRows: OperatorDailyEntry[]) => {
+    const updates = new Map(updatedRows.map((row) => [row.id, row]));
+    setEntries((current) => current.map((entry) => updates.get(entry.id) ?? entry));
+  }, []);
 
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: '#f3f6fb' }}>
@@ -702,7 +982,7 @@ export function Dashboard({ user, onLogout }: { user: AppUser; onLogout: () => v
                 </Stack>
                 <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.2}>
                   <Chip icon={<WaterDropRounded />} size="small" color={summary.lossPercentage > 2.6 ? 'error' : 'warning'} label={`${summary.totalLoss.toLocaleString()} L loss`} />
-                  <Chip icon={<NotificationsActiveRounded />} size="small" color={pendingIds.size > 0 ? 'warning' : 'success'} label={pendingIds.size > 0 ? `${pendingIds.size} pending saves` : 'All changes saved'} />
+                  <Chip icon={<NotificationsActiveRounded />} size="small" color={user.role === 'operator' ? 'primary' : 'success'} label={user.role === 'operator' ? 'Commit on Enter / blur / Save all' : 'Filtered admin view'} />
                 </Stack>
               </Stack>
 
@@ -752,7 +1032,7 @@ export function Dashboard({ user, onLogout }: { user: AppUser; onLogout: () => v
 
           <Box sx={{ p: { xs: 1.8, md: 2.4 } }}>
             {user.role === 'admin' && activeSection === 'dashboard' ? <DashboardOverview summary={summary} chartData={chartData} ranking={ranking} /> : null}
-            {user.role === 'admin' && activeSection === 'intake' ? <AdminIntakePage summary={summary} chartData={chartData} chemicalByOperator={chemicalByOperator} ranking={ranking} insights={insights} productionRecords={productionRecords} setEntries={setEntriesWithTouch} /> : null}
+            {user.role === 'admin' && activeSection === 'intake' ? <AdminIntakePage summary={summary} chartData={chartData} chemicalByOperator={chemicalByOperator} ranking={ranking} insights={insights} productionRecords={productionRecords} /> : null}
             {user.role === 'admin' && activeSection === 'cip' ? (
               <SectionCard title="GEA CIP Usage" description="Compact sanitation record view for the selected month.">
                 <TableContainer component={Paper} sx={{ borderRadius: 3, border: '1px solid rgba(148,163,184,0.16)' }}>
@@ -794,7 +1074,7 @@ export function Dashboard({ user, onLogout }: { user: AppUser; onLogout: () => v
                 </Box>
               </SectionCard>
             ) : null}
-            {user.role === 'operator' && activeSection === 'operator-entry' ? <OperatorMonthlyEntryTable rows={operatorRows} setEntries={setEntriesWithTouch} operatorName={user.name} pendingIds={pendingIds} touchedIds={touchedIds} onSaveAll={handleSaveAll} /> : null}
+            {user.role === 'operator' && activeSection === 'operator-entry' ? <OperatorMonthlyEntryTable rows={operatorRows} onCommitRows={commitOperatorRows} operatorName={user.name} /> : null}
           </Box>
         </Box>
       </Box>
