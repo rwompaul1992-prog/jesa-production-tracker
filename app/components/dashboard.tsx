@@ -1,6 +1,6 @@
 'use client';
 
-import { memo, useCallback, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import dayjs from 'dayjs';
 import {
   Avatar,
@@ -358,32 +358,27 @@ function AdminProductionTable({
 
 const OperatorEntryRow = memo(function OperatorEntryRow({
   row,
-  draft,
-  status,
   rowIndex,
   rowOrder,
-  onDraftChange,
   onCommitRow,
   onNavigate,
   registerCell,
+  registerCommitter,
 }: {
   row: OperatorDailyEntry;
-  draft: OperatorEntryDraft | undefined;
-  status: EntryStatus;
   rowIndex: number;
   rowOrder: string[];
-  onDraftChange: <K extends keyof OperatorEntryDraft>(id: string, field: K, value: OperatorEntryDraft[K]) => void;
-  onCommitRow: (id: string) => void;
+  onCommitRow: (row: OperatorDailyEntry) => void;
   onNavigate: (rowId: string, field: OperatorEditableField, direction: 'up' | 'down' | 'left' | 'right') => void;
   registerCell: (rowId: string, field: OperatorEditableField, element: HTMLElement | null) => void;
+  registerCommitter: (rowId: string, commit: () => void, isDirty: () => boolean) => void;
 }) {
-  const activeDraft = draft ?? createDraftFromEntry(row);
-  const milkOffloaded = parseNumberInput(activeDraft.milkOffloaded);
-  const milkPasteurized = parseNumberInput(activeDraft.milkPasteurized);
-  const milkLoss = milkOffloaded - milkPasteurized;
-  const lossPercentage = milkOffloaded === 0 ? 0 : (milkLoss / milkOffloaded) * 100;
-  const hasGain = milkPasteurized > milkOffloaded && milkOffloaded > 0;
-  const isHighLoss = lossPercentage > 2.6;
+  const [draft, setDraft] = useState<OperatorEntryDraft>(() => createDraftFromEntry(row));
+  const [isDirty, setIsDirty] = useState(false);
+  const committedMilkLoss = row.milkOffloaded - row.milkPasteurized;
+  const committedLossPercentage = row.milkOffloaded === 0 ? 0 : (committedMilkLoss / row.milkOffloaded) * 100;
+  const hasGain = row.milkPasteurized > row.milkOffloaded && row.milkOffloaded > 0;
+  const isHighLoss = committedLossPercentage > 2.6;
   const rowColor = hasGain
     ? 'rgba(254,240,138,0.35)'
     : isHighLoss
@@ -392,15 +387,37 @@ const OperatorEntryRow = memo(function OperatorEntryRow({
         ? 'rgba(248,250,252,0.86)'
         : 'white';
   const statusChip =
-    status === 'saved'
+    isDirty
+      ? <Chip size="small" color="warning" icon={<PendingRounded />} label="pending" />
+      : getEntryStatus(row, new Set(), new Set()) === 'saved'
       ? <Chip size="small" color="success" icon={<AssignmentTurnedInRounded />} label="saved" />
-      : status === 'pending'
-        ? <Chip size="small" color="warning" icon={<PendingRounded />} label="pending" />
-        : <Chip size="small" color="default" label="missing" />;
+      : <Chip size="small" color="default" label="missing" />;
+
+  useEffect(() => {
+    setDraft(createDraftFromEntry(row));
+    setIsDirty(false);
+  }, [row]);
 
   const commit = useCallback(() => {
-    onCommitRow(row.id);
-  }, [onCommitRow, row.id]);
+    if (!isDirty) return;
+    onCommitRow({
+      ...row,
+      offloadingShift: draft.offloadingShift,
+      pasteurizationShift: draft.pasteurizationShift,
+      milkOffloaded: parseNumberInput(draft.milkOffloaded),
+      milkPasteurized: parseNumberInput(draft.milkPasteurized),
+      cipDone: draft.cipDone,
+      cipType: draft.cipType,
+      causticJerrycansUsed: parseNumberInput(draft.causticJerrycansUsed),
+      nitricJerrycansUsed: parseNumberInput(draft.nitricJerrycansUsed),
+      notes: draft.notes,
+    });
+    setIsDirty(false);
+  }, [draft, isDirty, onCommitRow, row]);
+
+  useEffect(() => {
+    registerCommitter(row.id, commit, () => isDirty);
+  }, [commit, isDirty, registerCommitter, row.id]);
 
   const commitOnEnter = useCallback(
     (event: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -445,9 +462,9 @@ const OperatorEntryRow = memo(function OperatorEntryRow({
     (field: OperatorEditableField) =>
       (event: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         if (event.key === 'Enter') {
-          commitOnEnter(event);
-          return;
-        }
+        commitOnEnter(event);
+        return;
+      }
         navigateOnArrow(field)(event);
       },
     [commitOnEnter, navigateOnArrow],
@@ -462,8 +479,8 @@ const OperatorEntryRow = memo(function OperatorEntryRow({
           select
           size="small"
           name="offloadingShift"
-          value={activeDraft.offloadingShift}
-          onChange={(event) => onDraftChange(row.id, 'offloadingShift', event.target.value as Shift)}
+          value={draft.offloadingShift}
+          onChange={(event) => { setDraft((current) => ({ ...current, offloadingShift: event.target.value as Shift })); setIsDirty(true); }}
           onBlur={commit}
           onKeyDown={navigateOnArrow('offloadingShift')}
           inputRef={(element) => registerCell(row.id, 'offloadingShift', element)}
@@ -476,8 +493,8 @@ const OperatorEntryRow = memo(function OperatorEntryRow({
           select
           size="small"
           name="pasteurizationShift"
-          value={activeDraft.pasteurizationShift}
-          onChange={(event) => onDraftChange(row.id, 'pasteurizationShift', event.target.value as Shift)}
+          value={draft.pasteurizationShift}
+          onChange={(event) => { setDraft((current) => ({ ...current, pasteurizationShift: event.target.value as Shift })); setIsDirty(true); }}
           onBlur={commit}
           onKeyDown={navigateOnArrow('pasteurizationShift')}
           inputRef={(element) => registerCell(row.id, 'pasteurizationShift', element)}
@@ -490,8 +507,8 @@ const OperatorEntryRow = memo(function OperatorEntryRow({
           type="text"
           size="small"
           name="milkOffloaded"
-          value={activeDraft.milkOffloaded}
-          onChange={(event) => onDraftChange(row.id, 'milkOffloaded', event.target.value)}
+          value={draft.milkOffloaded}
+          onChange={(event) => { setDraft((current) => ({ ...current, milkOffloaded: event.target.value })); setIsDirty(true); }}
           onBlur={commit}
           onKeyDown={handleTextNavigation('milkOffloaded')}
           inputRef={(element) => registerCell(row.id, 'milkOffloaded', element)}
@@ -502,20 +519,20 @@ const OperatorEntryRow = memo(function OperatorEntryRow({
           type="text"
           size="small"
           name="milkPasteurized"
-          value={activeDraft.milkPasteurized}
-          onChange={(event) => onDraftChange(row.id, 'milkPasteurized', event.target.value)}
+          value={draft.milkPasteurized}
+          onChange={(event) => { setDraft((current) => ({ ...current, milkPasteurized: event.target.value })); setIsDirty(true); }}
           onBlur={commit}
           onKeyDown={handleTextNavigation('milkPasteurized')}
           inputRef={(element) => registerCell(row.id, 'milkPasteurized', element)}
         />
       </TableCell>
-      <TableCell><Chip size="small" color={hasGain ? 'warning' : isHighLoss ? 'error' : 'success'} label={`${milkLoss.toLocaleString()} L`} /></TableCell>
-      <TableCell><Chip size="small" color={hasGain ? 'warning' : isHighLoss ? 'error' : 'success'} label={`${lossPercentage.toFixed(2)}%`} /></TableCell>
+      <TableCell><Chip size="small" color={hasGain ? 'warning' : isHighLoss ? 'error' : 'success'} label={`${committedMilkLoss.toLocaleString()} L`} /></TableCell>
+      <TableCell><Chip size="small" color={hasGain ? 'warning' : isHighLoss ? 'error' : 'success'} label={`${committedLossPercentage.toFixed(2)}%`} /></TableCell>
       <TableCell>
         <Select
           size="small"
-          value={activeDraft.cipDone ? 'yes' : 'no'}
-          onChange={(event) => onDraftChange(row.id, 'cipDone', event.target.value === 'yes')}
+          value={draft.cipDone ? 'yes' : 'no'}
+          onChange={(event) => { setDraft((current) => ({ ...current, cipDone: event.target.value === 'yes' })); setIsDirty(true); }}
           onBlur={commit}
           inputRef={(element) => registerCell(row.id, 'cipDone', element)}
         >
@@ -528,8 +545,8 @@ const OperatorEntryRow = memo(function OperatorEntryRow({
           select
           size="small"
           name="cipType"
-          value={activeDraft.cipType}
-          onChange={(event) => onDraftChange(row.id, 'cipType', event.target.value as CipType)}
+          value={draft.cipType}
+          onChange={(event) => { setDraft((current) => ({ ...current, cipType: event.target.value as CipType })); setIsDirty(true); }}
           onBlur={commit}
           onKeyDown={navigateOnArrow('cipType')}
           inputRef={(element) => registerCell(row.id, 'cipType', element)}
@@ -542,8 +559,8 @@ const OperatorEntryRow = memo(function OperatorEntryRow({
           type="text"
           size="small"
           name="causticJerrycansUsed"
-          value={activeDraft.causticJerrycansUsed}
-          onChange={(event) => onDraftChange(row.id, 'causticJerrycansUsed', event.target.value)}
+          value={draft.causticJerrycansUsed}
+          onChange={(event) => { setDraft((current) => ({ ...current, causticJerrycansUsed: event.target.value })); setIsDirty(true); }}
           onBlur={commit}
           onKeyDown={handleTextNavigation('causticJerrycansUsed')}
           inputRef={(element) => registerCell(row.id, 'causticJerrycansUsed', element)}
@@ -554,8 +571,8 @@ const OperatorEntryRow = memo(function OperatorEntryRow({
           type="text"
           size="small"
           name="nitricJerrycansUsed"
-          value={activeDraft.nitricJerrycansUsed}
-          onChange={(event) => onDraftChange(row.id, 'nitricJerrycansUsed', event.target.value)}
+          value={draft.nitricJerrycansUsed}
+          onChange={(event) => { setDraft((current) => ({ ...current, nitricJerrycansUsed: event.target.value })); setIsDirty(true); }}
           onBlur={commit}
           onKeyDown={handleTextNavigation('nitricJerrycansUsed')}
           inputRef={(element) => registerCell(row.id, 'nitricJerrycansUsed', element)}
@@ -565,8 +582,8 @@ const OperatorEntryRow = memo(function OperatorEntryRow({
         <TextField
           name="notes"
           size="small"
-          value={activeDraft.notes}
-          onChange={(event) => onDraftChange(row.id, 'notes', event.target.value)}
+          value={draft.notes}
+          onChange={(event) => { setDraft((current) => ({ ...current, notes: event.target.value })); setIsDirty(true); }}
           onBlur={commit}
           onKeyDown={handleTextNavigation('notes')}
           inputRef={(element) => registerCell(row.id, 'notes', element)}
@@ -585,77 +602,30 @@ function OperatorMonthlyEntryTable({
   onCommitRows: (rows: OperatorDailyEntry[]) => void;
   operatorName: string;
 }) {
-  const [drafts, setDrafts] = useState<Record<string, OperatorEntryDraft>>({});
-  const [savedIds, setSavedIds] = useState<Set<string>>(new Set(rows.map((row) => row.id)));
   const cellRefs = useRef<Record<string, HTMLElement | null>>({});
+  const rowCommitters = useRef<Record<string, { commit: () => void; isDirty: () => boolean }>>({});
   const rowOrder = useMemo(() => rows.map((row) => row.id), [rows]);
-
-  const handleDraftChange = useCallback(
-    <K extends keyof OperatorEntryDraft>(id: string, field: K, value: OperatorEntryDraft[K]) => {
-      setDrafts((current) => ({
-        ...current,
-        [id]: {
-          ...(current[id] ?? createDraftFromEntry(rows.find((row) => row.id === id)!)),
-          [field]: value,
-        },
-      }));
-      setSavedIds((current) => {
-        const next = new Set(current);
-        next.delete(id);
-        return next;
-      });
-    },
-    [rows],
-  );
-
-  const buildCommittedEntry = useCallback(
-    (row: OperatorDailyEntry) => {
-      const draft = drafts[row.id];
-      if (!draft) return row;
-      return {
-        ...row,
-        offloadingShift: draft.offloadingShift,
-        pasteurizationShift: draft.pasteurizationShift,
-        milkOffloaded: parseNumberInput(draft.milkOffloaded),
-        milkPasteurized: parseNumberInput(draft.milkPasteurized),
-        cipDone: draft.cipDone,
-        cipType: draft.cipType,
-        causticJerrycansUsed: parseNumberInput(draft.causticJerrycansUsed),
-        nitricJerrycansUsed: parseNumberInput(draft.nitricJerrycansUsed),
-        notes: draft.notes,
-      };
-    },
-    [drafts],
-  );
-
-  const commitRow = useCallback(
-    (id: string) => {
-      const row = rows.find((entry) => entry.id === id);
-      if (!row) return;
-      const committed = buildCommittedEntry(row);
-      onCommitRows([committed]);
-      setDrafts((current) => {
-        if (!current[id]) return current;
-        const next = { ...current };
-        delete next[id];
-        return next;
-      });
-      setSavedIds((current) => new Set([...current, id]));
-    },
-    [buildCommittedEntry, onCommitRows, rows],
-  );
-
-  const commitAll = useCallback(() => {
-    const dirtyRows = rows.filter((row) => drafts[row.id]).map((row) => buildCommittedEntry(row));
-    if (dirtyRows.length === 0) return;
-    onCommitRows(dirtyRows);
-    setDrafts({});
-    setSavedIds((current) => new Set([...current, ...dirtyRows.map((row) => row.id)]));
-  }, [buildCommittedEntry, drafts, onCommitRows, rows]);
 
   const registerCell = useCallback((rowId: string, field: OperatorEditableField, element: HTMLElement | null) => {
     cellRefs.current[`${rowId}:${field}`] = element;
   }, []);
+
+  const registerCommitter = useCallback((rowId: string, commit: () => void, isDirty: () => boolean) => {
+    rowCommitters.current[rowId] = { commit, isDirty };
+  }, []);
+
+  const commitRow = useCallback((row: OperatorDailyEntry) => {
+    onCommitRows([row]);
+  }, [onCommitRows]);
+
+  const commitAll = useCallback(() => {
+    rowOrder.forEach((rowId) => {
+      const controller = rowCommitters.current[rowId];
+      if (controller?.isDirty()) {
+        controller.commit();
+      }
+    });
+  }, [rowOrder]);
 
   const onNavigate = useCallback(
     (rowId: string, field: OperatorEditableField, direction: 'up' | 'down' | 'left' | 'right') => {
@@ -702,24 +672,16 @@ function OperatorMonthlyEntryTable({
           </TableHead>
           <TableBody>
             {rows.map((row, index) => {
-              const status: EntryStatus = drafts[row.id]
-                ? 'pending'
-                : savedIds.has(row.id)
-                  ? 'saved'
-                  : getEntryStatus(row, new Set(), new Set());
-
               return (
                 <OperatorEntryRow
                   key={row.id}
                   row={row}
-                  draft={drafts[row.id]}
-                  status={status}
                   rowIndex={index}
                   rowOrder={rowOrder}
-                  onDraftChange={handleDraftChange}
                   onCommitRow={commitRow}
                   onNavigate={onNavigate}
                   registerCell={registerCell}
+                  registerCommitter={registerCommitter}
                 />
               );
             })}
