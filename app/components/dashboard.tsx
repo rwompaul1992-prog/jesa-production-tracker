@@ -1399,141 +1399,132 @@ export function Dashboard({ user, onLogout }: { user: AppUser; onLogout: () => v
             position: 'sticky',
             top: 0,
             zIndex: 10,
-            pt: { xs: 0.35, md: 0.45 },
-            pb: 0.42,
-            backdropFilter: 'blur(12px)',
-            bgcolor: 'rgba(237,243,251,0.88)',
+            pt: { xs: 0.2, md: 0.28 },
+            pb: 0.28,
+            borderBottom: '1px solid rgba(226,232,240,0.9)',
+            bgcolor: 'rgba(245,247,251,0.96)',
           }}
         >
-          <Paper
+          <Stack
+            direction="row"
             sx={{
-              borderRadius: 1.75,
-              overflow: 'hidden',
-              border: '1px solid rgba(148,163,184,0.18)',
-              background: 'rgba(255,255,255,0.98)',
-              boxShadow: '0 6px 16px rgba(15,23,42,0.04)',
+              minHeight: 44,
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 0.8,
+              flexWrap: { xs: 'wrap', xl: 'nowrap' },
+              py: 0.35,
             }}
           >
-            <Stack spacing={0.4} sx={{ px: { xs: 0.7, md: 0.85 }, py: { xs: 0.4, md: 0.46 } }}>
-              <Stack
-                direction={{ xs: 'column', xl: 'row' }}
-                spacing={0.5}
-                justifyContent="space-between"
-                alignItems={{ xs: 'flex-start', xl: 'center' }}
-                sx={{ minHeight: 0 }}
-              >
-                <Stack
-                  direction={{ xs: 'column', xl: 'row' }}
-                  spacing={0.55}
-                  justifyContent="space-between"
-                  alignItems={{ xs: 'stretch', lg: 'center' }}
-                  sx={{ width: '100%' }}
-                >
-                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={0.65} sx={{ flex: 1 }}>
-                    <FormControl fullWidth size="small">
-                      <InputLabel>Month</InputLabel>
-                      <Select value={selectedMonth} label="Month" onChange={(event) => setSelectedMonth(event.target.value)}>
-                        {months.map((month) => (
-                          <MenuItem key={month} value={month}>{dayjs(`${month}-01`).format('MMMM YYYY')}</MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
-                    {user.role === 'admin' ? (
-                      <>
-                        <FormControl fullWidth size="small">
-                          <InputLabel>Operators</InputLabel>
-                          <Select multiple value={operatorFilters} label="Operators" onChange={(event) => setOperatorFilters(typeof event.target.value === 'string' ? event.target.value.split(',') : event.target.value)} renderValue={(selected) => (selected as string[]).length === 0 ? 'All operators' : (selected as string[]).join(', ')}>
-                            {operators.map((operator) => (
-                              <MenuItem key={operator} value={operator}>
-                                <Checkbox checked={operatorFilters.includes(operator)} />
-                                <ListItemText primary={operator} />
-                              </MenuItem>
-                            ))}
-                          </Select>
-                        </FormControl>
-                        <FormControl fullWidth size="small">
-                          <InputLabel>Shifts</InputLabel>
-                          <Select multiple value={shiftFilters} label="Shifts" onChange={(event) => setShiftFilters(typeof event.target.value === 'string' ? event.target.value.split(',') : event.target.value)} renderValue={(selected) => (selected as string[]).length === 0 ? 'All shifts' : (selected as string[]).join(', ')}>
-                            {shifts.map((shift) => (
-                              <MenuItem key={shift} value={shift}>
-                                <Checkbox checked={shiftFilters.includes(shift)} />
-                                <ListItemText primary={shift} />
-                              </MenuItem>
-                            ))}
-                          </Select>
-                        </FormControl>
-                      </>
-                    ) : null}
-                  </Stack>
-
-                <Stack
-                  direction="row"
-                  spacing={0.55}
-                  sx={{ flexWrap: 'wrap', alignItems: 'center', justifyContent: { xs: 'flex-start', xl: 'center' } }}
-                >
-                  {availableSections.map((section) => {
-                    const active = section.key === activeSection;
-                    const accent =
-                      section.key === 'dashboard'
-                        ? '#2563eb'
-                        : section.key === 'intake'
-                          ? '#0f766e'
-                          : section.key === 'cip'
-                            ? '#7c3aed'
-                            : section.key === 'operators'
-                              ? '#ea580c'
-                              : '#2563eb';
-                    return (
-                      <Button
-                        key={section.key}
-                        onClick={() => setActiveSection(section.key)}
-                        startIcon={section.icon}
-                        size="small"
-                        sx={{
-                          minHeight: 27,
-                          px: 0.95,
-                          borderRadius: 1.25,
-                          color: active ? 'common.white' : '#111827',
-                          bgcolor: active ? accent : '#ffffff',
-                          border: `1px solid ${active ? accent : 'rgba(148,163,184,0.26)'}`,
-                          boxShadow: active ? `inset 0 -1px 0 ${alpha('#000', 0.08)}` : 'none',
-                          '&:hover': {
-                            bgcolor: active ? alpha(accent, 0.92) : '#f8fafc',
-                          },
-                          '& .MuiButton-startIcon': {
-                            mr: 0.5,
-                            color: active ? 'common.white' : '#475569',
-                          },
-                        }}
-                      >
-                        <Typography variant="caption" fontWeight={800} sx={{ letterSpacing: '0.01em', fontSize: '0.68rem' }}>
-                          {section.label}
-                        </Typography>
-                      </Button>
-                    );
-                  })}
-                </Stack>
-                <Button
-                  onClick={onLogout}
-                  size="small"
-                  sx={{
-                    minWidth: 0,
-                    px: 0.95,
-                    py: 0.34,
-                    borderRadius: 1.25,
-                    color: '#0f172a',
-                    border: '1px solid rgba(148,163,184,0.26)',
-                    bgcolor: '#ffffff',
-                    fontWeight: 800,
-                    alignSelf: { xs: 'flex-start', lg: 'center' },
-                  }}
-                >
-                  Sign out
-                </Button>
-              </Stack>
-              </Stack>
+            <Stack
+              direction="row"
+              spacing={0.6}
+              sx={{ flex: { xs: '1 1 100%', xl: '0 1 auto' }, minWidth: { xs: '100%', xl: 0 }, flexWrap: { xs: 'wrap', sm: 'nowrap' } }}
+            >
+              <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 160 } }}>
+                <InputLabel>Month</InputLabel>
+                <Select value={selectedMonth} label="Month" onChange={(event) => setSelectedMonth(event.target.value)}>
+                  {months.map((month) => (
+                    <MenuItem key={month} value={month}>{dayjs(`${month}-01`).format('MMMM YYYY')}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              {user.role === 'admin' ? (
+                <>
+                  <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 190 } }}>
+                    <InputLabel>Operators</InputLabel>
+                    <Select multiple value={operatorFilters} label="Operators" onChange={(event) => setOperatorFilters(typeof event.target.value === 'string' ? event.target.value.split(',') : event.target.value)} renderValue={(selected) => (selected as string[]).length === 0 ? 'All operators' : (selected as string[]).join(', ')}>
+                      {operators.map((operator) => (
+                        <MenuItem key={operator} value={operator}>
+                          <Checkbox checked={operatorFilters.includes(operator)} />
+                          <ListItemText primary={operator} />
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                  <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 168 } }}>
+                    <InputLabel>Shifts</InputLabel>
+                    <Select multiple value={shiftFilters} label="Shifts" onChange={(event) => setShiftFilters(typeof event.target.value === 'string' ? event.target.value.split(',') : event.target.value)} renderValue={(selected) => (selected as string[]).length === 0 ? 'All shifts' : (selected as string[]).join(', ')}>
+                      {shifts.map((shift) => (
+                        <MenuItem key={shift} value={shift}>
+                          <Checkbox checked={shiftFilters.includes(shift)} />
+                          <ListItemText primary={shift} />
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </>
+              ) : null}
             </Stack>
-          </Paper>
+
+            <Stack
+              direction="row"
+              spacing={0.55}
+              justifyContent="center"
+              sx={{ flex: { xs: '1 1 100%', xl: '1 1 auto' }, flexWrap: 'wrap', minWidth: 0 }}
+            >
+              {availableSections.map((section) => {
+                const active = section.key === activeSection;
+                const accent =
+                  section.key === 'dashboard'
+                    ? '#2563eb'
+                    : section.key === 'intake'
+                      ? '#0f766e'
+                      : section.key === 'cip'
+                        ? '#7c3aed'
+                        : section.key === 'operators'
+                          ? '#ea580c'
+                          : '#2563eb';
+                return (
+                  <Button
+                    key={section.key}
+                    onClick={() => setActiveSection(section.key)}
+                    startIcon={section.icon}
+                    size="small"
+                    sx={{
+                      minHeight: 27,
+                      px: 0.95,
+                      borderRadius: 1.25,
+                      color: active ? 'common.white' : '#111827',
+                      bgcolor: active ? accent : '#ffffff',
+                      border: `1px solid ${active ? accent : 'rgba(148,163,184,0.26)'}`,
+                      boxShadow: active ? `inset 0 -1px 0 ${alpha('#000', 0.08)}` : 'none',
+                      '&:hover': {
+                        bgcolor: active ? alpha(accent, 0.92) : '#f8fafc',
+                      },
+                      '& .MuiButton-startIcon': {
+                        mr: 0.5,
+                        color: active ? 'common.white' : '#475569',
+                      },
+                    }}
+                  >
+                    <Typography variant="caption" fontWeight={800} sx={{ letterSpacing: '0.01em', fontSize: '0.68rem' }}>
+                      {section.label}
+                    </Typography>
+                  </Button>
+                );
+              })}
+            </Stack>
+
+            <Box sx={{ display: 'flex', justifyContent: { xs: 'flex-start', xl: 'flex-end' }, flex: { xs: '1 1 100%', xl: '0 0 auto' } }}>
+              <Button
+                onClick={onLogout}
+                size="small"
+                sx={{
+                  minWidth: 0,
+                  px: 0.95,
+                  py: 0.34,
+                  borderRadius: 1.25,
+                  color: '#0f172a',
+                  border: '1px solid rgba(148,163,184,0.26)',
+                  bgcolor: '#ffffff',
+                  fontWeight: 800,
+                }}
+              >
+                Sign out
+              </Button>
+            </Box>
+          </Stack>
         </Box>
 
         <Box sx={{ pt: 0.8 }}>
