@@ -1392,6 +1392,7 @@ export function Dashboard({ user, onLogout }: { user: AppUser; onLogout: () => v
   }, [performance.operators, selectedPerformanceOperator]);
 
   return (
+
     <Box sx={{ minHeight: '100vh', background: '#f8f5f0' }}>
       <Box sx={{ maxWidth: 1660, mx: 'auto', px: { xs: 1, md: 1.5, xl: 1.8 }, pb: { xs: 1.6, md: 2.2 } }}>
         <Box
@@ -1405,164 +1406,220 @@ export function Dashboard({ user, onLogout }: { user: AppUser; onLogout: () => v
             bgcolor: '#f8f5f0',
           }}
         >
-          <Box
+<Box
+  sx={{
+    maxWidth: 1380,
+    mx: "auto",
+    px: { xs: 1.5, md: 2 },
+    py: 1.25,
+    borderRadius: 4,
+    border: "1px solid #f3e2d4",
+    background: "linear-gradient(180deg, #fffaf6 0%, #fff4eb 100%)",
+    boxShadow: "0 8px 24px rgba(120, 53, 15, 0.05)",
+  }}
+>
+  <Stack spacing={1.5}>
+    <Box
+      sx={{
+        display: "grid",
+        gridTemplateColumns: { xs: "1fr", xl: "auto 1fr auto" },
+        gap: 1.5,
+        alignItems: "center",
+      }}
+    >
+      <Stack
+        direction={{ xs: "column", sm: "row" }}
+        spacing={1}
+        sx={{
+          minWidth: 0,
+          alignItems: { xs: "stretch", sm: "center" },
+          flexWrap: "wrap",
+        }}
+      >
+        <FormControl size="small" sx={{ minWidth: { xs: "100%", sm: 170 } }}>
+          <InputLabel>Month</InputLabel>
+          <Select
+            value={selectedMonth}
+            label="Month"
+            onChange={(event) => setSelectedMonth(event.target.value)}
             sx={{
-              display: 'grid',
-              gridTemplateColumns: { xs: '1fr', xl: 'minmax(0, max-content) 1fr auto' },
-              alignItems: 'center',
-              columnGap: { xl: 0.9 },
-              rowGap: { xs: 0.55, xl: 0 },
-              maxWidth: 1380,
-              mx: 'auto',
-              minHeight: 40,
-              py: 0.18,
+              bgcolor: "#ffffff",
+              borderRadius: 3,
+              "& .MuiOutlinedInput-notchedOutline": {
+                borderColor: "#ead7c8",
+              },
             }}
           >
-            <Stack
-              direction="row"
-              alignItems="center"
-              spacing={0.5}
-              sx={{
-                width: '100%',
-                maxWidth: { xs: '100%', xl: 540 },
-                flexWrap: 'wrap',
-                minWidth: 0,
-                justifySelf: { xl: 'start' },
-              }}
-            >
-              <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 154 } }}>
-                <InputLabel>Month</InputLabel>
-                <Select
-                  value={selectedMonth}
-                  label="Month"
-                  onChange={(event) => setSelectedMonth(event.target.value)}
-                  sx={{ bgcolor: '#fffdf9', borderRadius: 1.2 }}
-                >
-                  {months.map((month) => (
-                    <MenuItem key={month} value={month}>{dayjs(`${month}-01`).format('MMMM YYYY')}</MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-              {user.role === 'admin' ? (
-                <>
-                  <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 188 } }}>
-                    <InputLabel>Operators</InputLabel>
-                    <Select
-                      multiple
-                      value={operatorFilters}
-                      label="Operators"
-                      onChange={(event) => setOperatorFilters(typeof event.target.value === 'string' ? event.target.value.split(',') : event.target.value)}
-                      renderValue={(selected) => (selected as string[]).length === 0 ? 'All operators' : (selected as string[]).join(', ')}
-                      sx={{ bgcolor: '#fffdf9', borderRadius: 1.2 }}
-                    >
-                      {operators.map((operator) => (
-                        <MenuItem key={operator} value={operator}>
-                          <Checkbox checked={operatorFilters.includes(operator)} />
-                          <ListItemText primary={operator} />
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                  <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 164 } }}>
-                    <InputLabel>Shifts</InputLabel>
-                    <Select
-                      multiple
-                      value={shiftFilters}
-                      label="Shifts"
-                      onChange={(event) => setShiftFilters(typeof event.target.value === 'string' ? event.target.value.split(',') : event.target.value)}
-                      renderValue={(selected) => (selected as string[]).length === 0 ? 'All shifts' : (selected as string[]).join(', ')}
-                      sx={{ bgcolor: '#fffdf9', borderRadius: 1.2 }}
-                    >
-                      {shifts.map((shift) => (
-                        <MenuItem key={shift} value={shift}>
-                          <Checkbox checked={shiftFilters.includes(shift)} />
-                          <ListItemText primary={shift} />
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </>
-              ) : null}
-            </Stack>
+            {months.map((month) => (
+              <MenuItem key={month} value={month}>
+                {dayjs(`${month}-01`).format("MMMM YYYY")}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
 
-            <Stack
-              direction="row"
-              alignItems="center"
-              spacing={0.45}
-              justifyContent="center"
-              sx={{
-                flexWrap: 'wrap',
-                minWidth: 0,
-                width: '100%',
-                justifySelf: { xl: 'center' },
-              }}
-            >
-              {availableSections.map((section) => {
-                const active = section.key === activeSection;
-                return (
-                  <Button
-                    key={section.key}
-                    onClick={() => setActiveSection(section.key)}
-                    startIcon={section.icon}
-                    size="small"
-                    sx={{
-                      minHeight: 26,
-                      px: 0.92,
-                      borderRadius: 999,
-                      color: active ? '#9a3412' : '#78716c',
-                      bgcolor: active ? '#fff1e6' : '#ffffff',
-                      border: `1px solid ${active ? 'rgba(234,88,12,0.22)' : 'rgba(231,229,228,1)'}`,
-                      boxShadow: active ? '0 1px 0 rgba(234,88,12,0.08)' : 'none',
-                      '&:hover': {
-                        bgcolor: active ? '#ffe7d6' : '#fffaf5',
-                        color: active ? '#9a3412' : '#57534e',
-                      },
-                      '& .MuiButton-startIcon': {
-                        mr: 0.5,
-                        color: active ? '#ea580c' : '#a8a29e',
-                      },
-                    }}
-                  >
-                    <Typography variant="caption" fontWeight={800} sx={{ letterSpacing: '0.01em', fontSize: '0.68rem' }}>
-                      {section.label}
-                    </Typography>
-                  </Button>
-                );
-              })}
-            </Stack>
-
-            <Box
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: { xs: 'flex-start', xl: 'flex-end' },
-                minWidth: 0,
-                justifySelf: { xl: 'end' },
-              }}
-            >
-              <Button
-                onClick={onLogout}
-                size="small"
+        {user.role === "admin" ? (
+          <>
+            <FormControl size="small" sx={{ minWidth: { xs: "100%", sm: 200 } }}>
+              <InputLabel>Operators</InputLabel>
+              <Select
+                multiple
+                value={operatorFilters}
+                label="Operators"
+                onChange={(event) =>
+                  setOperatorFilters(
+                    typeof event.target.value === "string"
+                      ? event.target.value.split(",")
+                      : event.target.value
+                  )
+                }
+                renderValue={(selected) =>
+                  (selected as string[]).length === 0
+                    ? "All operators"
+                    : (selected as string[]).join(", ")
+                }
                 sx={{
-                  minWidth: 0,
-                  px: 0.88,
-                  py: 0.28,
-                  borderRadius: 999,
-                  color: '#44403c',
-                  border: '1px solid rgba(231,229,228,1)',
-                  bgcolor: '#ffffff',
-                  fontWeight: 800,
-                  '&:hover': {
-                    bgcolor: '#fffaf5',
+                  bgcolor: "#ffffff",
+                  borderRadius: 3,
+                  "& .MuiOutlinedInput-notchedOutline": {
+                    borderColor: "#ead7c8",
                   },
                 }}
               >
-                Sign out
-              </Button>
-            </Box>
-          </Box>
-        </Box>
+                {operators.map((operator) => (
+                  <MenuItem key={operator} value={operator}>
+                    <Checkbox checked={operatorFilters.includes(operator)} />
+                    <ListItemText primary={operator} />
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
 
+            <FormControl size="small" sx={{ minWidth: { xs: "100%", sm: 170 } }}>
+              <InputLabel>Shifts</InputLabel>
+              <Select
+                multiple
+                value={shiftFilters}
+                label="Shifts"
+                onChange={(event) =>
+                  setShiftFilters(
+                    typeof event.target.value === "string"
+                      ? event.target.value.split(",")
+                      : event.target.value
+                  )
+                }
+                renderValue={(selected) =>
+                  (selected as string[]).length === 0
+                    ? "All shifts"
+                    : (selected as string[]).join(", ")
+                }
+                sx={{
+                  bgcolor: "#ffffff",
+                  borderRadius: 3,
+                  "& .MuiOutlinedInput-notchedOutline": {
+                    borderColor: "#ead7c8",
+                  },
+                }}
+              >
+                {shifts.map((shift) => (
+                  <MenuItem key={shift} value={shift}>
+                    <Checkbox checked={shiftFilters.includes(shift)} />
+                    <ListItemText primary={shift} />
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </>
+        ) : null}
+      </Stack>
+
+      <Stack
+        direction="row"
+        spacing={1}
+        useFlexGap
+        sx={{
+          flexWrap: "wrap",
+          justifyContent: { xs: "flex-start", xl: "center" },
+          alignItems: "center",
+          minWidth: 0,
+        }}
+      >
+        {availableSections.map((section) => {
+          const active = section.key === activeSection;
+
+          return (
+            <Button
+              key={section.key}
+              onClick={() => setActiveSection(section.key)}
+              startIcon={section.icon}
+              size="small"
+              variant="outlined"
+              sx={{
+                minHeight: 38,
+                px: 1.6,
+                borderRadius: 999,
+                textTransform: "none",
+                whiteSpace: "nowrap",
+                bgcolor: active ? "#fff0e4" : "#ffffff",
+                color: active ? "#9a3412" : "#6b7280",
+                borderColor: active ? "#f4b183" : "#ead7c8",
+                boxShadow: active ? "0 4px 10px rgba(234, 88, 12, 0.10)" : "none",
+                "& .MuiButton-startIcon": {
+                  mr: 0.7,
+                  color: active ? "#ea580c" : "#a8a29e",
+                },
+                "&:hover": {
+                  bgcolor: active ? "#ffe6d2" : "#fff8f2",
+                  borderColor: "#f4b183",
+                },
+              }}
+            >
+              <Typography
+                sx={{
+                  fontWeight: 700,
+                  fontSize: "0.82rem",
+                  letterSpacing: "0.01em",
+                }}
+              >
+                {section.label}
+              </Typography>
+            </Button>
+          );
+        })}
+      </Stack>
+
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: { xs: "flex-start", xl: "flex-end" },
+          alignItems: "center",
+        }}
+      >
+        <Button
+          onClick={onLogout}
+          variant="contained"
+          size="small"
+          sx={{
+            minHeight: 38,
+            px: 2,
+            borderRadius: 999,
+            textTransform: "none",
+            fontWeight: 700,
+            bgcolor: "#f97316",
+            color: "#ffffff",
+            boxShadow: "none",
+            "&:hover": {
+              bgcolor: "#ea580c",
+              boxShadow: "none",
+            },
+          }}
+        >
+          Sign out
+        </Button>
+      </Box>
+    </Box>
+  </Stack>
+</Box>
         <Box sx={{ pt: 0.8 }}>
           {user.role === 'admin' && activeSection === 'dashboard' ? <DashboardOverview summary={summary} chartData={chartData} ranking={ranking} /> : null}
           {user.role === 'admin' && activeSection === 'intake' ? <AdminIntakePage summary={summary} chartData={chartData} chemicalByOperator={chemicalByOperator} ranking={ranking} insights={insights} productionRecords={productionRecords} /> : null}
@@ -1602,5 +1659,6 @@ export function Dashboard({ user, onLogout }: { user: AppUser; onLogout: () => v
         </Box>
       </Box>
     </Box>
-  );
+  </Box>
+);  
 }
