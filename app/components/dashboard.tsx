@@ -1399,36 +1399,42 @@ export function Dashboard({ user, onLogout }: { user: AppUser; onLogout: () => v
             position: 'sticky',
             top: 0,
             zIndex: 10,
-            pt: { xs: 0.2, md: 0.28 },
-            pb: 0.28,
-            borderBottom: '1px solid rgba(226,232,240,0.9)',
-            bgcolor: 'rgba(248,245,240,0.96)',
+            pt: { xs: 0.3, md: 0.36 },
+            pb: 0.3,
+            borderBottom: '1px solid rgba(234,88,12,0.08)',
+            bgcolor: '#f8f5f0',
           }}
         >
           <Stack
-            direction="row"
+            direction={{ xs: 'column', xl: 'row' }}
             justifyContent="space-between"
-            alignItems="center"
+            alignItems={{ xs: 'stretch', xl: 'center' }}
             sx={{
-              minHeight: 38,
-              gap: 0.8,
-              flexWrap: { xs: 'wrap', xl: 'nowrap' },
-              py: 0.18,
-              px: 0.2,
-              borderRadius: 1.5,
-              bgcolor: '#ffffff',
-              boxShadow: '0 4px 12px rgba(15,23,42,0.05)',
+              minHeight: 42,
+              gap: { xs: 0.65, xl: 1 },
+              py: 0.22,
             }}
-            >
+          >
             <Stack
               direction="row"
               alignItems="center"
-              spacing={0.5}
-              sx={{ flex: { xs: '1 1 100%', xl: '1 1 0' }, width: '100%', maxWidth: { xs: '100%', xl: 560 }, flexWrap: { xs: 'wrap', sm: 'nowrap' }, minWidth: 0 }}
+              spacing={0.55}
+              sx={{
+                flex: { xs: '1 1 auto', xl: '1 1 0' },
+                width: '100%',
+                maxWidth: { xs: '100%', xl: 560 },
+                flexWrap: { xs: 'wrap', md: 'nowrap' },
+                minWidth: 0,
+              }}
             >
-              <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 160 } }}>
+              <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 154 } }}>
                 <InputLabel>Month</InputLabel>
-                <Select value={selectedMonth} label="Month" onChange={(event) => setSelectedMonth(event.target.value)}>
+                <Select
+                  value={selectedMonth}
+                  label="Month"
+                  onChange={(event) => setSelectedMonth(event.target.value)}
+                  sx={{ bgcolor: '#fffdf9', borderRadius: 1.2 }}
+                >
                   {months.map((month) => (
                     <MenuItem key={month} value={month}>{dayjs(`${month}-01`).format('MMMM YYYY')}</MenuItem>
                   ))}
@@ -1436,9 +1442,16 @@ export function Dashboard({ user, onLogout }: { user: AppUser; onLogout: () => v
               </FormControl>
               {user.role === 'admin' ? (
                 <>
-                  <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 190 } }}>
+                  <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 188 } }}>
                     <InputLabel>Operators</InputLabel>
-                    <Select multiple value={operatorFilters} label="Operators" onChange={(event) => setOperatorFilters(typeof event.target.value === 'string' ? event.target.value.split(',') : event.target.value)} renderValue={(selected) => (selected as string[]).length === 0 ? 'All operators' : (selected as string[]).join(', ')}>
+                    <Select
+                      multiple
+                      value={operatorFilters}
+                      label="Operators"
+                      onChange={(event) => setOperatorFilters(typeof event.target.value === 'string' ? event.target.value.split(',') : event.target.value)}
+                      renderValue={(selected) => (selected as string[]).length === 0 ? 'All operators' : (selected as string[]).join(', ')}
+                      sx={{ bgcolor: '#fffdf9', borderRadius: 1.2 }}
+                    >
                       {operators.map((operator) => (
                         <MenuItem key={operator} value={operator}>
                           <Checkbox checked={operatorFilters.includes(operator)} />
@@ -1447,9 +1460,16 @@ export function Dashboard({ user, onLogout }: { user: AppUser; onLogout: () => v
                       ))}
                     </Select>
                   </FormControl>
-                  <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 168 } }}>
+                  <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 164 } }}>
                     <InputLabel>Shifts</InputLabel>
-                    <Select multiple value={shiftFilters} label="Shifts" onChange={(event) => setShiftFilters(typeof event.target.value === 'string' ? event.target.value.split(',') : event.target.value)} renderValue={(selected) => (selected as string[]).length === 0 ? 'All shifts' : (selected as string[]).join(', ')}>
+                    <Select
+                      multiple
+                      value={shiftFilters}
+                      label="Shifts"
+                      onChange={(event) => setShiftFilters(typeof event.target.value === 'string' ? event.target.value.split(',') : event.target.value)}
+                      renderValue={(selected) => (selected as string[]).length === 0 ? 'All shifts' : (selected as string[]).join(', ')}
+                      sx={{ bgcolor: '#fffdf9', borderRadius: 1.2 }}
+                    >
                       {shifts.map((shift) => (
                         <MenuItem key={shift} value={shift}>
                           <Checkbox checked={shiftFilters.includes(shift)} />
@@ -1465,22 +1485,17 @@ export function Dashboard({ user, onLogout }: { user: AppUser; onLogout: () => v
             <Stack
               direction="row"
               alignItems="center"
-              spacing={0.45}
+              spacing={0.5}
               justifyContent="center"
-              sx={{ flex: { xs: '1 1 100%', xl: '1 1 0' }, flexWrap: 'wrap', minWidth: 0 }}
+              sx={{
+                flex: { xs: '1 1 auto', xl: '1 1 0' },
+                flexWrap: 'wrap',
+                minWidth: 0,
+                width: '100%',
+              }}
             >
               {availableSections.map((section) => {
                 const active = section.key === activeSection;
-                const accent =
-                  section.key === 'dashboard'
-                    ? '#2563eb'
-                    : section.key === 'intake'
-                      ? '#0f766e'
-                      : section.key === 'cip'
-                        ? '#7c3aed'
-                        : section.key === 'operators'
-                          ? '#ea580c'
-                          : '#2563eb';
                 return (
                   <Button
                     key={section.key}
@@ -1489,19 +1504,19 @@ export function Dashboard({ user, onLogout }: { user: AppUser; onLogout: () => v
                     size="small"
                     sx={{
                       minHeight: 26,
-                      px: 0.88,
-                      borderRadius: 1,
-                      color: active ? 'common.white' : '#94a3b8',
-                      bgcolor: active ? accent : '#ffffff',
-                      border: `1px solid ${active ? accent : 'rgba(226,232,240,0.96)'}`,
-                      boxShadow: active ? `inset 0 -1px 0 ${alpha('#000', 0.08)}` : 'none',
+                      px: 0.92,
+                      borderRadius: 999,
+                      color: active ? '#9a3412' : '#78716c',
+                      bgcolor: active ? '#fff1e6' : '#ffffff',
+                      border: `1px solid ${active ? 'rgba(234,88,12,0.22)' : 'rgba(231,229,228,1)'}`,
+                      boxShadow: active ? '0 1px 0 rgba(234,88,12,0.08)' : 'none',
                       '&:hover': {
-                        bgcolor: active ? alpha(accent, 0.92) : '#f8fafc',
-                        color: active ? 'common.white' : '#64748b',
+                        bgcolor: active ? '#ffe7d6' : '#fffaf5',
+                        color: active ? '#9a3412' : '#57534e',
                       },
                       '& .MuiButton-startIcon': {
                         mr: 0.5,
-                        color: active ? 'common.white' : '#94a3b8',
+                        color: active ? '#ea580c' : '#a8a29e',
                       },
                     }}
                   >
@@ -1527,13 +1542,16 @@ export function Dashboard({ user, onLogout }: { user: AppUser; onLogout: () => v
                 size="small"
                 sx={{
                   minWidth: 0,
-                  px: 0.82,
+                  px: 0.88,
                   py: 0.28,
-                  borderRadius: 1,
-                  color: '#0f172a',
-                  border: '1px solid rgba(226,232,240,0.96)',
+                  borderRadius: 999,
+                  color: '#44403c',
+                  border: '1px solid rgba(231,229,228,1)',
                   bgcolor: '#ffffff',
                   fontWeight: 800,
+                  '&:hover': {
+                    bgcolor: '#fffaf5',
+                  },
                 }}
               >
                 Sign out
