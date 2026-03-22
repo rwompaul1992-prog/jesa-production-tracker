@@ -10,9 +10,7 @@ import {
   CardContent,
   Checkbox,
   Chip,
-  Divider,
   FormControl,
-  IconButton,
   InputLabel,
   LinearProgress,
   ListItemText,
@@ -30,13 +28,11 @@ import {
   Typography,
 } from '@mui/material';
 import { alpha } from '@mui/material/styles';
-import MenuRounded from '@mui/icons-material/MenuRounded';
 import OpacityRounded from '@mui/icons-material/OpacityRounded';
 import ScienceRounded from '@mui/icons-material/ScienceRounded';
 import WarningAmberRounded from '@mui/icons-material/WarningAmberRounded';
 import InsightsRounded from '@mui/icons-material/InsightsRounded';
 import FactoryRounded from '@mui/icons-material/FactoryRounded';
-import GroupsRounded from '@mui/icons-material/GroupsRounded';
 import DashboardRounded from '@mui/icons-material/DashboardRounded';
 import LocalDrinkRounded from '@mui/icons-material/LocalDrinkRounded';
 import CleaningServicesRounded from '@mui/icons-material/CleaningServicesRounded';
@@ -48,7 +44,6 @@ import SaveRounded from '@mui/icons-material/SaveRounded';
 import AssignmentTurnedInRounded from '@mui/icons-material/AssignmentTurnedInRounded';
 import PendingRounded from '@mui/icons-material/PendingRounded';
 import TrendingUpRounded from '@mui/icons-material/TrendingUpRounded';
-import TrendingDownRounded from '@mui/icons-material/TrendingDownRounded';
 import BoltRounded from '@mui/icons-material/BoltRounded';
 import FlagRounded from '@mui/icons-material/FlagRounded';
 import ShowChartRounded from '@mui/icons-material/ShowChartRounded';
@@ -80,7 +75,6 @@ import {
 } from '@/app/lib/analytics';
 import { AppUser, CipRecord, CipType, EntryStatus, OperatorDailyEntry, OperatorPerformanceEntry, ProductionRecord, Shift } from '@/app/lib/types';
 
-const drawerWidth = 260;
 const shifts: Shift[] = ['Morning', 'Afternoon', 'Night'];
 const cipTypes: CipType[] = ['Caustic wash', 'Caustic and Acid wash'];
 
@@ -1376,70 +1370,159 @@ export function Dashboard({ user, onLogout }: { user: AppUser; onLogout: () => v
 
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: '#edf3fb' }}>
-      <Box sx={{ display: 'flex', minHeight: '100vh' }}>
-        <Box sx={{ width: { xs: 88, md: drawerWidth }, flexShrink: 0, background: 'linear-gradient(180deg, #081121 0%, #0f172a 38%, #111c34 100%)', color: 'white', p: { xs: 1.4, md: 1.8 }, display: 'flex', flexDirection: 'column', borderRight: '1px solid rgba(255,255,255,0.08)', position: 'sticky', top: 0, height: '100vh', boxShadow: 'inset -1px 0 0 rgba(255,255,255,0.04)' }}>
-          <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.2} alignItems="center" sx={{ mb: 2.2 }}>
-            <Avatar sx={{ bgcolor: 'primary.main', width: 46, height: 46, boxShadow: '0 10px 22px rgba(47,109,246,0.38)' }}><FactoryRounded /></Avatar>
-            <Box sx={{ display: { xs: 'none', md: 'block' } }}>
-              <Typography variant="body2" fontWeight={900}>JESA Operations</Typography>
-              <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.62)' }}>Industrial analytics platform</Typography>
-            </Box>
-          </Stack>
-
-          <Paper sx={{ p: 1.7, mb: 2.2, borderRadius: 4, color: 'white', background: 'linear-gradient(145deg, rgba(47,109,246,0.26), rgba(15,118,110,0.18), rgba(51,65,85,0.42))', border: '1px solid rgba(255,255,255,0.08)' }}>
-            <Stack spacing={0.8} alignItems={{ xs: 'center', md: 'flex-start' }}>
-              <Avatar sx={{ width: 34, height: 34, bgcolor: 'rgba(255,255,255,0.14)' }}><GroupsRounded fontSize="small" /></Avatar>
-              <Box sx={{ display: { xs: 'none', md: 'block' } }}>
-                <Typography variant="body2" fontWeight={800}>{user.name}</Typography>
-                <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.66)' }}>{user.role === 'admin' ? 'Admin / Supervisor' : 'Operator command view'}</Typography>
-              </Box>
-            </Stack>
-          </Paper>
-
-          <Stack spacing={0.8} sx={{ flexGrow: 1 }}>
-            {availableSections.map((section) => {
-              const active = section.key === activeSection;
-              return (
-                <Button
-                  key={section.key}
-                  onClick={() => setActiveSection(section.key)}
-                  startIcon={section.icon}
-                  sx={{ justifyContent: { xs: 'center', md: 'flex-start' }, px: { xs: 0.7, md: 1.35 }, py: 1.25, color: 'white', bgcolor: active ? 'rgba(255,255,255,0.12)' : 'transparent', border: active ? '1px solid rgba(255,255,255,0.12)' : '1px solid transparent', boxShadow: active ? 'inset 0 1px 0 rgba(255,255,255,0.05)' : 'none', '&:hover': { bgcolor: 'rgba(255,255,255,0.08)' }, '& .MuiButton-startIcon': { mr: { xs: 0, md: 0.8 }, color: active ? '#7dd3fc' : 'rgba(255,255,255,0.72)' } }}
-                >
-                  <Box sx={{ display: { xs: 'none', md: 'block' }, textAlign: 'left' }}>
-                    <Typography variant="caption" fontWeight={800}>{section.label}</Typography>
-                    <Typography variant="caption" sx={{ display: 'block', color: 'rgba(255,255,255,0.58)' }}>{section.description}</Typography>
-                  </Box>
-                </Button>
-              );
-            })}
-          </Stack>
-
-          <Button color="inherit" onClick={onLogout} sx={{ mt: 1.5, bgcolor: 'rgba(255,255,255,0.08)' }}>Sign out</Button>
-        </Box>
-
-        <Box sx={{ flex: 1, minWidth: 0 }}>
-          <Box sx={{ position: 'sticky', top: 0, zIndex: 5, px: { xs: 1.8, md: 2.4 }, py: 1.6, borderBottom: '1px solid rgba(148,163,184,0.14)', backdropFilter: 'blur(18px)', bgcolor: 'rgba(237,243,251,0.9)' }}>
-            <Stack spacing={1.4}>
-              <Stack direction={{ xs: 'column', lg: 'row' }} justifyContent="space-between" spacing={1.5}>
+      <Box sx={{ maxWidth: 1660, mx: 'auto', px: { xs: 1.4, md: 2.2 }, pb: { xs: 2, md: 2.8 } }}>
+        <Box
+          sx={{
+            position: 'sticky',
+            top: 0,
+            zIndex: 10,
+            pt: { xs: 1.2, md: 1.5 },
+            pb: 1.2,
+            backdropFilter: 'blur(18px)',
+            bgcolor: 'rgba(237,243,251,0.88)',
+          }}
+        >
+          <Paper
+            sx={{
+              borderRadius: 5,
+              overflow: 'hidden',
+              border: '1px solid rgba(148,163,184,0.14)',
+              background: 'linear-gradient(180deg, rgba(255,255,255,0.98), rgba(248,250,252,0.94))',
+              boxShadow: '0 16px 34px rgba(15,23,42,0.06)',
+            }}
+          >
+            <Box
+              sx={{
+                px: { xs: 1.2, md: 1.8 },
+                py: { xs: 1.1, md: 1.25 },
+                borderBottom: '1px solid rgba(148,163,184,0.12)',
+                background: 'linear-gradient(90deg, rgba(8,17,33,0.98) 0%, rgba(17,28,52,0.95) 42%, rgba(15,118,110,0.92) 100%)',
+                color: 'white',
+              }}
+            >
+              <Stack
+                direction={{ xs: 'column', xl: 'row' }}
+                spacing={1.2}
+                justifyContent="space-between"
+                alignItems={{ xs: 'flex-start', xl: 'center' }}
+              >
                 <Stack direction="row" spacing={1.2} alignItems="center">
-                  <IconButton sx={{ display: { md: 'none' }, bgcolor: 'white' }}><MenuRounded /></IconButton>
+                  <Avatar sx={{ bgcolor: 'rgba(255,255,255,0.12)', width: 38, height: 38, boxShadow: '0 10px 22px rgba(8,17,33,0.2)' }}>
+                    <FactoryRounded fontSize="small" />
+                  </Avatar>
                   <Box>
-                    <Typography variant="overline" sx={{ color: 'primary.main', letterSpacing: '0.12em', fontWeight: 800 }}>Industrial dairy operations / {selectedMonth}</Typography>
-                    <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>{currentSection.label}</Typography>
-                    <Typography variant="caption" color="text.secondary">{currentSection.description}</Typography>
+                    <Typography variant="body2" fontWeight={900}>
+                      JESA Operations
+                    </Typography>
+                    <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.72)' }}>
+                      Industrial analytics platform
+                    </Typography>
                   </Box>
                 </Stack>
-                <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.2}>
-                  <Chip icon={<WaterDropRounded />} size="small" color={summary.lossPercentage > 2.6 ? 'error' : 'warning'} label={`${summary.totalLoss.toLocaleString()} L loss`} sx={{ bgcolor: summary.lossPercentage > 2.6 ? 'rgba(220,38,38,0.12)' : 'rgba(245,158,11,0.12)' }} />
-                  <Chip icon={<NotificationsActiveRounded />} size="small" color={user.role === 'operator' ? 'primary' : 'success'} label={user.role === 'operator' ? 'Commit on Enter / blur / Save all' : 'Filtered executive view'} sx={{ bgcolor: user.role === 'operator' ? 'rgba(47,109,246,0.1)' : 'rgba(20,184,166,0.12)' }} />
+
+                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={0.8} alignItems={{ xs: 'flex-start', sm: 'center' }}>
+                  <Chip
+                    size="small"
+                    variant="outlined"
+                    label={user.role === 'admin' ? 'Admin / Supervisor' : 'Operator workspace'}
+                    sx={{ color: 'white', borderColor: 'rgba(255,255,255,0.18)', bgcolor: 'rgba(255,255,255,0.06)' }}
+                  />
+                  <Chip
+                    icon={<WaterDropRounded />}
+                    size="small"
+                    label={`${summary.totalLoss.toLocaleString()} L loss`}
+                    sx={{ color: 'white', bgcolor: summary.lossPercentage > 2.6 ? 'rgba(239,68,68,0.18)' : 'rgba(245,158,11,0.18)' }}
+                  />
+                  <Button
+                    color="inherit"
+                    onClick={onLogout}
+                    size="small"
+                    sx={{
+                      minWidth: 0,
+                      px: 1.4,
+                      py: 0.75,
+                      borderRadius: 999,
+                      bgcolor: 'rgba(255,255,255,0.08)',
+                      border: '1px solid rgba(255,255,255,0.12)',
+                    }}
+                  >
+                    Sign out
+                  </Button>
+                </Stack>
+              </Stack>
+            </Box>
+
+            <Stack spacing={1.1} sx={{ px: { xs: 1.2, md: 1.8 }, py: { xs: 1.15, md: 1.35 } }}>
+              <Stack
+                direction={{ xs: 'column', lg: 'row' }}
+                spacing={1}
+                justifyContent="space-between"
+                alignItems={{ xs: 'stretch', lg: 'center' }}
+              >
+                <Stack spacing={0.35}>
+                  <Typography variant="overline" sx={{ color: 'primary.main', letterSpacing: '0.14em', fontWeight: 800 }}>
+                    Industrial dairy operations / {selectedMonth}
+                  </Typography>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 900 }}>
+                    {currentSection.label}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700 }}>
+                    {currentSection.description}
+                  </Typography>
+                </Stack>
+
+                <Stack
+                  direction="row"
+                  spacing={0.8}
+                  sx={{ flexWrap: 'wrap', alignItems: 'center' }}
+                >
+                  {availableSections.map((section) => {
+                    const active = section.key === activeSection;
+                    return (
+                      <Button
+                        key={section.key}
+                        onClick={() => setActiveSection(section.key)}
+                        startIcon={section.icon}
+                        size="small"
+                        sx={{
+                          minHeight: 36,
+                          px: 1.25,
+                          borderRadius: 999,
+                          color: active ? 'primary.main' : 'text.secondary',
+                          bgcolor: active ? 'rgba(47,109,246,0.1)' : 'transparent',
+                          border: `1px solid ${active ? 'rgba(47,109,246,0.18)' : 'rgba(148,163,184,0.14)'}`,
+                          boxShadow: active ? 'inset 0 1px 0 rgba(255,255,255,0.7)' : 'none',
+                          '&:hover': {
+                            bgcolor: active ? 'rgba(47,109,246,0.12)' : 'rgba(148,163,184,0.08)',
+                          },
+                          '& .MuiButton-startIcon': {
+                            mr: 0.7,
+                            color: active ? 'primary.main' : 'text.secondary',
+                          },
+                        }}
+                      >
+                        <Typography variant="caption" fontWeight={800}>
+                          {section.label}
+                        </Typography>
+                      </Button>
+                    );
+                  })}
                 </Stack>
               </Stack>
 
-              <Paper sx={{ p: 1.5, borderRadius: 4, border: '1px solid rgba(148,163,184,0.16)', background: 'linear-gradient(180deg, rgba(255,255,255,0.94), rgba(255,255,255,0.86))' }}>
-                <Stack direction={{ xs: 'column', xl: 'row' }} spacing={1.2} alignItems={{ xs: 'stretch', xl: 'center' }}>
-                  <Chip icon={<FilterAltRounded />} size="small" label={user.role === 'admin' ? 'Executive filters' : 'Month selector'} color="primary" sx={{ alignSelf: { xs: 'flex-start', xl: 'center' }, bgcolor: 'rgba(47,109,246,0.1)' }} />
-                  <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.2} sx={{ flex: 1 }}>
+              <Paper sx={{ p: 1.15, borderRadius: 4, border: '1px solid rgba(148,163,184,0.14)', background: 'linear-gradient(180deg, rgba(255,255,255,0.96), rgba(255,255,255,0.88))' }}>
+                <Stack direction={{ xs: 'column', xl: 'row' }} spacing={1} alignItems={{ xs: 'stretch', xl: 'center' }}>
+                  <Stack direction="row" spacing={0.8} alignItems="center">
+                    <Chip icon={<FilterAltRounded />} size="small" label={user.role === 'admin' ? 'Executive filters' : 'Month selector'} color="primary" sx={{ bgcolor: 'rgba(47,109,246,0.1)' }} />
+                    <Chip
+                      icon={<NotificationsActiveRounded />}
+                      size="small"
+                      color={user.role === 'operator' ? 'primary' : 'success'}
+                      label={user.role === 'operator' ? 'Commit on Enter / blur / Save all' : 'Filtered executive view'}
+                      sx={{ bgcolor: user.role === 'operator' ? 'rgba(47,109,246,0.1)' : 'rgba(20,184,166,0.12)' }}
+                    />
+                  </Stack>
+                  <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} sx={{ flex: 1 }}>
                     <FormControl fullWidth size="small">
                       <InputLabel>Month</InputLabel>
                       <Select value={selectedMonth} label="Month" onChange={(event) => setSelectedMonth(event.target.value)}>
@@ -1478,45 +1561,45 @@ export function Dashboard({ user, onLogout }: { user: AppUser; onLogout: () => v
                 </Stack>
               </Paper>
             </Stack>
-          </Box>
+          </Paper>
+        </Box>
 
-          <Box sx={{ p: { xs: 1.8, md: 2.4 } }}>
-            {user.role === 'admin' && activeSection === 'dashboard' ? <DashboardOverview summary={summary} chartData={chartData} ranking={ranking} /> : null}
-            {user.role === 'admin' && activeSection === 'intake' ? <AdminIntakePage summary={summary} chartData={chartData} chemicalByOperator={chemicalByOperator} ranking={ranking} insights={insights} productionRecords={productionRecords} /> : null}
-            {user.role === 'admin' && activeSection === 'cip' ? (
-              <SectionCard title="Sanitation chemistry ledger" description="CIP chemistry records for the selected month.">
-                <TableContainer component={Paper} sx={{ borderRadius: 3, border: '1px solid rgba(148,163,184,0.16)' }}>
-                  <Table size="small">
-                    <TableHead>
-                      <TableRow>
-                        {['Date', 'Operator', 'CIP type', 'Chemical used', 'Caustic', 'Nitric'].map((header) => <TableCell key={header} sx={{ fontWeight: 800, py: 1.1 }}>{header}</TableCell>)}
+        <Box sx={{ pt: 1.2 }}>
+          {user.role === 'admin' && activeSection === 'dashboard' ? <DashboardOverview summary={summary} chartData={chartData} ranking={ranking} /> : null}
+          {user.role === 'admin' && activeSection === 'intake' ? <AdminIntakePage summary={summary} chartData={chartData} chemicalByOperator={chemicalByOperator} ranking={ranking} insights={insights} productionRecords={productionRecords} /> : null}
+          {user.role === 'admin' && activeSection === 'cip' ? (
+            <SectionCard title="Sanitation chemistry ledger" description="CIP chemistry records for the selected month.">
+              <TableContainer component={Paper} sx={{ borderRadius: 3, border: '1px solid rgba(148,163,184,0.16)' }}>
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      {['Date', 'Operator', 'CIP type', 'Chemical used', 'Caustic', 'Nitric'].map((header) => <TableCell key={header} sx={{ fontWeight: 800, py: 1.1 }}>{header}</TableCell>)}
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {cipRecords.map((record) => (
+                      <TableRow key={record.id} hover sx={{ '& td': { py: 0.9 } }}>
+                        <TableCell>{record.date}</TableCell>
+                        <TableCell>{record.operatorName}</TableCell>
+                        <TableCell>{record.cipType}</TableCell>
+                        <TableCell>{record.chemicalUsed}</TableCell>
+                        <TableCell>{record.causticJerrycansUsed}</TableCell>
+                        <TableCell>{record.nitricAcidJerrycansUsed}</TableCell>
                       </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {cipRecords.map((record) => (
-                        <TableRow key={record.id} hover sx={{ '& td': { py: 0.9 } }}>
-                          <TableCell>{record.date}</TableCell>
-                          <TableCell>{record.operatorName}</TableCell>
-                          <TableCell>{record.cipType}</TableCell>
-                          <TableCell>{record.chemicalUsed}</TableCell>
-                          <TableCell>{record.causticJerrycansUsed}</TableCell>
-                          <TableCell>{record.nitricAcidJerrycansUsed}</TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-              </SectionCard>
-            ) : null}
-            {user.role === 'admin' && activeSection === 'operators' ? (
-              <OperatorPerformancePage
-                performance={performance}
-                selectedOperator={selectedPerformanceOperator}
-                onSelectOperator={setSelectedPerformanceOperator}
-              />
-            ) : null}
-            {user.role === 'operator' && activeSection === 'operator-entry' ? <OperatorMonthlyEntryTable rows={operatorRows} onCommitRows={commitOperatorRows} operatorName={user.name} /> : null}
-          </Box>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </SectionCard>
+          ) : null}
+          {user.role === 'admin' && activeSection === 'operators' ? (
+            <OperatorPerformancePage
+              performance={performance}
+              selectedOperator={selectedPerformanceOperator}
+              onSelectOperator={setSelectedPerformanceOperator}
+            />
+          ) : null}
+          {user.role === 'operator' && activeSection === 'operator-entry' ? <OperatorMonthlyEntryTable rows={operatorRows} onCommitRows={commitOperatorRows} operatorName={user.name} /> : null}
         </Box>
       </Box>
     </Box>
