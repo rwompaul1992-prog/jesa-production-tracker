@@ -36,9 +36,6 @@ import DashboardRounded from '@mui/icons-material/DashboardRounded';
 import LocalDrinkRounded from '@mui/icons-material/LocalDrinkRounded';
 import CleaningServicesRounded from '@mui/icons-material/CleaningServicesRounded';
 import LeaderboardRounded from '@mui/icons-material/LeaderboardRounded';
-import NotificationsActiveRounded from '@mui/icons-material/NotificationsActiveRounded';
-import WaterDropRounded from '@mui/icons-material/WaterDropRounded';
-import FilterAltRounded from '@mui/icons-material/FilterAltRounded';
 import SaveRounded from '@mui/icons-material/SaveRounded';
 import AssignmentTurnedInRounded from '@mui/icons-material/AssignmentTurnedInRounded';
 import PendingRounded from '@mui/icons-material/PendingRounded';
@@ -1296,13 +1293,7 @@ function AdminIntakePage({
 
 function DashboardOverview({ summary, chartData, ranking }: { summary: ReturnType<typeof buildMonthlySummary>; chartData: ReturnType<typeof buildChartData>; ranking: ReturnType<typeof buildOperatorRanking>; }) {
   return (
-    <Stack spacing={1.8}>
-      <Box sx={{ p: 2.05, borderRadius: 4.5, background: 'linear-gradient(135deg, #081121 0%, #17367a 54%, #0f766e 100%)', color: 'white', position: 'relative', overflow: 'hidden', boxShadow: '0 18px 34px rgba(15,23,42,0.14)' }}>
-        <Box sx={{ position: 'absolute', inset: 0, background: 'radial-gradient(circle at 18% 20%, rgba(96,165,250,0.22), transparent 24%)' }} />
-        <Typography variant="overline" sx={{ letterSpacing: '0.16em', opacity: 0.84, position: 'relative' }}>JESA industrial operations</Typography>
-        <Typography variant="h6" sx={{ mt: 0.45, position: 'relative', fontWeight: 900 }}>Executive control center</Typography>
-        <Typography variant="body2" sx={{ mt: 0.55, opacity: 0.84, maxWidth: 560, position: 'relative' }}>A premium operational snapshot of intake throughput, loss discipline, and operator performance for the active month.</Typography>
-      </Box>
+    <Stack spacing={1.35}>
       <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '1.4fr 1fr' }, gap: 1.35 }}>
         <SectionCard title="Milk movement" description="Throughput profile across daily offloaded and pasteurized volume.">
           <Box sx={{ height: 198 }}>
@@ -1386,55 +1377,65 @@ export function Dashboard({ user, onLogout }: { user: AppUser; onLogout: () => v
             position: 'sticky',
             top: 0,
             zIndex: 10,
-            pt: { xs: 0.45, md: 0.6 },
-            pb: 0.55,
-            backdropFilter: 'blur(14px)',
+            pt: { xs: 0.35, md: 0.45 },
+            pb: 0.42,
+            backdropFilter: 'blur(12px)',
             bgcolor: 'rgba(237,243,251,0.88)',
           }}
         >
           <Paper
             sx={{
-              borderRadius: 3.5,
+              borderRadius: 3,
               overflow: 'hidden',
               border: '1px solid rgba(148,163,184,0.14)',
               background: 'rgba(255,255,255,0.95)',
-              boxShadow: '0 10px 24px rgba(15,23,42,0.05)',
+              boxShadow: '0 8px 20px rgba(15,23,42,0.05)',
             }}
           >
-            <Stack spacing={0.7} sx={{ px: { xs: 0.85, md: 1.15 }, py: { xs: 0.7, md: 0.8 } }}>
+            <Stack spacing={0.55} sx={{ px: { xs: 0.8, md: 1 }, py: { xs: 0.55, md: 0.62 } }}>
               <Stack
                 direction={{ xs: 'column', xl: 'row' }}
-                spacing={0.8}
+                spacing={0.55}
                 justifyContent="space-between"
                 alignItems={{ xs: 'flex-start', xl: 'center' }}
                 sx={{ minHeight: 0 }}
               >
                 <Stack
                   direction={{ xs: 'column', lg: 'row' }}
-                  spacing={0.8}
+                  spacing={0.6}
                   justifyContent="space-between"
                   alignItems={{ xs: 'stretch', lg: 'center' }}
                   sx={{ width: '100%' }}
                 >
-                <Stack spacing={0.35}>
-                  <Typography variant="overline" sx={{ color: 'primary.main', letterSpacing: '0.14em', fontWeight: 800 }}>
+                <Stack spacing={0.15}>
+                  <Typography variant="overline" sx={{ color: 'primary.main', letterSpacing: '0.12em', fontWeight: 800, lineHeight: 1.2 }}>
                     Industrial dairy operations / {selectedMonth}
                   </Typography>
-                  <Typography variant="subtitle2" sx={{ fontWeight: 900 }}>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 900, lineHeight: 1.15 }}>
                     {currentSection.label}
                   </Typography>
-                  <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700 }}>
+                  <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700, lineHeight: 1.15 }}>
                     {currentSection.description}
                   </Typography>
                 </Stack>
 
                 <Stack
                   direction="row"
-                  spacing={0.8}
+                  spacing={0.6}
                   sx={{ flexWrap: 'wrap', alignItems: 'center' }}
                 >
                   {availableSections.map((section) => {
                     const active = section.key === activeSection;
+                    const accent =
+                      section.key === 'dashboard'
+                        ? '#2563eb'
+                        : section.key === 'intake'
+                          ? '#0f766e'
+                          : section.key === 'cip'
+                            ? '#7c3aed'
+                            : section.key === 'operators'
+                              ? '#ea580c'
+                              : '#2563eb';
                     return (
                       <Button
                         key={section.key}
@@ -1442,18 +1443,18 @@ export function Dashboard({ user, onLogout }: { user: AppUser; onLogout: () => v
                         startIcon={section.icon}
                         size="small"
                         sx={{
-                          minHeight: 30,
-                          px: 1.05,
+                          minHeight: 28,
+                          px: 1,
                           borderRadius: 999,
                           color: active ? 'common.white' : '#0f172a',
-                          bgcolor: active ? '#2563eb' : 'rgba(255,255,255,0.96)',
-                          border: `1px solid ${active ? '#2563eb' : 'rgba(148,163,184,0.22)'}`,
-                          boxShadow: active ? '0 10px 18px rgba(37,99,235,0.22)' : 'none',
+                          bgcolor: active ? accent : 'rgba(255,255,255,0.98)',
+                          border: `1px solid ${active ? accent : 'rgba(148,163,184,0.22)'}`,
+                          boxShadow: active ? `0 10px 18px ${alpha(accent, 0.28)}` : 'none',
                           '&:hover': {
-                            bgcolor: active ? '#1d4ed8' : 'rgba(241,245,249,0.98)',
+                            bgcolor: active ? alpha(accent, 0.92) : 'rgba(241,245,249,0.98)',
                           },
                           '& .MuiButton-startIcon': {
-                            mr: 0.6,
+                            mr: 0.5,
                             color: active ? 'common.white' : '#334155',
                           },
                         }}
@@ -1465,27 +1466,27 @@ export function Dashboard({ user, onLogout }: { user: AppUser; onLogout: () => v
                     );
                   })}
                 </Stack>
+                <Button
+                  onClick={onLogout}
+                  size="small"
+                  sx={{
+                    minWidth: 0,
+                    px: 1.05,
+                    py: 0.45,
+                    borderRadius: 999,
+                    color: '#0f172a',
+                    border: '1px solid rgba(148,163,184,0.22)',
+                    bgcolor: 'rgba(255,255,255,0.98)',
+                    fontWeight: 800,
+                    alignSelf: { xs: 'flex-start', lg: 'center' },
+                  }}
+                >
+                  Sign out
+                </Button>
               </Stack>
 
-              <Stack direction={{ xs: 'column', xl: 'row' }} spacing={0.75} alignItems={{ xs: 'stretch', xl: 'center' }}>
-                  <Stack direction="row" spacing={0.65} alignItems="center" flexWrap="wrap" useFlexGap>
-                    <Chip icon={<FilterAltRounded />} size="small" label={user.role === 'admin' ? 'Executive filters' : 'Month selector'} color="primary" sx={{ height: 22, bgcolor: 'rgba(37,99,235,0.1)' }} />
-                    <Chip
-                      icon={<NotificationsActiveRounded />}
-                      size="small"
-                      color={user.role === 'operator' ? 'primary' : 'success'}
-                      label={user.role === 'operator' ? 'Commit on Enter / blur / Save all' : 'Filtered executive view'}
-                      sx={{ height: 22, bgcolor: user.role === 'operator' ? 'rgba(37,99,235,0.1)' : 'rgba(20,184,166,0.12)' }}
-                    />
-                    <Chip
-                      icon={<WaterDropRounded />}
-                      size="small"
-                      label={`${summary.totalLoss.toLocaleString()} L loss`}
-                      color={summary.lossPercentage > 2.6 ? 'error' : 'warning'}
-                      sx={{ height: 22 }}
-                    />
-                  </Stack>
-                  <Stack direction={{ xs: 'column', sm: 'row' }} spacing={0.75} sx={{ flex: 1 }}>
+              <Stack direction={{ xs: 'column', xl: 'row' }} spacing={0.65} alignItems={{ xs: 'stretch', xl: 'center' }}>
+                  <Stack direction={{ xs: 'column', sm: 'row' }} spacing={0.7} sx={{ flex: 1 }}>
                     <FormControl fullWidth size="small">
                       <InputLabel>Month</InputLabel>
                       <Select value={selectedMonth} label="Month" onChange={(event) => setSelectedMonth(event.target.value)}>
@@ -1520,24 +1521,6 @@ export function Dashboard({ user, onLogout }: { user: AppUser; onLogout: () => v
                         </FormControl>
                       </>
                     ) : null}
-                  </Stack>
-                  <Stack direction="row" spacing={0.6} justifyContent="flex-end">
-                    <Button
-                      onClick={onLogout}
-                      size="small"
-                      sx={{
-                        minWidth: 0,
-                        px: 1.15,
-                        py: 0.55,
-                        borderRadius: 999,
-                        color: '#0f172a',
-                        border: '1px solid rgba(148,163,184,0.22)',
-                        bgcolor: 'rgba(255,255,255,0.96)',
-                        fontWeight: 800,
-                      }}
-                    >
-                      Sign out
-                    </Button>
                   </Stack>
                 </Stack>
               </Stack>
