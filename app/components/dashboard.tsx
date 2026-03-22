@@ -1184,8 +1184,8 @@ function AdminIntakePage({
   const abnormalOperators = ranking.filter((entry) => entry.lossRate > 2.5).map((entry) => entry.operator);
 
   return (
-    <Stack spacing={1.35}>
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)', xl: 'repeat(6, 1fr)' }, gap: 0.95 }}>
+    <Stack spacing={1.15}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)', xl: 'repeat(6, 1fr)' }, gap: 0.8 }}>
         <CompactMetricCard title="Milk offloaded" value={`${summary.totalOffloaded.toLocaleString()} L`} helper="Monthly intake volume" icon={<OpacityRounded />} tone="neutral" trend="Flow stable" />
         <CompactMetricCard title="Milk pasteurized" value={`${summary.totalPasteurized.toLocaleString()} L`} helper="Finished output" icon={<LocalDrinkRounded />} tone="good" trend="Output healthy" />
         <CompactMetricCard title="Milk loss" value={`${summary.totalLoss.toLocaleString()} L`} helper="Variance to review" icon={<WarningAmberRounded />} tone={summary.lossPercentage > 2.6 ? 'bad' : 'warning'} trend={summary.lossPercentage > 2.6 ? 'Action needed' : 'Contained'} />
@@ -1194,10 +1194,10 @@ function AdminIntakePage({
         <CompactMetricCard title="Nitric usage" value={`${summary.totalNitric}`} helper="Jerrycans logged" icon={<ScienceRounded />} tone="neutral" trend="Chemical watch" />
       </Box>
 
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', xl: '1.45fr 0.85fr' }, gap: 1.1 }}>
-        <Stack spacing={1.1}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', xl: '1.45fr 0.85fr' }, gap: 0.9 }}>
+        <Stack spacing={0.9}>
           <SectionCard title="Throughput trend" description="Daily offloaded and pasteurized volume for the active review window.">
-            <Box sx={{ height: 208 }}>
+            <Box sx={{ height: 192 }}>
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={chartData}>
                   <defs>
@@ -1225,7 +1225,7 @@ function AdminIntakePage({
           </SectionCard>
 
           <SectionCard title="Loss surveillance" description="Trendline for milk loss and fast anomaly recognition.">
-            <Box sx={{ height: 186 }}>
+            <Box sx={{ height: 172 }}>
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={chartData}>
                   <defs>
@@ -1245,7 +1245,7 @@ function AdminIntakePage({
           </SectionCard>
 
           <SectionCard title="Chemical intensity" description="Caustic and nitric consumption by operator for the selected month.">
-            <Box sx={{ height: 186 }}>
+            <Box sx={{ height: 172 }}>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chemicalByOperator}>
                   <CartesianGrid {...chartGridProps} />
@@ -1261,7 +1261,7 @@ function AdminIntakePage({
           </SectionCard>
         </Stack>
 
-        <Stack spacing={1.1}>
+        <Stack spacing={0.9}>
           <SectionCard title="Operator performance ranking" description="Best-to-worst comparison across loss, chemistry discipline, and completeness.">
             <Stack spacing={1.2}>
               {ranking.map((entry) => (
@@ -1316,10 +1316,10 @@ function AdminIntakePage({
 
 function DashboardOverview({ summary, chartData, ranking }: { summary: ReturnType<typeof buildMonthlySummary>; chartData: ReturnType<typeof buildChartData>; ranking: ReturnType<typeof buildOperatorRanking>; }) {
   return (
-    <Stack spacing={1.05}>
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '1.4fr 1fr' }, gap: 1.05 }}>
+    <Stack spacing={0.9}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '1.4fr 1fr' }, gap: 0.9 }}>
         <SectionCard title="Milk movement" description="Throughput profile across daily offloaded and pasteurized volume.">
-          <Box sx={{ height: 182 }}>
+          <Box sx={{ height: 168 }}>
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={chartData}>
                 <CartesianGrid {...chartGridProps} />
@@ -1392,7 +1392,7 @@ export function Dashboard({ user, onLogout }: { user: AppUser; onLogout: () => v
   }, [performance.operators, selectedPerformanceOperator]);
 
   return (
-    <Box sx={{ minHeight: '100vh', background: 'linear-gradient(180deg, #f5f7fb 0%, #f8fbff 52%, #ffffff 100%)' }}>
+    <Box sx={{ minHeight: '100vh', background: '#f8f5f0' }}>
       <Box sx={{ maxWidth: 1660, mx: 'auto', px: { xs: 1.2, md: 1.8 }, pb: { xs: 1.6, md: 2.2 } }}>
         <Box
           sx={{
@@ -1402,18 +1402,22 @@ export function Dashboard({ user, onLogout }: { user: AppUser; onLogout: () => v
             pt: { xs: 0.2, md: 0.28 },
             pb: 0.28,
             borderBottom: '1px solid rgba(226,232,240,0.9)',
-            bgcolor: 'rgba(245,247,251,0.96)',
+            bgcolor: 'rgba(248,245,240,0.96)',
           }}
         >
           <Stack
             direction="row"
             sx={{
-              minHeight: 42,
+              minHeight: 38,
               alignItems: 'center',
               justifyContent: 'space-between',
-              gap: 1,
+              gap: 0.8,
               flexWrap: { xs: 'wrap', xl: 'nowrap' },
-              py: 0.24,
+              py: 0.18,
+              px: 0.2,
+              borderRadius: 1.5,
+              bgcolor: '#ffffff',
+              boxShadow: '0 4px 12px rgba(15,23,42,0.05)',
             }}
           >
             <Box
@@ -1427,7 +1431,7 @@ export function Dashboard({ user, onLogout }: { user: AppUser; onLogout: () => v
             >
             <Stack
               direction="row"
-              spacing={0.6}
+              spacing={0.5}
               sx={{ width: '100%', maxWidth: { xs: '100%', xl: 560 }, flexWrap: { xs: 'wrap', sm: 'nowrap' }, alignItems: 'center' }}
             >
               <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 160 } }}>
@@ -1478,7 +1482,7 @@ export function Dashboard({ user, onLogout }: { user: AppUser; onLogout: () => v
             >
             <Stack
               direction="row"
-              spacing={0.55}
+              spacing={0.45}
               justifyContent="center"
               sx={{ flexWrap: 'wrap', minWidth: 0, alignItems: 'center' }}
             >
@@ -1501,19 +1505,20 @@ export function Dashboard({ user, onLogout }: { user: AppUser; onLogout: () => v
                     startIcon={section.icon}
                     size="small"
                     sx={{
-                      minHeight: 27,
-                      px: 0.95,
+                      minHeight: 26,
+                      px: 0.88,
                       borderRadius: 1,
-                      color: active ? 'common.white' : '#111827',
+                      color: active ? 'common.white' : '#94a3b8',
                       bgcolor: active ? accent : '#ffffff',
-                      border: `1px solid ${active ? accent : 'rgba(148,163,184,0.26)'}`,
+                      border: `1px solid ${active ? accent : 'rgba(226,232,240,0.96)'}`,
                       boxShadow: active ? `inset 0 -1px 0 ${alpha('#000', 0.08)}` : 'none',
                       '&:hover': {
                         bgcolor: active ? alpha(accent, 0.92) : '#f8fafc',
+                        color: active ? 'common.white' : '#64748b',
                       },
                       '& .MuiButton-startIcon': {
                         mr: 0.5,
-                        color: active ? 'common.white' : '#475569',
+                        color: active ? 'common.white' : '#94a3b8',
                       },
                     }}
                   >
@@ -1540,11 +1545,11 @@ export function Dashboard({ user, onLogout }: { user: AppUser; onLogout: () => v
                 size="small"
                 sx={{
                   minWidth: 0,
-                  px: 0.95,
-                  py: 0.34,
+                  px: 0.82,
+                  py: 0.28,
                   borderRadius: 1,
                   color: '#0f172a',
-                  border: '1px solid rgba(148,163,184,0.26)',
+                  border: '1px solid rgba(226,232,240,0.96)',
                   bgcolor: '#ffffff',
                   fontWeight: 800,
                 }}
