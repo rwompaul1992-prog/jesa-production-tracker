@@ -102,13 +102,13 @@ const operatorSections: Array<{ key: SectionKey; label: string; description: str
 const chartAxisProps = {
   axisLine: false,
   tickLine: false,
-  tickMargin: 10,
-  tick: { fontSize: 11, fill: '#64748b', fontWeight: 600 },
+  tickMargin: 8,
+  tick: { fontSize: 10, fill: '#475569', fontWeight: 700 },
 };
 
 const chartGridProps = {
-  stroke: 'rgba(148,163,184,0.18)',
-  strokeDasharray: '3 6',
+  stroke: 'rgba(71,85,105,0.16)',
+  strokeDasharray: '2 5',
   vertical: false,
 };
 
@@ -124,18 +124,27 @@ function ChartTooltipCard({
   if (!active || !payload?.length) return null;
 
   return (
-    <Paper sx={{ p: 1.4, borderRadius: 3, border: '1px solid rgba(148,163,184,0.14)', minWidth: 160 }}>
-      <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 800 }}>
+    <Paper
+      sx={{
+        p: 1.2,
+        borderRadius: 3,
+        border: '1px solid rgba(59,130,246,0.14)',
+        minWidth: 160,
+        background: 'linear-gradient(180deg, rgba(255,255,255,0.98), rgba(239,246,255,0.96))',
+        boxShadow: '0 18px 28px rgba(15,23,42,0.12)',
+      }}
+    >
+      <Typography variant="caption" sx={{ color: 'primary.main', fontWeight: 900, letterSpacing: '0.04em' }}>
         {label}
       </Typography>
-      <Stack spacing={0.75} sx={{ mt: 0.8 }}>
+      <Stack spacing={0.65} sx={{ mt: 0.75 }}>
         {payload.map((item) => (
           <Stack key={item.name} direction="row" justifyContent="space-between" spacing={1.5}>
             <Stack direction="row" spacing={0.8} alignItems="center">
-              <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: item.color ?? 'primary.main' }} />
-              <Typography variant="caption" color="text.secondary">{item.name}</Typography>
+              <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: item.color ?? 'primary.main', boxShadow: `0 0 0 3px ${alpha(item.color ?? '#2563eb', 0.12)}` }} />
+              <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700 }}>{item.name}</Typography>
             </Stack>
-            <Typography variant="caption" fontWeight={800}>{Number(item.value ?? 0).toLocaleString()}</Typography>
+            <Typography variant="caption" fontWeight={900} color="text.primary">{Number(item.value ?? 0).toLocaleString()}</Typography>
           </Stack>
         ))}
       </Stack>
@@ -319,8 +328,9 @@ function CompactMetricCard({
         borderColor: alpha(colors.accent, 0.16),
         position: 'relative',
         overflow: 'hidden',
-        background: `linear-gradient(145deg, ${alpha(colors.accent, 0.14)}, rgba(255,255,255,0.96) 44%, rgba(255,255,255,1) 100%)`,
+        background: `linear-gradient(145deg, ${alpha(colors.accent, 0.22)}, rgba(255,255,255,0.98) 36%, rgba(255,255,255,1) 100%)`,
         transition: 'transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease',
+        boxShadow: `0 16px 26px ${alpha(colors.accent, 0.08)}`,
         '&::before': {
           content: '""',
           position: 'absolute',
@@ -328,27 +338,27 @@ function CompactMetricCard({
           width: 5,
           background: `linear-gradient(180deg, ${colors.accent}, ${alpha(colors.accent, 0.32)})`,
         },
-        '&:hover': { transform: 'translateY(-3px)', boxShadow: `0 22px 36px ${alpha(colors.accent, 0.15)}`, borderColor: alpha(colors.accent, 0.28) },
+        '&:hover': { transform: 'translateY(-2px)', boxShadow: `0 20px 30px ${alpha(colors.accent, 0.16)}`, borderColor: alpha(colors.accent, 0.3) },
       }}
     >
-      <CardContent sx={{ p: 2.1 }}>
-        <Stack spacing={1.4}>
+      <CardContent sx={{ p: 1.65 }}>
+        <Stack spacing={1.05}>
           <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
             <Box>
               <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
                 {title}
               </Typography>
-              <Typography variant="h5" sx={{ mt: 0.8, fontWeight: 900, letterSpacing: '-0.03em' }}>
+              <Typography variant="h6" sx={{ mt: 0.55, fontWeight: 900, letterSpacing: '-0.03em' }}>
                 {value}
               </Typography>
             </Box>
-            <Avatar sx={{ width: 44, height: 44, bgcolor: alpha(colors.accent, 0.12), color: colors.accent, boxShadow: `inset 0 1px 0 ${alpha('#fff', 0.6)}` }}>{icon}</Avatar>
+            <Avatar sx={{ width: 38, height: 38, bgcolor: alpha(colors.accent, 0.14), color: colors.accent, boxShadow: `inset 0 1px 0 ${alpha('#fff', 0.6)}, 0 10px 20px ${alpha(colors.accent, 0.12)}` }}>{icon}</Avatar>
           </Stack>
           <Stack direction="row" justifyContent="space-between" alignItems="center">
-            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700 }}>
+            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700, fontSize: '0.72rem' }}>
               {helper}
             </Typography>
-            <Chip size="small" color={colors.chip} label={trend} sx={{ bgcolor: alpha(colors.accent, 0.12), color: colors.accent }} />
+            <Chip size="small" color={colors.chip} label={trend} sx={{ height: 22, fontWeight: 800, bgcolor: alpha(colors.accent, 0.14), color: colors.accent }} />
           </Stack>
         </Stack>
       </CardContent>
@@ -372,22 +382,23 @@ function SectionCard({
       sx={{
         border: '1px solid rgba(148,163,184,0.14)',
         background: 'linear-gradient(180deg, rgba(255,255,255,0.98), rgba(248,250,252,0.95))',
+        boxShadow: '0 14px 28px rgba(15,23,42,0.05)',
       }}
     >
-      <CardContent sx={{ p: 2.4 }}>
-        <Stack spacing={2}>
-          <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" spacing={1.5}>
+      <CardContent sx={{ p: 1.8 }}>
+        <Stack spacing={1.45}>
+          <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" spacing={1.1}>
             <Box>
               <Chip
                 size="small"
                 label="Operations panel"
-                sx={{ mb: 1, bgcolor: 'rgba(47,109,246,0.08)', color: 'primary.main', borderColor: 'rgba(47,109,246,0.12)' }}
+                sx={{ mb: 0.75, height: 22, bgcolor: 'rgba(47,109,246,0.08)', color: 'primary.main', borderColor: 'rgba(47,109,246,0.12)' }}
               />
-              <Typography variant="subtitle1" sx={{ fontWeight: 900, letterSpacing: '-0.02em' }}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 900, letterSpacing: '-0.02em' }}>
                 {title}
               </Typography>
               {description ? (
-                <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700 }}>
+                <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700, fontSize: '0.72rem' }}>
                   {description}
                 </Typography>
               ) : null}
@@ -443,8 +454,8 @@ function OperatorPerformancePage({
   }
 
   return (
-    <Stack spacing={2}>
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)', xl: 'repeat(4, 1fr)' }, gap: 1.4 }}>
+    <Stack spacing={1.6}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)', xl: 'repeat(4, 1fr)' }, gap: 1.1 }}>
         {performance.operators.map((entry) => {
           const badge = getPerformanceBadgeMeta(entry.badge);
           const isActive = entry.operator === selectedEntry.operator;
@@ -521,8 +532,8 @@ function OperatorPerformancePage({
         })}
       </Box>
 
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', xl: '1.1fr 0.9fr' }, gap: 1.8 }}>
-        <Stack spacing={1.8}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', xl: '1.1fr 0.9fr' }, gap: 1.4 }}>
+        <Stack spacing={1.4}>
           <SectionCard
             title="Operator score ranking"
             description="Weighted monthly score with fair per-1000L chemical normalization and completeness discipline."
@@ -618,7 +629,7 @@ function OperatorPerformancePage({
                 <Typography variant="caption" color="text.secondary" fontWeight={800}>
                   Loss trend
                 </Typography>
-                <Box sx={{ height: 230, mt: 0.8 }}>
+                <Box sx={{ height: 198, mt: 0.55 }}>
                   <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={selectedEntry.trend}>
                       <defs>
@@ -640,7 +651,7 @@ function OperatorPerformancePage({
                 <Typography variant="caption" color="text.secondary" fontWeight={800}>
                   Chemical usage trend
                 </Typography>
-                <Box sx={{ height: 230, mt: 0.8 }}>
+                <Box sx={{ height: 198, mt: 0.55 }}>
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={selectedEntry.trend}>
                       <CartesianGrid {...chartGridProps} />
@@ -658,7 +669,7 @@ function OperatorPerformancePage({
           </SectionCard>
         </Stack>
 
-        <Stack spacing={1.8}>
+        <Stack spacing={1.4}>
           <SectionCard title="Supervisor insights" description="Immediate flags for risky behavior, missing records, and improvement momentum.">
             <Stack spacing={1.1}>
               <Paper sx={{ p: 1.5, borderRadius: 4, background: 'linear-gradient(135deg, rgba(20,184,166,0.12), rgba(255,255,255,0.98))' }}>
@@ -1154,8 +1165,8 @@ function AdminIntakePage({
   const abnormalOperators = ranking.filter((entry) => entry.lossRate > 2.5).map((entry) => entry.operator);
 
   return (
-    <Stack spacing={2.2}>
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)', xl: 'repeat(6, 1fr)' }, gap: 1.6 }}>
+    <Stack spacing={1.7}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)', xl: 'repeat(6, 1fr)' }, gap: 1.1 }}>
         <CompactMetricCard title="Milk offloaded" value={`${summary.totalOffloaded.toLocaleString()} L`} helper="Monthly intake volume" icon={<OpacityRounded />} tone="neutral" trend="Flow stable" />
         <CompactMetricCard title="Milk pasteurized" value={`${summary.totalPasteurized.toLocaleString()} L`} helper="Finished output" icon={<LocalDrinkRounded />} tone="good" trend="Output healthy" />
         <CompactMetricCard title="Milk loss" value={`${summary.totalLoss.toLocaleString()} L`} helper="Variance to review" icon={<WarningAmberRounded />} tone={summary.lossPercentage > 2.6 ? 'bad' : 'warning'} trend={summary.lossPercentage > 2.6 ? 'Action needed' : 'Contained'} />
@@ -1164,10 +1175,10 @@ function AdminIntakePage({
         <CompactMetricCard title="Nitric usage" value={`${summary.totalNitric}`} helper="Jerrycans logged" icon={<ScienceRounded />} tone="neutral" trend="Chemical watch" />
       </Box>
 
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', xl: '1.45fr 0.85fr' }, gap: 1.8 }}>
-        <Stack spacing={1.8}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', xl: '1.45fr 0.85fr' }, gap: 1.4 }}>
+        <Stack spacing={1.4}>
           <SectionCard title="Throughput trend" description="Daily offloaded and pasteurized volume for the active review window.">
-            <Box sx={{ height: 270 }}>
+            <Box sx={{ height: 220 }}>
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={chartData}>
                   <defs>
@@ -1184,18 +1195,18 @@ function AdminIntakePage({
                   <XAxis dataKey="date" {...chartAxisProps} />
                   <YAxis {...chartAxisProps} />
                   <Tooltip content={<ChartTooltipCard />} />
-                  <Legend wrapperStyle={{ fontSize: 12 }} />
+                  <Legend wrapperStyle={{ fontSize: 11, paddingTop: 6 }} />
                   <Area type="monotone" dataKey="offloaded" fill="url(#offloadedGlow)" stroke="none" />
                   <Area type="monotone" dataKey="pasteurized" fill="url(#pasteurizedGlow)" stroke="none" />
-                  <Line type="monotone" dataKey="offloaded" stroke="#2f6df6" strokeWidth={3} dot={false} activeDot={{ r: 5, strokeWidth: 0, fill: '#2f6df6' }} />
-                  <Line type="monotone" dataKey="pasteurized" stroke="#14b8a6" strokeWidth={3} dot={false} activeDot={{ r: 5, strokeWidth: 0, fill: '#14b8a6' }} />
+                  <Line type="monotone" dataKey="offloaded" stroke="#2563eb" strokeWidth={3.2} dot={false} activeDot={{ r: 5, strokeWidth: 0, fill: '#2563eb' }} />
+                  <Line type="monotone" dataKey="pasteurized" stroke="#0f766e" strokeWidth={3.2} dot={false} activeDot={{ r: 5, strokeWidth: 0, fill: '#0f766e' }} />
                 </LineChart>
               </ResponsiveContainer>
             </Box>
           </SectionCard>
 
           <SectionCard title="Loss surveillance" description="Trendline for milk loss and fast anomaly recognition.">
-            <Box sx={{ height: 240 }}>
+            <Box sx={{ height: 198 }}>
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={chartData}>
                   <defs>
@@ -1208,30 +1219,30 @@ function AdminIntakePage({
                   <XAxis dataKey="date" {...chartAxisProps} />
                   <YAxis {...chartAxisProps} />
                   <Tooltip content={<ChartTooltipCard />} />
-                  <Area type="monotone" dataKey="loss" stroke="#dc2626" fill="url(#lossFillAdmin)" strokeWidth={3} activeDot={{ r: 4, fill: '#dc2626', strokeWidth: 0 }} />
+                  <Area type="monotone" dataKey="loss" stroke="#dc2626" fill="url(#lossFillAdmin)" strokeWidth={3.2} activeDot={{ r: 4, fill: '#dc2626', strokeWidth: 0 }} />
                 </AreaChart>
               </ResponsiveContainer>
             </Box>
           </SectionCard>
 
           <SectionCard title="Chemical intensity" description="Caustic and nitric consumption by operator for the selected month.">
-            <Box sx={{ height: 240 }}>
+            <Box sx={{ height: 198 }}>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chemicalByOperator}>
                   <CartesianGrid {...chartGridProps} />
                   <XAxis dataKey="operator" {...chartAxisProps} />
                   <YAxis {...chartAxisProps} />
                   <Tooltip content={<ChartTooltipCard />} />
-                  <Legend wrapperStyle={{ fontSize: 12 }} />
-                  <Bar dataKey="caustic" fill="#2f6df6" radius={[8, 8, 0, 0]} />
-                  <Bar dataKey="nitric" fill="#14b8a6" radius={[8, 8, 0, 0]} />
+                  <Legend wrapperStyle={{ fontSize: 11, paddingTop: 4 }} />
+                  <Bar dataKey="caustic" fill="#2563eb" radius={[8, 8, 0, 0]} />
+                  <Bar dataKey="nitric" fill="#0f766e" radius={[8, 8, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </Box>
           </SectionCard>
         </Stack>
 
-        <Stack spacing={1.8}>
+        <Stack spacing={1.4}>
           <SectionCard title="Operator performance ranking" description="Best-to-worst comparison across loss, chemistry discipline, and completeness.">
             <Stack spacing={1.2}>
               {ranking.map((entry) => (
@@ -1287,24 +1298,24 @@ function AdminIntakePage({
 function DashboardOverview({ summary, chartData, ranking }: { summary: ReturnType<typeof buildMonthlySummary>; chartData: ReturnType<typeof buildChartData>; ranking: ReturnType<typeof buildOperatorRanking>; }) {
   return (
     <Stack spacing={1.8}>
-      <Box sx={{ p: 2.6, borderRadius: 5, background: 'linear-gradient(135deg, #081121 0%, #17367a 54%, #0f766e 100%)', color: 'white', position: 'relative', overflow: 'hidden' }}>
+      <Box sx={{ p: 2.05, borderRadius: 4.5, background: 'linear-gradient(135deg, #081121 0%, #17367a 54%, #0f766e 100%)', color: 'white', position: 'relative', overflow: 'hidden', boxShadow: '0 18px 34px rgba(15,23,42,0.14)' }}>
         <Box sx={{ position: 'absolute', inset: 0, background: 'radial-gradient(circle at 18% 20%, rgba(96,165,250,0.22), transparent 24%)' }} />
         <Typography variant="overline" sx={{ letterSpacing: '0.16em', opacity: 0.84, position: 'relative' }}>JESA industrial operations</Typography>
-        <Typography variant="h5" sx={{ mt: 0.8, position: 'relative' }}>Executive control center</Typography>
-        <Typography variant="body2" sx={{ mt: 0.9, opacity: 0.84, maxWidth: 560, position: 'relative' }}>A premium operational snapshot of intake throughput, loss discipline, and operator performance for the active month.</Typography>
+        <Typography variant="h6" sx={{ mt: 0.45, position: 'relative', fontWeight: 900 }}>Executive control center</Typography>
+        <Typography variant="body2" sx={{ mt: 0.55, opacity: 0.84, maxWidth: 560, position: 'relative' }}>A premium operational snapshot of intake throughput, loss discipline, and operator performance for the active month.</Typography>
       </Box>
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '1.4fr 1fr' }, gap: 1.8 }}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '1.4fr 1fr' }, gap: 1.35 }}>
         <SectionCard title="Milk movement" description="Throughput profile across daily offloaded and pasteurized volume.">
-          <Box sx={{ height: 240 }}>
+          <Box sx={{ height: 198 }}>
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={chartData}>
                 <CartesianGrid {...chartGridProps} />
                 <XAxis dataKey="date" {...chartAxisProps} />
                 <YAxis {...chartAxisProps} />
                 <Tooltip content={<ChartTooltipCard />} />
-                <Legend wrapperStyle={{ fontSize: 12 }} />
-                <Line type="monotone" dataKey="offloaded" stroke="#2f6df6" strokeWidth={3} dot={false} activeDot={{ r: 5, fill: '#2f6df6', strokeWidth: 0 }} />
-                <Line type="monotone" dataKey="pasteurized" stroke="#14b8a6" strokeWidth={3} dot={false} activeDot={{ r: 5, fill: '#14b8a6', strokeWidth: 0 }} />
+                <Legend wrapperStyle={{ fontSize: 11, paddingTop: 6 }} />
+                <Line type="monotone" dataKey="offloaded" stroke="#2563eb" strokeWidth={3.2} dot={false} activeDot={{ r: 5, fill: '#2563eb', strokeWidth: 0 }} />
+                <Line type="monotone" dataKey="pasteurized" stroke="#0f766e" strokeWidth={3.2} dot={false} activeDot={{ r: 5, fill: '#0f766e', strokeWidth: 0 }} />
               </LineChart>
             </ResponsiveContainer>
           </Box>
@@ -1370,14 +1381,14 @@ export function Dashboard({ user, onLogout }: { user: AppUser; onLogout: () => v
 
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: '#edf3fb' }}>
-      <Box sx={{ maxWidth: 1660, mx: 'auto', px: { xs: 1.4, md: 2.2 }, pb: { xs: 2, md: 2.8 } }}>
+      <Box sx={{ maxWidth: 1660, mx: 'auto', px: { xs: 1.2, md: 1.8 }, pb: { xs: 1.6, md: 2.2 } }}>
         <Box
           sx={{
             position: 'sticky',
             top: 0,
             zIndex: 10,
-            pt: { xs: 1.2, md: 1.5 },
-            pb: 1.2,
+            pt: { xs: 0.8, md: 1 },
+            pb: 0.9,
             backdropFilter: 'blur(18px)',
             bgcolor: 'rgba(237,243,251,0.88)',
           }}
@@ -1393,8 +1404,8 @@ export function Dashboard({ user, onLogout }: { user: AppUser; onLogout: () => v
           >
             <Box
               sx={{
-                px: { xs: 1.2, md: 1.8 },
-                py: { xs: 1.1, md: 1.25 },
+                px: { xs: 1.1, md: 1.5 },
+                py: { xs: 0.9, md: 1 },
                 borderBottom: '1px solid rgba(148,163,184,0.12)',
                 background: 'linear-gradient(90deg, rgba(8,17,33,0.98) 0%, rgba(17,28,52,0.95) 42%, rgba(15,118,110,0.92) 100%)',
                 color: 'white',
@@ -1452,13 +1463,13 @@ export function Dashboard({ user, onLogout }: { user: AppUser; onLogout: () => v
               </Stack>
             </Box>
 
-            <Stack spacing={1.1} sx={{ px: { xs: 1.2, md: 1.8 }, py: { xs: 1.15, md: 1.35 } }}>
-              <Stack
-                direction={{ xs: 'column', lg: 'row' }}
-                spacing={1}
-                justifyContent="space-between"
-                alignItems={{ xs: 'stretch', lg: 'center' }}
-              >
+              <Stack spacing={0.9} sx={{ px: { xs: 1.1, md: 1.5 }, py: { xs: 0.95, md: 1.05 } }}>
+                <Stack
+                  direction={{ xs: 'column', lg: 'row' }}
+                  spacing={0.8}
+                  justifyContent="space-between"
+                  alignItems={{ xs: 'stretch', lg: 'center' }}
+                >
                 <Stack spacing={0.35}>
                   <Typography variant="overline" sx={{ color: 'primary.main', letterSpacing: '0.14em', fontWeight: 800 }}>
                     Industrial dairy operations / {selectedMonth}
@@ -1485,8 +1496,8 @@ export function Dashboard({ user, onLogout }: { user: AppUser; onLogout: () => v
                         startIcon={section.icon}
                         size="small"
                         sx={{
-                          minHeight: 36,
-                          px: 1.25,
+                          minHeight: 32,
+                          px: 1.05,
                           borderRadius: 999,
                           color: active ? 'primary.main' : 'text.secondary',
                           bgcolor: active ? 'rgba(47,109,246,0.1)' : 'transparent',
@@ -1511,7 +1522,7 @@ export function Dashboard({ user, onLogout }: { user: AppUser; onLogout: () => v
               </Stack>
 
               <Paper sx={{ p: 1.15, borderRadius: 4, border: '1px solid rgba(148,163,184,0.14)', background: 'linear-gradient(180deg, rgba(255,255,255,0.96), rgba(255,255,255,0.88))' }}>
-                <Stack direction={{ xs: 'column', xl: 'row' }} spacing={1} alignItems={{ xs: 'stretch', xl: 'center' }}>
+                <Stack direction={{ xs: 'column', xl: 'row' }} spacing={0.85} alignItems={{ xs: 'stretch', xl: 'center' }}>
                   <Stack direction="row" spacing={0.8} alignItems="center">
                     <Chip icon={<FilterAltRounded />} size="small" label={user.role === 'admin' ? 'Executive filters' : 'Month selector'} color="primary" sx={{ bgcolor: 'rgba(47,109,246,0.1)' }} />
                     <Chip
@@ -1522,7 +1533,7 @@ export function Dashboard({ user, onLogout }: { user: AppUser; onLogout: () => v
                       sx={{ bgcolor: user.role === 'operator' ? 'rgba(47,109,246,0.1)' : 'rgba(20,184,166,0.12)' }}
                     />
                   </Stack>
-                  <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} sx={{ flex: 1 }}>
+                  <Stack direction={{ xs: 'column', sm: 'row' }} spacing={0.85} sx={{ flex: 1 }}>
                     <FormControl fullWidth size="small">
                       <InputLabel>Month</InputLabel>
                       <Select value={selectedMonth} label="Month" onChange={(event) => setSelectedMonth(event.target.value)}>
@@ -1564,7 +1575,7 @@ export function Dashboard({ user, onLogout }: { user: AppUser; onLogout: () => v
           </Paper>
         </Box>
 
-        <Box sx={{ pt: 1.2 }}>
+        <Box sx={{ pt: 0.8 }}>
           {user.role === 'admin' && activeSection === 'dashboard' ? <DashboardOverview summary={summary} chartData={chartData} ranking={ranking} /> : null}
           {user.role === 'admin' && activeSection === 'intake' ? <AdminIntakePage summary={summary} chartData={chartData} chemicalByOperator={chemicalByOperator} ranking={ranking} insights={insights} productionRecords={productionRecords} /> : null}
           {user.role === 'admin' && activeSection === 'cip' ? (
