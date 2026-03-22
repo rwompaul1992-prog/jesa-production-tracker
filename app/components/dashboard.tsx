@@ -1352,7 +1352,6 @@ export function Dashboard({ user, onLogout }: { user: AppUser; onLogout: () => v
   const performance = useMemo(() => buildOperatorPerformance(entries, selectedMonth), [entries, selectedMonth]);
   const [selectedPerformanceOperator, setSelectedPerformanceOperator] = useState<string>('');
   const operatorRows = useMemo(() => getMonthlyDays(selectedMonth, user.name, entries), [entries, selectedMonth, user.name]);
-  const currentSection = availableSections.find((section) => section.key === activeSection) ?? availableSections[0];
   const commitOperatorRows = useCallback((updatedRows: OperatorDailyEntry[]) => {
     const updates = new Map(updatedRows.map((row) => [row.id, row]));
     setEntries((current) => current.map((entry) => updates.get(entry.id) ?? entry));
@@ -1370,7 +1369,7 @@ export function Dashboard({ user, onLogout }: { user: AppUser; onLogout: () => v
   }, [performance.operators, selectedPerformanceOperator]);
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: '#edf3fb' }}>
+    <Box sx={{ minHeight: '100vh', background: 'linear-gradient(180deg, #f5f7fb 0%, #f8fbff 52%, #ffffff 100%)' }}>
       <Box sx={{ maxWidth: 1660, mx: 'auto', px: { xs: 1.2, md: 1.8 }, pb: { xs: 1.6, md: 2.2 } }}>
         <Box
           sx={{
@@ -1388,105 +1387,26 @@ export function Dashboard({ user, onLogout }: { user: AppUser; onLogout: () => v
               borderRadius: 3,
               overflow: 'hidden',
               border: '1px solid rgba(148,163,184,0.14)',
-              background: 'rgba(255,255,255,0.95)',
+              background: 'rgba(255,255,255,0.98)',
               boxShadow: '0 8px 20px rgba(15,23,42,0.05)',
             }}
           >
-            <Stack spacing={0.55} sx={{ px: { xs: 0.8, md: 1 }, py: { xs: 0.55, md: 0.62 } }}>
+            <Stack spacing={0.5} sx={{ px: { xs: 0.75, md: 0.9 }, py: { xs: 0.46, md: 0.52 } }}>
               <Stack
                 direction={{ xs: 'column', xl: 'row' }}
-                spacing={0.55}
+                spacing={0.5}
                 justifyContent="space-between"
                 alignItems={{ xs: 'flex-start', xl: 'center' }}
                 sx={{ minHeight: 0 }}
               >
                 <Stack
-                  direction={{ xs: 'column', lg: 'row' }}
-                  spacing={0.6}
+                  direction={{ xs: 'column', xl: 'row' }}
+                  spacing={0.55}
                   justifyContent="space-between"
                   alignItems={{ xs: 'stretch', lg: 'center' }}
                   sx={{ width: '100%' }}
                 >
-                <Stack spacing={0.15}>
-                  <Typography variant="overline" sx={{ color: 'primary.main', letterSpacing: '0.12em', fontWeight: 800, lineHeight: 1.2 }}>
-                    Industrial dairy operations / {selectedMonth}
-                  </Typography>
-                  <Typography variant="subtitle2" sx={{ fontWeight: 900, lineHeight: 1.15 }}>
-                    {currentSection.label}
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700, lineHeight: 1.15 }}>
-                    {currentSection.description}
-                  </Typography>
-                </Stack>
-
-                <Stack
-                  direction="row"
-                  spacing={0.6}
-                  sx={{ flexWrap: 'wrap', alignItems: 'center' }}
-                >
-                  {availableSections.map((section) => {
-                    const active = section.key === activeSection;
-                    const accent =
-                      section.key === 'dashboard'
-                        ? '#2563eb'
-                        : section.key === 'intake'
-                          ? '#0f766e'
-                          : section.key === 'cip'
-                            ? '#7c3aed'
-                            : section.key === 'operators'
-                              ? '#ea580c'
-                              : '#2563eb';
-                    return (
-                      <Button
-                        key={section.key}
-                        onClick={() => setActiveSection(section.key)}
-                        startIcon={section.icon}
-                        size="small"
-                        sx={{
-                          minHeight: 28,
-                          px: 1,
-                          borderRadius: 999,
-                          color: active ? 'common.white' : '#0f172a',
-                          bgcolor: active ? accent : 'rgba(255,255,255,0.98)',
-                          border: `1px solid ${active ? accent : 'rgba(148,163,184,0.22)'}`,
-                          boxShadow: active ? `0 10px 18px ${alpha(accent, 0.28)}` : 'none',
-                          '&:hover': {
-                            bgcolor: active ? alpha(accent, 0.92) : 'rgba(241,245,249,0.98)',
-                          },
-                          '& .MuiButton-startIcon': {
-                            mr: 0.5,
-                            color: active ? 'common.white' : '#334155',
-                          },
-                        }}
-                      >
-                        <Typography variant="caption" fontWeight={800} sx={{ letterSpacing: '0.01em' }}>
-                          {section.label}
-                        </Typography>
-                      </Button>
-                    );
-                  })}
-                </Stack>
-                <Button
-                  onClick={onLogout}
-                  size="small"
-                  sx={{
-                    minWidth: 0,
-                    px: 1.05,
-                    py: 0.45,
-                    borderRadius: 999,
-                    color: '#0f172a',
-                    border: '1px solid rgba(148,163,184,0.22)',
-                    bgcolor: 'rgba(255,255,255,0.98)',
-                    fontWeight: 800,
-                    alignSelf: { xs: 'flex-start', lg: 'center' },
-                  }}
-                >
-                  Sign out
-                </Button>
-              </Stack>
-
-              <Stack direction={{ xs: 'column', xl: 'row' }} spacing={0.65} alignItems={{ xs: 'stretch', xl: 'center' }}>
-                  <Stack direction={{ xs: 'column', sm: 'row' }} spacing={0.7} sx={{ flex: 1 }}>
+                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={0.65} sx={{ flex: 1 }}>
                     <FormControl fullWidth size="small">
                       <InputLabel>Month</InputLabel>
                       <Select value={selectedMonth} label="Month" onChange={(event) => setSelectedMonth(event.target.value)}>
@@ -1522,7 +1442,72 @@ export function Dashboard({ user, onLogout }: { user: AppUser; onLogout: () => v
                       </>
                     ) : null}
                   </Stack>
+
+                <Stack
+                  direction="row"
+                  spacing={0.55}
+                  sx={{ flexWrap: 'wrap', alignItems: 'center', justifyContent: { xs: 'flex-start', xl: 'center' } }}
+                >
+                  {availableSections.map((section) => {
+                    const active = section.key === activeSection;
+                    const accent =
+                      section.key === 'dashboard'
+                        ? '#2563eb'
+                        : section.key === 'intake'
+                          ? '#0f766e'
+                          : section.key === 'cip'
+                            ? '#7c3aed'
+                            : section.key === 'operators'
+                              ? '#ea580c'
+                              : '#2563eb';
+                    return (
+                      <Button
+                        key={section.key}
+                        onClick={() => setActiveSection(section.key)}
+                        startIcon={section.icon}
+                        size="small"
+                        sx={{
+                          minHeight: 28,
+                          px: 1.02,
+                          borderRadius: 999,
+                          color: active ? 'common.white' : '#111827',
+                          bgcolor: active ? accent : '#ffffff',
+                          border: `1px solid ${active ? accent : 'rgba(148,163,184,0.26)'}`,
+                          boxShadow: active ? `0 10px 18px ${alpha(accent, 0.28)}` : 'none',
+                          '&:hover': {
+                            bgcolor: active ? alpha(accent, 0.92) : '#f8fafc',
+                          },
+                          '& .MuiButton-startIcon': {
+                            mr: 0.5,
+                            color: active ? 'common.white' : '#475569',
+                          },
+                        }}
+                      >
+                        <Typography variant="caption" fontWeight={800} sx={{ letterSpacing: '0.01em' }}>
+                          {section.label}
+                        </Typography>
+                      </Button>
+                    );
+                  })}
                 </Stack>
+                <Button
+                  onClick={onLogout}
+                  size="small"
+                  sx={{
+                    minWidth: 0,
+                    px: 0.95,
+                    py: 0.38,
+                    borderRadius: 999,
+                    color: '#0f172a',
+                    border: '1px solid rgba(148,163,184,0.26)',
+                    bgcolor: '#ffffff',
+                    fontWeight: 800,
+                    alignSelf: { xs: 'flex-start', lg: 'center' },
+                  }}
+                >
+                  Sign out
+                </Button>
+              </Stack>
               </Stack>
             </Stack>
           </Paper>
