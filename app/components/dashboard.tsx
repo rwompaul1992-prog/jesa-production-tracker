@@ -1408,18 +1408,27 @@ export function Dashboard({ user, onLogout }: { user: AppUser; onLogout: () => v
           <Stack
             direction="row"
             sx={{
-              minHeight: 44,
+              minHeight: 42,
               alignItems: 'center',
               justifyContent: 'space-between',
-              gap: 0.8,
+              gap: 1,
               flexWrap: { xs: 'wrap', xl: 'nowrap' },
-              py: 0.35,
+              py: 0.24,
             }}
           >
+            <Box
+              sx={{
+                flex: { xs: '1 1 100%', xl: '1 1 0' },
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'flex-start',
+                minWidth: 0,
+              }}
+            >
             <Stack
               direction="row"
               spacing={0.6}
-              sx={{ flex: { xs: '1 1 100%', xl: '0 1 auto' }, minWidth: { xs: '100%', xl: 0 }, flexWrap: { xs: 'wrap', sm: 'nowrap' } }}
+              sx={{ width: '100%', maxWidth: { xs: '100%', xl: 560 }, flexWrap: { xs: 'wrap', sm: 'nowrap' }, alignItems: 'center' }}
             >
               <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 160 } }}>
                 <InputLabel>Month</InputLabel>
@@ -1456,12 +1465,22 @@ export function Dashboard({ user, onLogout }: { user: AppUser; onLogout: () => v
                 </>
               ) : null}
             </Stack>
+            </Box>
 
+            <Box
+              sx={{
+                flex: { xs: '1 1 100%', xl: '1 1 0' },
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                minWidth: 0,
+              }}
+            >
             <Stack
               direction="row"
               spacing={0.55}
               justifyContent="center"
-              sx={{ flex: { xs: '1 1 100%', xl: '1 1 auto' }, flexWrap: 'wrap', minWidth: 0 }}
+              sx={{ flexWrap: 'wrap', minWidth: 0, alignItems: 'center' }}
             >
               {availableSections.map((section) => {
                 const active = section.key === activeSection;
@@ -1484,7 +1503,7 @@ export function Dashboard({ user, onLogout }: { user: AppUser; onLogout: () => v
                     sx={{
                       minHeight: 27,
                       px: 0.95,
-                      borderRadius: 1.25,
+                      borderRadius: 1,
                       color: active ? 'common.white' : '#111827',
                       bgcolor: active ? accent : '#ffffff',
                       border: `1px solid ${active ? accent : 'rgba(148,163,184,0.26)'}`,
@@ -1505,8 +1524,17 @@ export function Dashboard({ user, onLogout }: { user: AppUser; onLogout: () => v
                 );
               })}
             </Stack>
+            </Box>
 
-            <Box sx={{ display: 'flex', justifyContent: { xs: 'flex-start', xl: 'flex-end' }, flex: { xs: '1 1 100%', xl: '0 0 auto' } }}>
+            <Box
+              sx={{
+                flex: { xs: '1 1 100%', xl: '1 1 0' },
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: { xs: 'flex-start', xl: 'flex-end' },
+                minWidth: 0,
+              }}
+            >
               <Button
                 onClick={onLogout}
                 size="small"
@@ -1514,7 +1542,7 @@ export function Dashboard({ user, onLogout }: { user: AppUser; onLogout: () => v
                   minWidth: 0,
                   px: 0.95,
                   py: 0.34,
-                  borderRadius: 1.25,
+                  borderRadius: 1,
                   color: '#0f172a',
                   border: '1px solid rgba(148,163,184,0.26)',
                   bgcolor: '#ffffff',
