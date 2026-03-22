@@ -1318,28 +1318,60 @@ function DashboardOverview({ summary, chartData, ranking }: { summary: ReturnTyp
   return (
     <Stack spacing={0.9}>
       <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '1.4fr 1fr' }, gap: 0.9 }}>
-        <SectionCard title="Milk movement" description="Throughput profile across daily offloaded and pasteurized volume.">
-          <Box sx={{ height: 168 }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chartData}>
-                <CartesianGrid {...chartGridProps} />
-                <XAxis dataKey="date" {...chartAxisProps} />
-                <YAxis {...chartAxisProps} />
-                <Tooltip content={<ChartTooltipCard />} />
-                <Legend wrapperStyle={{ fontSize: 11, paddingTop: 6 }} />
-                <Line type="monotone" dataKey="offloaded" stroke="#2563eb" strokeWidth={3.2} dot={false} activeDot={{ r: 5, fill: '#2563eb', strokeWidth: 0 }} />
-                <Line type="monotone" dataKey="pasteurized" stroke="#0f766e" strokeWidth={3.2} dot={false} activeDot={{ r: 5, fill: '#0f766e', strokeWidth: 0 }} />
-              </LineChart>
-            </ResponsiveContainer>
-          </Box>
-        </SectionCard>
-        <SectionCard title="Quick status" description="Top-level control signals for the current month.">
-          <Stack spacing={1.2}>
-            <CompactMetricCard title="Total offloaded" value={`${summary.totalOffloaded.toLocaleString()} L`} helper="Month-to-date" icon={<OpacityRounded />} tone="neutral" trend="Running" />
-            <CompactMetricCard title="Loss rate" value={`${summary.lossPercentage.toFixed(2)}%`} helper="Month-to-date" icon={<WarningAmberRounded />} tone={summary.lossPercentage > 2.6 ? 'bad' : 'good'} trend={summary.lossPercentage > 2.6 ? 'Escalated' : 'Controlled'} />
-            <Paper sx={{ p: 1.7, borderRadius: 4, background: 'linear-gradient(135deg, rgba(47,109,246,0.08), rgba(255,255,255,0.96))' }}><Typography variant="caption" fontWeight={800}>Top operator</Typography><Typography variant="body2" sx={{ mt: 0.4 }}>{ranking[0]?.operator ?? 'N/A'}</Typography></Paper>
-          </Stack>
-        </SectionCard>
+       <SectionCard
+  title="Milk movement"
+  description="Throughput profile across daily offloaded and pasteurized volume."
+>
+  <Box sx={{ height: 180 }}>
+  <ResponsiveContainer width="100%" height="100%">
+    <LineChart
+      data={chartData}
+      margin={{ top: 5, right: 10, left: 0, bottom: 0 }}
+    >
+      <CartesianGrid
+        strokeDasharray="2 2"
+        vertical={false}
+        stroke="#f1f5f9"
+      />
+
+      <XAxis
+        dataKey="date"
+        tick={{ fontSize: 10, fill: '#9ca3af' }}
+        axisLine={false}
+        tickLine={false}
+        interval="preserveStartEnd"
+      />
+
+      <YAxis
+        tick={{ fontSize: 10, fill: '#9ca3af' }}
+        axisLine={false}
+        tickLine={false}
+        width={35}
+      />
+
+      <Tooltip
+        content={<ChartTooltipCard />}
+      />
+
+      <Line
+        type="monotone"
+        dataKey="offloaded"
+        stroke="#2563eb"
+        strokeWidth={2.5}
+        dot={false}
+      />
+
+      <Line
+        type="monotone"
+        dataKey="pasteurized"
+        stroke="#059669"
+        strokeWidth={2.5}
+        dot={false}
+      />
+    </LineChart>
+  </ResponsiveContainer>
+</Box>
+      </SectionCard>
       </Box>
     </Stack>
   );
