@@ -108,6 +108,18 @@ const chartGridProps = {
   vertical: false,
 };
 
+function getSectionAccent(title: string) {
+  if (/loss|signal|alert|surveillance/i.test(title)) {
+    return { bar: '#f5b63d', tint: 'rgba(245,182,61,0.08)', text: '#7c4a03' };
+  }
+
+  if (/chemical|sanitation|cip/i.test(title)) {
+    return { bar: '#123b8f', tint: 'rgba(18,59,143,0.08)', text: '#123b8f' };
+  }
+
+  return { bar: '#123b8f', tint: 'rgba(18,59,143,0.08)', text: '#123b8f' };
+}
+
 function ChartTooltipCard({
   active,
   label,
@@ -324,22 +336,22 @@ function CompactMetricCard({
         borderColor: alpha(colors.accent, 0.22),
         position: 'relative',
         overflow: 'hidden',
-        borderRadius: 2,
+        borderRadius: 1.25,
         background: '#ffffff',
         transition: 'transform 0.16s ease, border-color 0.16s ease, background-color 0.16s ease',
         '&::before': {
           content: '""',
           position: 'absolute',
           inset: '0 auto 0 0',
-          width: 4,
+          width: 3,
           background: colors.accent,
         },
         '&:hover': { transform: 'translateY(-1px)', borderColor: alpha(colors.accent, 0.34), backgroundColor: alpha(colors.accent, 0.025) },
       }}
     >
-      <CardContent sx={{ p: 1.3 }}>
-        <Stack spacing={0.8}>
-          <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
+      <CardContent sx={{ p: 1.15 }}>
+        <Stack spacing={0.75}>
+          <Stack direction="row" justifyContent="space-between" alignItems="center">
             <Box>
               <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 800, letterSpacing: '0.07em', textTransform: 'uppercase', fontSize: '0.68rem' }}>
                 {title}
@@ -348,13 +360,13 @@ function CompactMetricCard({
                 {value}
               </Typography>
             </Box>
-            <Avatar sx={{ width: 32, height: 32, borderRadius: 1.5, bgcolor: alpha(colors.accent, 0.12), color: colors.accent }}>{icon}</Avatar>
+            <Avatar sx={{ width: 30, height: 30, borderRadius: 0.9, bgcolor: alpha(colors.accent, 0.12), color: colors.accent }}>{icon}</Avatar>
           </Stack>
           <Stack direction="row" justifyContent="space-between" alignItems="center">
             <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700, fontSize: '0.72rem' }}>
               {helper}
             </Typography>
-            <Chip size="small" color={colors.chip} label={trend} sx={{ height: 20, borderRadius: 1, fontWeight: 800, bgcolor: alpha(colors.accent, 0.12), color: colors.accent }} />
+            <Chip size="small" color={colors.chip} label={trend} sx={{ height: 19, borderRadius: 0.8, fontWeight: 800, bgcolor: alpha(colors.accent, 0.12), color: colors.accent }} />
           </Stack>
         </Stack>
       </CardContent>
@@ -373,36 +385,46 @@ function SectionCard({
   children: React.ReactNode;
   action?: React.ReactNode;
 }) {
+  const accent = getSectionAccent(title);
+
   return (
     <Card
       sx={{
         border: '1px solid rgba(148,163,184,0.16)',
-        borderRadius: 2,
+        borderRadius: 1.25,
         background: '#ffffff',
         boxShadow: 'none',
       }}
     >
-      <CardContent sx={{ p: 1.35 }}>
+      <CardContent sx={{ p: 1.15 }}>
         <Stack spacing={1.05}>
           <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" spacing={0.8}>
             <Box>
-              <Chip
-                size="small"
-                label="Operations panel"
-                sx={{ mb: 0.55, height: 18, borderRadius: 1, bgcolor: 'rgba(37,99,235,0.08)', color: '#1d4ed8', borderColor: 'rgba(37,99,235,0.12)', '& .MuiChip-label': { px: 0.8, fontSize: '0.62rem', fontWeight: 800, letterSpacing: '0.04em' } }}
-              />
-              <Typography variant="subtitle2" sx={{ fontWeight: 900, letterSpacing: '-0.015em', lineHeight: 1.15 }}>
-                {title}
-              </Typography>
+              <Box
+                sx={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  px: 1.05,
+                  py: 0.32,
+                  mb: 0.5,
+                  borderRadius: 0.75,
+                  bgcolor: accent.bar,
+                  color: '#ffffff',
+                }}
+              >
+                <Typography variant="caption" sx={{ fontSize: '0.69rem', fontWeight: 900, letterSpacing: '0.02em', lineHeight: 1 }}>
+                  {title}
+                </Typography>
+              </Box>
               {description ? (
-                <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700, fontSize: '0.69rem', lineHeight: 1.2 }}>
+                <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700, fontSize: '0.67rem', lineHeight: 1.15 }}>
                   {description}
                 </Typography>
               ) : null}
             </Box>
             {action}
           </Stack>
-          {children}
+          <Box sx={{ pt: 0.1, borderTop: '1px solid rgba(226,232,240,0.9)' }}>{children}</Box>
         </Stack>
       </CardContent>
     </Card>
