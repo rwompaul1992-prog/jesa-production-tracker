@@ -1407,10 +1407,10 @@ export function Dashboard({ user, onLogout }: { user: AppUser; onLogout: () => v
         >
           <Stack
             direction="row"
+            justifyContent="space-between"
+            alignItems="center"
             sx={{
               minHeight: 38,
-              alignItems: 'center',
-              justifyContent: 'space-between',
               gap: 0.8,
               flexWrap: { xs: 'wrap', xl: 'nowrap' },
               py: 0.18,
@@ -1419,20 +1419,12 @@ export function Dashboard({ user, onLogout }: { user: AppUser; onLogout: () => v
               bgcolor: '#ffffff',
               boxShadow: '0 4px 12px rgba(15,23,42,0.05)',
             }}
-          >
-            <Box
-              sx={{
-                flex: { xs: '1 1 100%', xl: '1 1 0' },
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'flex-start',
-                minWidth: 0,
-              }}
             >
             <Stack
               direction="row"
+              alignItems="center"
               spacing={0.5}
-              sx={{ width: '100%', maxWidth: { xs: '100%', xl: 560 }, flexWrap: { xs: 'wrap', sm: 'nowrap' }, alignItems: 'center' }}
+              sx={{ flex: { xs: '1 1 100%', xl: '1 1 0' }, width: '100%', maxWidth: { xs: '100%', xl: 560 }, flexWrap: { xs: 'wrap', sm: 'nowrap' }, minWidth: 0 }}
             >
               <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 160 } }}>
                 <InputLabel>Month</InputLabel>
@@ -1469,22 +1461,13 @@ export function Dashboard({ user, onLogout }: { user: AppUser; onLogout: () => v
                 </>
               ) : null}
             </Stack>
-            </Box>
 
-            <Box
-              sx={{
-                flex: { xs: '1 1 100%', xl: '1 1 0' },
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                minWidth: 0,
-              }}
-            >
             <Stack
               direction="row"
+              alignItems="center"
               spacing={0.45}
               justifyContent="center"
-              sx={{ flexWrap: 'wrap', minWidth: 0, alignItems: 'center' }}
+              sx={{ flex: { xs: '1 1 100%', xl: '1 1 0' }, flexWrap: 'wrap', minWidth: 0 }}
             >
               {availableSections.map((section) => {
                 const active = section.key === activeSection;
@@ -1529,7 +1512,6 @@ export function Dashboard({ user, onLogout }: { user: AppUser; onLogout: () => v
                 );
               })}
             </Stack>
-            </Box>
 
             <Box
               sx={{
