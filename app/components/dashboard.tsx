@@ -1393,38 +1393,41 @@ export function Dashboard({ user, onLogout }: { user: AppUser; onLogout: () => v
 
   return (
     <Box sx={{ minHeight: '100vh', background: '#f8f5f0' }}>
-      <Box sx={{ maxWidth: 1660, mx: 'auto', px: { xs: 1.2, md: 1.8 }, pb: { xs: 1.6, md: 2.2 } }}>
+      <Box sx={{ maxWidth: 1660, mx: 'auto', px: { xs: 1, md: 1.5, xl: 1.8 }, pb: { xs: 1.6, md: 2.2 } }}>
         <Box
           sx={{
             position: 'sticky',
             top: 0,
             zIndex: 10,
-            pt: { xs: 0.3, md: 0.36 },
-            pb: 0.3,
+            pt: { xs: 0.2, md: 0.28 },
+            pb: 0.24,
             borderBottom: '1px solid rgba(234,88,12,0.08)',
             bgcolor: '#f8f5f0',
           }}
         >
-          <Stack
-            direction={{ xs: 'column', xl: 'row' }}
-            justifyContent="space-between"
-            alignItems={{ xs: 'stretch', xl: 'center' }}
+          <Box
             sx={{
-              minHeight: 42,
-              gap: { xs: 0.65, xl: 1 },
-              py: 0.22,
+              display: 'grid',
+              gridTemplateColumns: { xs: '1fr', xl: 'minmax(0, max-content) 1fr auto' },
+              alignItems: 'center',
+              columnGap: { xl: 0.9 },
+              rowGap: { xs: 0.55, xl: 0 },
+              maxWidth: 1380,
+              mx: 'auto',
+              minHeight: 40,
+              py: 0.18,
             }}
           >
             <Stack
               direction="row"
               alignItems="center"
-              spacing={0.55}
+              spacing={0.5}
               sx={{
-                flex: { xs: '1 1 auto', xl: '1 1 0' },
                 width: '100%',
-                maxWidth: { xs: '100%', xl: 560 },
-                flexWrap: { xs: 'wrap', md: 'nowrap' },
+                maxWidth: { xs: '100%', xl: 540 },
+                flexWrap: 'wrap',
                 minWidth: 0,
+                justifySelf: { xl: 'start' },
               }}
             >
               <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 154 } }}>
@@ -1485,13 +1488,13 @@ export function Dashboard({ user, onLogout }: { user: AppUser; onLogout: () => v
             <Stack
               direction="row"
               alignItems="center"
-              spacing={0.5}
+              spacing={0.45}
               justifyContent="center"
               sx={{
-                flex: { xs: '1 1 auto', xl: '1 1 0' },
                 flexWrap: 'wrap',
                 minWidth: 0,
                 width: '100%',
+                justifySelf: { xl: 'center' },
               }}
             >
               {availableSections.map((section) => {
@@ -1530,11 +1533,11 @@ export function Dashboard({ user, onLogout }: { user: AppUser; onLogout: () => v
 
             <Box
               sx={{
-                flex: { xs: '1 1 100%', xl: '1 1 0' },
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: { xs: 'flex-start', xl: 'flex-end' },
                 minWidth: 0,
+                justifySelf: { xl: 'end' },
               }}
             >
               <Button
@@ -1557,7 +1560,7 @@ export function Dashboard({ user, onLogout }: { user: AppUser; onLogout: () => v
                 Sign out
               </Button>
             </Box>
-          </Stack>
+          </Box>
         </Box>
 
         <Box sx={{ pt: 0.8 }}>
