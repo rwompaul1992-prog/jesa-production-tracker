@@ -122,22 +122,22 @@ function ChartTooltipCard({
   return (
     <Paper
       sx={{
-        p: 1.2,
-        borderRadius: 3,
-        border: '1px solid rgba(59,130,246,0.14)',
+        p: 1,
+        borderRadius: 1.5,
+        border: '1px solid rgba(15,23,42,0.12)',
         minWidth: 160,
-        background: 'linear-gradient(180deg, rgba(255,255,255,0.98), rgba(239,246,255,0.96))',
-        boxShadow: '0 18px 28px rgba(15,23,42,0.12)',
+        background: 'rgba(255,255,255,0.99)',
+        boxShadow: '0 10px 18px rgba(15,23,42,0.08)',
       }}
     >
-      <Typography variant="caption" sx={{ color: 'primary.main', fontWeight: 900, letterSpacing: '0.04em' }}>
+      <Typography variant="caption" sx={{ color: '#1d4ed8', fontWeight: 900, letterSpacing: '0.06em' }}>
         {label}
       </Typography>
       <Stack spacing={0.65} sx={{ mt: 0.75 }}>
         {payload.map((item) => (
           <Stack key={item.name} direction="row" justifyContent="space-between" spacing={1.5}>
             <Stack direction="row" spacing={0.8} alignItems="center">
-              <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: item.color ?? 'primary.main', boxShadow: `0 0 0 3px ${alpha(item.color ?? '#2563eb', 0.12)}` }} />
+              <Box sx={{ width: 8, height: 8, borderRadius: 1, bgcolor: item.color ?? 'primary.main' }} />
               <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700 }}>{item.name}</Typography>
             </Stack>
             <Typography variant="caption" fontWeight={900} color="text.primary">{Number(item.value ?? 0).toLocaleString()}</Typography>
@@ -321,40 +321,40 @@ function CompactMetricCard({
     <Card
       sx={{
         border: '1px solid',
-        borderColor: alpha(colors.accent, 0.16),
+        borderColor: alpha(colors.accent, 0.22),
         position: 'relative',
         overflow: 'hidden',
-        background: `linear-gradient(145deg, ${alpha(colors.accent, 0.22)}, rgba(255,255,255,0.98) 36%, rgba(255,255,255,1) 100%)`,
-        transition: 'transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease',
-        boxShadow: `0 16px 26px ${alpha(colors.accent, 0.08)}`,
+        borderRadius: 2,
+        background: '#ffffff',
+        transition: 'transform 0.16s ease, border-color 0.16s ease, background-color 0.16s ease',
         '&::before': {
           content: '""',
           position: 'absolute',
           inset: '0 auto 0 0',
-          width: 5,
-          background: `linear-gradient(180deg, ${colors.accent}, ${alpha(colors.accent, 0.32)})`,
+          width: 4,
+          background: colors.accent,
         },
-        '&:hover': { transform: 'translateY(-2px)', boxShadow: `0 20px 30px ${alpha(colors.accent, 0.16)}`, borderColor: alpha(colors.accent, 0.3) },
+        '&:hover': { transform: 'translateY(-1px)', borderColor: alpha(colors.accent, 0.34), backgroundColor: alpha(colors.accent, 0.025) },
       }}
     >
-      <CardContent sx={{ p: 1.65 }}>
-        <Stack spacing={1.05}>
+      <CardContent sx={{ p: 1.3 }}>
+        <Stack spacing={0.8}>
           <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
             <Box>
-              <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+              <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 800, letterSpacing: '0.07em', textTransform: 'uppercase', fontSize: '0.68rem' }}>
                 {title}
               </Typography>
-              <Typography variant="h6" sx={{ mt: 0.55, fontWeight: 900, letterSpacing: '-0.03em' }}>
+              <Typography variant="h6" sx={{ mt: 0.35, fontWeight: 900, letterSpacing: '-0.03em', lineHeight: 1.05 }}>
                 {value}
               </Typography>
             </Box>
-            <Avatar sx={{ width: 38, height: 38, bgcolor: alpha(colors.accent, 0.14), color: colors.accent, boxShadow: `inset 0 1px 0 ${alpha('#fff', 0.6)}, 0 10px 20px ${alpha(colors.accent, 0.12)}` }}>{icon}</Avatar>
+            <Avatar sx={{ width: 32, height: 32, borderRadius: 1.5, bgcolor: alpha(colors.accent, 0.12), color: colors.accent }}>{icon}</Avatar>
           </Stack>
           <Stack direction="row" justifyContent="space-between" alignItems="center">
             <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700, fontSize: '0.72rem' }}>
               {helper}
             </Typography>
-            <Chip size="small" color={colors.chip} label={trend} sx={{ height: 22, fontWeight: 800, bgcolor: alpha(colors.accent, 0.14), color: colors.accent }} />
+            <Chip size="small" color={colors.chip} label={trend} sx={{ height: 20, borderRadius: 1, fontWeight: 800, bgcolor: alpha(colors.accent, 0.12), color: colors.accent }} />
           </Stack>
         </Stack>
       </CardContent>
@@ -376,25 +376,26 @@ function SectionCard({
   return (
     <Card
       sx={{
-        border: '1px solid rgba(148,163,184,0.14)',
-        background: 'linear-gradient(180deg, rgba(255,255,255,0.98), rgba(248,250,252,0.95))',
-        boxShadow: '0 14px 28px rgba(15,23,42,0.05)',
+        border: '1px solid rgba(148,163,184,0.16)',
+        borderRadius: 2,
+        background: '#ffffff',
+        boxShadow: 'none',
       }}
     >
-      <CardContent sx={{ p: 1.8 }}>
-        <Stack spacing={1.45}>
-          <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" spacing={1.1}>
+      <CardContent sx={{ p: 1.35 }}>
+        <Stack spacing={1.05}>
+          <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" spacing={0.8}>
             <Box>
               <Chip
                 size="small"
                 label="Operations panel"
-                sx={{ mb: 0.75, height: 22, bgcolor: 'rgba(47,109,246,0.08)', color: 'primary.main', borderColor: 'rgba(47,109,246,0.12)' }}
+                sx={{ mb: 0.55, height: 18, borderRadius: 1, bgcolor: 'rgba(37,99,235,0.08)', color: '#1d4ed8', borderColor: 'rgba(37,99,235,0.12)', '& .MuiChip-label': { px: 0.8, fontSize: '0.62rem', fontWeight: 800, letterSpacing: '0.04em' } }}
               />
-              <Typography variant="subtitle2" sx={{ fontWeight: 900, letterSpacing: '-0.02em' }}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 900, letterSpacing: '-0.015em', lineHeight: 1.15 }}>
                 {title}
               </Typography>
               {description ? (
-                <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700, fontSize: '0.72rem' }}>
+                <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700, fontSize: '0.69rem', lineHeight: 1.2 }}>
                   {description}
                 </Typography>
               ) : null}
@@ -450,8 +451,8 @@ function OperatorPerformancePage({
   }
 
   return (
-    <Stack spacing={1.6}>
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)', xl: 'repeat(4, 1fr)' }, gap: 1.1 }}>
+    <Stack spacing={1.25}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)', xl: 'repeat(4, 1fr)' }, gap: 0.95 }}>
         {performance.operators.map((entry) => {
           const badge = getPerformanceBadgeMeta(entry.badge);
           const isActive = entry.operator === selectedEntry.operator;
@@ -528,8 +529,8 @@ function OperatorPerformancePage({
         })}
       </Box>
 
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', xl: '1.1fr 0.9fr' }, gap: 1.4 }}>
-        <Stack spacing={1.4}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', xl: '1.1fr 0.9fr' }, gap: 1.1 }}>
+        <Stack spacing={1.1}>
           <SectionCard
             title="Operator score ranking"
             description="Weighted monthly score with fair per-1000L chemical normalization and completeness discipline."
@@ -665,7 +666,7 @@ function OperatorPerformancePage({
           </SectionCard>
         </Stack>
 
-        <Stack spacing={1.4}>
+        <Stack spacing={1.1}>
           <SectionCard title="Supervisor insights" description="Immediate flags for risky behavior, missing records, and improvement momentum.">
             <Stack spacing={1.1}>
               <Paper sx={{ p: 1.5, borderRadius: 4, background: 'linear-gradient(135deg, rgba(20,184,166,0.12), rgba(255,255,255,0.98))' }}>
@@ -1161,8 +1162,8 @@ function AdminIntakePage({
   const abnormalOperators = ranking.filter((entry) => entry.lossRate > 2.5).map((entry) => entry.operator);
 
   return (
-    <Stack spacing={1.7}>
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)', xl: 'repeat(6, 1fr)' }, gap: 1.1 }}>
+    <Stack spacing={1.35}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)', xl: 'repeat(6, 1fr)' }, gap: 0.95 }}>
         <CompactMetricCard title="Milk offloaded" value={`${summary.totalOffloaded.toLocaleString()} L`} helper="Monthly intake volume" icon={<OpacityRounded />} tone="neutral" trend="Flow stable" />
         <CompactMetricCard title="Milk pasteurized" value={`${summary.totalPasteurized.toLocaleString()} L`} helper="Finished output" icon={<LocalDrinkRounded />} tone="good" trend="Output healthy" />
         <CompactMetricCard title="Milk loss" value={`${summary.totalLoss.toLocaleString()} L`} helper="Variance to review" icon={<WarningAmberRounded />} tone={summary.lossPercentage > 2.6 ? 'bad' : 'warning'} trend={summary.lossPercentage > 2.6 ? 'Action needed' : 'Contained'} />
@@ -1171,10 +1172,10 @@ function AdminIntakePage({
         <CompactMetricCard title="Nitric usage" value={`${summary.totalNitric}`} helper="Jerrycans logged" icon={<ScienceRounded />} tone="neutral" trend="Chemical watch" />
       </Box>
 
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', xl: '1.45fr 0.85fr' }, gap: 1.4 }}>
-        <Stack spacing={1.4}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', xl: '1.45fr 0.85fr' }, gap: 1.1 }}>
+        <Stack spacing={1.1}>
           <SectionCard title="Throughput trend" description="Daily offloaded and pasteurized volume for the active review window.">
-            <Box sx={{ height: 220 }}>
+            <Box sx={{ height: 208 }}>
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={chartData}>
                   <defs>
@@ -1202,7 +1203,7 @@ function AdminIntakePage({
           </SectionCard>
 
           <SectionCard title="Loss surveillance" description="Trendline for milk loss and fast anomaly recognition.">
-            <Box sx={{ height: 198 }}>
+            <Box sx={{ height: 186 }}>
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={chartData}>
                   <defs>
@@ -1222,7 +1223,7 @@ function AdminIntakePage({
           </SectionCard>
 
           <SectionCard title="Chemical intensity" description="Caustic and nitric consumption by operator for the selected month.">
-            <Box sx={{ height: 198 }}>
+            <Box sx={{ height: 186 }}>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chemicalByOperator}>
                   <CartesianGrid {...chartGridProps} />
@@ -1238,7 +1239,7 @@ function AdminIntakePage({
           </SectionCard>
         </Stack>
 
-        <Stack spacing={1.4}>
+        <Stack spacing={1.1}>
           <SectionCard title="Operator performance ranking" description="Best-to-worst comparison across loss, chemistry discipline, and completeness.">
             <Stack spacing={1.2}>
               {ranking.map((entry) => (
@@ -1293,10 +1294,10 @@ function AdminIntakePage({
 
 function DashboardOverview({ summary, chartData, ranking }: { summary: ReturnType<typeof buildMonthlySummary>; chartData: ReturnType<typeof buildChartData>; ranking: ReturnType<typeof buildOperatorRanking>; }) {
   return (
-    <Stack spacing={1.35}>
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '1.4fr 1fr' }, gap: 1.35 }}>
+    <Stack spacing={1.05}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '1.4fr 1fr' }, gap: 1.05 }}>
         <SectionCard title="Milk movement" description="Throughput profile across daily offloaded and pasteurized volume.">
-          <Box sx={{ height: 198 }}>
+          <Box sx={{ height: 182 }}>
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={chartData}>
                 <CartesianGrid {...chartGridProps} />
@@ -1384,14 +1385,14 @@ export function Dashboard({ user, onLogout }: { user: AppUser; onLogout: () => v
         >
           <Paper
             sx={{
-              borderRadius: 3,
+              borderRadius: 1.75,
               overflow: 'hidden',
-              border: '1px solid rgba(148,163,184,0.14)',
+              border: '1px solid rgba(148,163,184,0.18)',
               background: 'rgba(255,255,255,0.98)',
-              boxShadow: '0 8px 20px rgba(15,23,42,0.05)',
+              boxShadow: '0 6px 16px rgba(15,23,42,0.04)',
             }}
           >
-            <Stack spacing={0.5} sx={{ px: { xs: 0.75, md: 0.9 }, py: { xs: 0.46, md: 0.52 } }}>
+            <Stack spacing={0.4} sx={{ px: { xs: 0.7, md: 0.85 }, py: { xs: 0.4, md: 0.46 } }}>
               <Stack
                 direction={{ xs: 'column', xl: 'row' }}
                 spacing={0.5}
@@ -1467,13 +1468,13 @@ export function Dashboard({ user, onLogout }: { user: AppUser; onLogout: () => v
                         startIcon={section.icon}
                         size="small"
                         sx={{
-                          minHeight: 28,
-                          px: 1.02,
-                          borderRadius: 999,
+                          minHeight: 27,
+                          px: 0.95,
+                          borderRadius: 1.25,
                           color: active ? 'common.white' : '#111827',
                           bgcolor: active ? accent : '#ffffff',
                           border: `1px solid ${active ? accent : 'rgba(148,163,184,0.26)'}`,
-                          boxShadow: active ? `0 10px 18px ${alpha(accent, 0.28)}` : 'none',
+                          boxShadow: active ? `inset 0 -1px 0 ${alpha('#000', 0.08)}` : 'none',
                           '&:hover': {
                             bgcolor: active ? alpha(accent, 0.92) : '#f8fafc',
                           },
@@ -1483,7 +1484,7 @@ export function Dashboard({ user, onLogout }: { user: AppUser; onLogout: () => v
                           },
                         }}
                       >
-                        <Typography variant="caption" fontWeight={800} sx={{ letterSpacing: '0.01em' }}>
+                        <Typography variant="caption" fontWeight={800} sx={{ letterSpacing: '0.01em', fontSize: '0.68rem' }}>
                           {section.label}
                         </Typography>
                       </Button>
@@ -1496,8 +1497,8 @@ export function Dashboard({ user, onLogout }: { user: AppUser; onLogout: () => v
                   sx={{
                     minWidth: 0,
                     px: 0.95,
-                    py: 0.38,
-                    borderRadius: 999,
+                    py: 0.34,
+                    borderRadius: 1.25,
                     color: '#0f172a',
                     border: '1px solid rgba(148,163,184,0.26)',
                     bgcolor: '#ffffff',
