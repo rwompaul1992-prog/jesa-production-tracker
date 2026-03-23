@@ -92,18 +92,109 @@ const chartAxisProps = {
   axisLine: false,
   tickLine: false,
   tickMargin: 8,
-  tick: { fontSize: 10, fill: '#6b7280', fontWeight: 700 },
+  tick: { fontSize: 10, fill: '#78716c', fontWeight: 700 },
 };
 
 const chartGridProps = {
-  stroke: 'rgba(120,113,108,0.16)',
-  strokeDasharray: '3 5',
+  stroke: 'rgba(120,113,108,0.14)',
+  strokeDasharray: '2 6',
   vertical: false,
 };
 
+function PremiumHero({
+  eyebrow,
+  title,
+  description,
+  highlights,
+}: {
+  eyebrow: string;
+  title: string;
+  description: string;
+  highlights: string[];
+}) {
+  return (
+    <Card
+      sx={{
+        borderRadius: 1.6,
+        border: '1px solid rgba(18,59,143,0.12)',
+        background: 'linear-gradient(140deg, #0f172a 0%, #123b8f 44%, #14b8a6 100%)',
+        color: '#ffffff',
+        overflow: 'hidden',
+        position: 'relative',
+        boxShadow: '0 24px 50px rgba(15,23,42,0.18)',
+        '&::before': {
+          content: '""',
+          position: 'absolute',
+          inset: 0,
+          background: [
+            'radial-gradient(circle at 14% 18%, rgba(255,255,255,0.16), transparent 22%)',
+            'radial-gradient(circle at 82% 24%, rgba(255,255,255,0.14), transparent 18%)',
+            'linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0))',
+          ].join(','),
+        },
+      }}
+    >
+      <CardContent sx={{ p: { xs: 1.5, md: 1.8 }, position: 'relative' }}>
+        <Stack spacing={1.2}>
+          <Chip
+            label={eyebrow}
+            size="small"
+            sx={{
+              alignSelf: 'flex-start',
+              color: '#ffffff',
+              bgcolor: alpha('#ffffff', 0.12),
+              border: `1px solid ${alpha('#ffffff', 0.18)}`,
+              fontWeight: 800,
+            }}
+          />
+          <Stack spacing={0.7}>
+            <Typography variant="h5" sx={{ fontWeight: 900, letterSpacing: '-0.03em' }}>
+              {title}
+            </Typography>
+            <Typography sx={{ color: 'rgba(241,245,249,0.86)', maxWidth: 860, fontSize: '0.94rem' }}>
+              {description}
+            </Typography>
+          </Stack>
+          <Stack direction={{ xs: 'column', md: 'row' }} spacing={0.8} flexWrap="wrap" useFlexGap>
+            {highlights.map((highlight) => (
+              <Chip
+                key={highlight}
+                label={highlight}
+                size="small"
+                sx={{
+                  color: '#ffffff',
+                  bgcolor: alpha('#ffffff', 0.1),
+                  border: `1px solid ${alpha('#ffffff', 0.16)}`,
+                  fontWeight: 700,
+                }}
+              />
+            ))}
+          </Stack>
+        </Stack>
+      </CardContent>
+    </Card>
+  );
+}
+
 function CompactCard({ title, value, helper, icon, accent = '#ea580c' }: { title: string; value: string; helper: string; icon: React.ReactNode; accent?: string }) {
   return (
-    <Card sx={{ borderRadius: 1.4, border: `1px solid ${alpha(accent, 0.18)}`, background: '#ffffff', boxShadow: 'none' }}>
+    <Card
+      sx={{
+        borderRadius: 1.45,
+        border: `1px solid ${alpha(accent, 0.18)}`,
+        background: `linear-gradient(180deg, ${alpha('#ffffff', 0.98)}, ${alpha(accent, 0.035)})`,
+        boxShadow: '0 14px 30px rgba(15,23,42,0.05)',
+        position: 'relative',
+        overflow: 'hidden',
+        '&::before': {
+          content: '""',
+          position: 'absolute',
+          inset: '0 auto 0 0',
+          width: 4,
+          background: `linear-gradient(180deg, ${accent}, ${alpha(accent, 0.45)})`,
+        },
+      }}
+    >
       <CardContent sx={{ p: 1.15 }}>
         <Stack spacing={0.75}>
           <Stack direction="row" justifyContent="space-between" alignItems="center">
@@ -122,12 +213,19 @@ function CompactCard({ title, value, helper, icon, accent = '#ea580c' }: { title
 
 function SectionCard({ title, description, action, children }: { title: string; description?: string; action?: React.ReactNode; children: React.ReactNode }) {
   return (
-    <Card sx={{ borderRadius: 1.4, border: '1px solid rgba(231,229,228,1)', boxShadow: 'none', background: '#ffffff' }}>
+    <Card
+      sx={{
+        borderRadius: 1.45,
+        border: '1px solid rgba(231,229,228,1)',
+        boxShadow: '0 14px 30px rgba(15,23,42,0.04)',
+        background: 'linear-gradient(180deg, rgba(255,255,255,0.98), rgba(255,251,247,0.94))',
+      }}
+    >
       <CardContent sx={{ p: 1.15 }}>
         <Stack spacing={1}>
           <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" spacing={0.8}>
             <Box>
-              <Box sx={{ display: 'inline-flex', px: 1.05, py: 0.34, borderRadius: 1, bgcolor: '#123b8f', color: '#fff', mb: 0.5 }}>
+              <Box sx={{ display: 'inline-flex', px: 1.05, py: 0.34, borderRadius: 1, bgcolor: '#123b8f', color: '#fff', mb: 0.5, boxShadow: '0 8px 18px rgba(18,59,143,0.18)' }}>
                 <Typography variant="caption" sx={{ fontWeight: 900, lineHeight: 1, letterSpacing: '0.02em' }}>{title}</Typography>
               </Box>
               {description ? <Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontWeight: 700 }}>{description}</Typography> : null}
@@ -158,6 +256,24 @@ function ChartTooltip({ active, label, payload }: { active?: boolean; label?: st
         ))}
       </Stack>
     </Paper>
+  );
+}
+
+function ChartSurface({ children, height = 220 }: { children: React.ReactNode; height?: number }) {
+  return (
+    <Box
+      sx={{
+        height,
+        mt: 0.2,
+        borderRadius: 1.3,
+        border: '1px solid rgba(231,229,228,0.9)',
+        background: 'linear-gradient(180deg, rgba(255,255,255,0.96), rgba(255,250,245,0.88))',
+        p: 0.7,
+        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.7)',
+      }}
+    >
+      {children}
+    </Box>
   );
 }
 
@@ -224,6 +340,13 @@ const FreshMilkOperatorForm = memo(function FreshMilkOperatorForm({ user, record
 
   return (
     <Stack spacing={1.1}>
+      <PremiumHero
+        eyebrow="Operator workspace"
+        title={`${user.name} • Fresh Milk machine entry`}
+        description="A fast production-grade submission workspace for pouch-machine operators. Inputs stay local while typing, then save in one clean submit action for a smoother shift-floor experience."
+        highlights={['Submit once per entry', 'Desktop-optimized', 'No save-on-keystroke lag']}
+      />
+
       <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'repeat(4, minmax(0, 1fr))' }, gap: 0.8 }}>
         <CompactCard title="Rate preview" value={`${previewRate.toFixed(0)} pouches/hr`} helper="Live productivity preview before submit" icon={<SpeedRounded fontSize="small" />} accent="#123b8f" />
         <CompactCard title="Defect preview" value={`${previewDefect.toFixed(2)}%`} helper="Rejected pouches / total pouches" icon={<ReportRounded fontSize="small" />} accent="#dc2626" />
@@ -237,29 +360,29 @@ const FreshMilkOperatorForm = memo(function FreshMilkOperatorForm({ user, record
         action={<Button variant="contained" startIcon={<SaveRounded />} onClick={handleSubmit} sx={{ bgcolor: '#123b8f', '&:hover': { bgcolor: '#0f3277' } }}>Submit daily entry</Button>}
       >
         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, minmax(0, 1fr))', xl: 'repeat(4, minmax(0, 1fr))' }, gap: 0.8 }}>
-          <TextField label="Date" type="date" value={form.date} onChange={(event) => update('date', event.target.value)} InputLabelProps={{ shrink: true }} size="small" />
-          <TextField label="Operator" value={user.name} size="small" disabled />
-          <TextField select label="Shift" value={form.shift} onChange={(event) => update('shift', event.target.value as FreshMilkShift)} size="small">
+          <TextField label="Date" type="date" value={form.date} onChange={(event) => update('date', event.target.value)} InputLabelProps={{ shrink: true }} size="small" sx={{ '& .MuiOutlinedInput-root': { bgcolor: '#fffdf9' } }} />
+          <TextField label="Operator" value={user.name} size="small" disabled sx={{ '& .MuiOutlinedInput-root': { bgcolor: '#fffaf5' } }} />
+          <TextField select label="Shift" value={form.shift} onChange={(event) => update('shift', event.target.value as FreshMilkShift)} size="small" sx={{ '& .MuiOutlinedInput-root': { bgcolor: '#fffdf9' } }}>
             {shiftOptions.map((shift) => <MenuItem key={shift} value={shift}>{shift}</MenuItem>)}
           </TextField>
-          <TextField select label="Machine number" value={form.machineNumber} onChange={(event) => update('machineNumber', event.target.value as FreshMilkMachine)} size="small">
+          <TextField select label="Machine number" value={form.machineNumber} onChange={(event) => update('machineNumber', event.target.value as FreshMilkMachine)} size="small" sx={{ '& .MuiOutlinedInput-root': { bgcolor: '#fffdf9' } }}>
             {machineOptions.map((machine) => <MenuItem key={machine} value={machine}>{machine}</MenuItem>)}
           </TextField>
-          <TextField label="Product packed" value={form.productPacked} onChange={(event) => update('productPacked', event.target.value)} size="small" />
-          <TextField select label="Pack size" value={form.packSize} onChange={(event) => update('packSize', event.target.value)} size="small">
+          <TextField label="Product packed" value={form.productPacked} onChange={(event) => update('productPacked', event.target.value)} size="small" sx={{ '& .MuiOutlinedInput-root': { bgcolor: '#fffdf9' } }} />
+          <TextField select label="Pack size" value={form.packSize} onChange={(event) => update('packSize', event.target.value)} size="small" sx={{ '& .MuiOutlinedInput-root': { bgcolor: '#fffdf9' } }}>
             {packSizeOptions.map((packSize) => <MenuItem key={packSize} value={packSize}>{packSize}</MenuItem>)}
           </TextField>
-          <TextField label="Total pouches produced" value={form.totalPouchesProduced} onChange={(event) => update('totalPouchesProduced', event.target.value)} size="small" />
-          <TextField label="Running hours" value={form.runningHours} onChange={(event) => update('runningHours', event.target.value)} size="small" />
-          <TextField label="Downtime minutes" value={form.downtimeMinutes} onChange={(event) => update('downtimeMinutes', event.target.value)} size="small" />
-          <TextField label="Number of stoppages" value={form.stoppageCount} onChange={(event) => update('stoppageCount', event.target.value)} size="small" />
-          <TextField label="Rejected pouches" value={form.rejectedPouches} onChange={(event) => update('rejectedPouches', event.target.value)} size="small" />
-          <TextField label="Start-up time to first good pouch (min)" value={form.startupTimeMinutes} onChange={(event) => update('startupTimeMinutes', event.target.value)} size="small" />
-          <TextField label="Bad pouches before stable production" value={form.badPouchesBeforeStableProduction} onChange={(event) => update('badPouchesBeforeStableProduction', event.target.value)} size="small" />
-          <TextField select label="Main downtime reason" value={form.downtimeReason} onChange={(event) => update('downtimeReason', event.target.value as FreshMilkDowntimeReason)} size="small">
+          <TextField label="Total pouches produced" value={form.totalPouchesProduced} onChange={(event) => update('totalPouchesProduced', event.target.value)} size="small" sx={{ '& .MuiOutlinedInput-root': { bgcolor: '#fffdf9' } }} />
+          <TextField label="Running hours" value={form.runningHours} onChange={(event) => update('runningHours', event.target.value)} size="small" sx={{ '& .MuiOutlinedInput-root': { bgcolor: '#fffdf9' } }} />
+          <TextField label="Downtime minutes" value={form.downtimeMinutes} onChange={(event) => update('downtimeMinutes', event.target.value)} size="small" sx={{ '& .MuiOutlinedInput-root': { bgcolor: '#fffdf9' } }} />
+          <TextField label="Number of stoppages" value={form.stoppageCount} onChange={(event) => update('stoppageCount', event.target.value)} size="small" sx={{ '& .MuiOutlinedInput-root': { bgcolor: '#fffdf9' } }} />
+          <TextField label="Rejected pouches" value={form.rejectedPouches} onChange={(event) => update('rejectedPouches', event.target.value)} size="small" sx={{ '& .MuiOutlinedInput-root': { bgcolor: '#fffdf9' } }} />
+          <TextField label="Start-up time to first good pouch (min)" value={form.startupTimeMinutes} onChange={(event) => update('startupTimeMinutes', event.target.value)} size="small" sx={{ '& .MuiOutlinedInput-root': { bgcolor: '#fffdf9' } }} />
+          <TextField label="Bad pouches before stable production" value={form.badPouchesBeforeStableProduction} onChange={(event) => update('badPouchesBeforeStableProduction', event.target.value)} size="small" sx={{ '& .MuiOutlinedInput-root': { bgcolor: '#fffdf9' } }} />
+          <TextField select label="Main downtime reason" value={form.downtimeReason} onChange={(event) => update('downtimeReason', event.target.value as FreshMilkDowntimeReason)} size="small" sx={{ '& .MuiOutlinedInput-root': { bgcolor: '#fffdf9' } }}>
             {downtimeReasonOptions.map((reason) => <MenuItem key={reason} value={reason}>{reason}</MenuItem>)}
           </TextField>
-          <TextField label="Optional comment" value={form.comment} onChange={(event) => update('comment', event.target.value)} size="small" multiline minRows={1} />
+          <TextField label="Optional comment" value={form.comment} onChange={(event) => update('comment', event.target.value)} size="small" multiline minRows={1} sx={{ '& .MuiOutlinedInput-root': { bgcolor: '#fffdf9' } }} />
         </Box>
       </SectionCard>
 
@@ -335,26 +458,37 @@ export function FreshMilkSupervisorDashboard({ records }: { records: FreshMilkDa
 
   return (
     <Stack spacing={1.1}>
+      <PremiumHero
+        eyebrow="Executive operations workspace"
+        title="Fresh Milk operations command center"
+        description="Premium visibility for plant managers and supervisors across throughput, downtime discipline, startup stability, defect exposure, machine balance, and operator performance — using only measurable machine-entry KPIs."
+        highlights={[
+          `${filteredRecords.length} entries in scope`,
+          `${summary.totalPouches.toLocaleString()} pouches reviewed`,
+          `${bestOperator} leading`,
+        ]}
+      />
+
       <SectionCard title="Fresh Milk Operations" description="Supervisor command surface for the pouch machine section with measurable operator KPIs only.">
         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(3, minmax(0, 1fr))', xl: 'repeat(7, minmax(0, 1fr))' }, gap: 0.75 }}>
-          <TextField select label="Month" value={monthFilter} onChange={(event) => { setMonthFilter(event.target.value); setStartDate(`${event.target.value}-01`); setEndDate(dayjs(`${event.target.value}-01`).endOf('month').format('YYYY-MM-DD')); }} size="small">
+          <TextField select label="Month" value={monthFilter} onChange={(event) => { setMonthFilter(event.target.value); setStartDate(`${event.target.value}-01`); setEndDate(dayjs(`${event.target.value}-01`).endOf('month').format('YYYY-MM-DD')); }} size="small" sx={{ '& .MuiOutlinedInput-root': { bgcolor: '#fffdf9' } }}>
             {months.map((month) => <MenuItem key={month} value={month}>{dayjs(`${month}-01`).format('MMMM YYYY')}</MenuItem>)}
           </TextField>
-          <TextField label="Start date" type="date" value={startDate} onChange={(event) => setStartDate(event.target.value)} size="small" InputLabelProps={{ shrink: true }} />
-          <TextField label="End date" type="date" value={endDate} onChange={(event) => setEndDate(event.target.value)} size="small" InputLabelProps={{ shrink: true }} />
-          <TextField select label="Shift" value={shiftFilter} onChange={(event) => setShiftFilter(event.target.value as 'All' | FreshMilkShift)} size="small">
+          <TextField label="Start date" type="date" value={startDate} onChange={(event) => setStartDate(event.target.value)} size="small" InputLabelProps={{ shrink: true }} sx={{ '& .MuiOutlinedInput-root': { bgcolor: '#fffdf9' } }} />
+          <TextField label="End date" type="date" value={endDate} onChange={(event) => setEndDate(event.target.value)} size="small" InputLabelProps={{ shrink: true }} sx={{ '& .MuiOutlinedInput-root': { bgcolor: '#fffdf9' } }} />
+          <TextField select label="Shift" value={shiftFilter} onChange={(event) => setShiftFilter(event.target.value as 'All' | FreshMilkShift)} size="small" sx={{ '& .MuiOutlinedInput-root': { bgcolor: '#fffdf9' } }}>
             <MenuItem value="All">All</MenuItem>
             {shiftOptions.map((shift) => <MenuItem key={shift} value={shift}>{shift}</MenuItem>)}
           </TextField>
-          <TextField select label="Machine" value={machineFilter} onChange={(event) => setMachineFilter(event.target.value as 'All' | FreshMilkMachine)} size="small">
+          <TextField select label="Machine" value={machineFilter} onChange={(event) => setMachineFilter(event.target.value as 'All' | FreshMilkMachine)} size="small" sx={{ '& .MuiOutlinedInput-root': { bgcolor: '#fffdf9' } }}>
             <MenuItem value="All">All</MenuItem>
             {machineOptions.map((machine) => <MenuItem key={machine} value={machine}>{machine}</MenuItem>)}
           </TextField>
-          <TextField select label="Operator" value={operatorFilter} onChange={(event) => setOperatorFilter(event.target.value)} size="small">
+          <TextField select label="Operator" value={operatorFilter} onChange={(event) => setOperatorFilter(event.target.value)} size="small" sx={{ '& .MuiOutlinedInput-root': { bgcolor: '#fffdf9' } }}>
             <MenuItem value="All">All</MenuItem>
             {operatorNames.map((name) => <MenuItem key={name} value={name}>{name}</MenuItem>)}
           </TextField>
-          <TextField label="Search" value={search} onChange={(event) => setSearch(event.target.value)} size="small" />
+          <TextField label="Search" value={search} onChange={(event) => setSearch(event.target.value)} size="small" sx={{ '& .MuiOutlinedInput-root': { bgcolor: '#fffdf9' } }} />
         </Box>
       </SectionCard>
 
@@ -372,49 +506,77 @@ export function FreshMilkSupervisorDashboard({ records }: { records: FreshMilkDa
       <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', xl: '1.05fr 0.95fr' }, gap: 0.9 }}>
         <Stack spacing={0.9}>
           <SectionCard title="Daily total pouches" description="Line view of total Fresh Milk pouch output across the selected period.">
-            <Box sx={{ height: 200 }}>
+            <ChartSurface height={208}>
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={trend}>
+                  <defs>
+                    <linearGradient id="freshMilkDailyGlow" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#123b8f" stopOpacity={0.22} />
+                      <stop offset="95%" stopColor="#123b8f" stopOpacity={0.02} />
+                    </linearGradient>
+                  </defs>
                   <CartesianGrid {...chartGridProps} />
                   <XAxis dataKey="date" {...chartAxisProps} />
                   <YAxis {...chartAxisProps} />
                   <Tooltip content={<ChartTooltip />} />
-                  <Line type="monotone" dataKey="totalPouches" stroke="#123b8f" strokeWidth={3} dot={false} />
+                  <Legend wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
+                  <Line type="monotone" dataKey="totalPouches" name="Total pouches" stroke="#123b8f" strokeWidth={3.2} dot={false} activeDot={{ r: 5, fill: '#123b8f', stroke: '#ffffff', strokeWidth: 2 }} />
+                  <Line type="monotone" dataKey="averageRate" name="Avg pouches/hr" stroke="#14b8a6" strokeWidth={2.6} dot={false} activeDot={{ r: 4, fill: '#14b8a6', stroke: '#ffffff', strokeWidth: 2 }} />
                 </LineChart>
               </ResponsiveContainer>
-            </Box>
+            </ChartSurface>
           </SectionCard>
           <SectionCard title="Operator production and downtime" description="Compare average pouch rate and total downtime by operator.">
-            <Box sx={{ height: 220 }}>
+            <ChartSurface>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={ranking}>
+                  <defs>
+                    <linearGradient id="freshMilkRateBar" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#2dd4bf" />
+                      <stop offset="100%" stopColor="#14b8a6" />
+                    </linearGradient>
+                    <linearGradient id="freshMilkDowntimeBar" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#fb7185" />
+                      <stop offset="100%" stopColor="#dc2626" />
+                    </linearGradient>
+                  </defs>
                   <CartesianGrid {...chartGridProps} />
                   <XAxis dataKey="operatorName" {...chartAxisProps} />
                   <YAxis yAxisId="left" {...chartAxisProps} />
                   <YAxis yAxisId="right" orientation="right" {...chartAxisProps} />
                   <Tooltip content={<ChartTooltip />} />
                   <Legend wrapperStyle={{ fontSize: 11 }} />
-                  <Bar yAxisId="left" dataKey="averagePouchesPerHour" name="Avg pouches/hr" fill="#14b8a6" radius={[8, 8, 0, 0]} />
-                  <Bar yAxisId="right" dataKey="totalDowntime" name="Downtime min" fill="#dc2626" radius={[8, 8, 0, 0]} />
+                  <Bar yAxisId="left" dataKey="averagePouchesPerHour" name="Avg pouches/hr" fill="url(#freshMilkRateBar)" radius={[8, 8, 0, 0]} />
+                  <Bar yAxisId="right" dataKey="totalDowntime" name="Downtime min" fill="url(#freshMilkDowntimeBar)" radius={[8, 8, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
-            </Box>
+            </ChartSurface>
           </SectionCard>
           <SectionCard title="Operator quality and startup" description="Defect rate and startup time by operator for the selected period.">
-            <Box sx={{ height: 220 }}>
+            <ChartSurface>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={ranking}>
+                  <defs>
+                    <linearGradient id="freshMilkDefectBar" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#fb923c" />
+                      <stop offset="100%" stopColor="#ea580c" />
+                    </linearGradient>
+                    <linearGradient id="freshMilkStartupBar" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#a78bfa" />
+                      <stop offset="100%" stopColor="#8b5cf6" />
+                    </linearGradient>
+                  </defs>
                   <CartesianGrid {...chartGridProps} />
                   <XAxis dataKey="operatorName" {...chartAxisProps} />
                   <YAxis yAxisId="left" {...chartAxisProps} />
                   <YAxis yAxisId="right" orientation="right" {...chartAxisProps} />
                   <Tooltip content={<ChartTooltip />} />
                   <Legend wrapperStyle={{ fontSize: 11 }} />
-                  <Bar yAxisId="left" dataKey="averageDefectRate" name="Avg defect rate" fill="#ea580c" radius={[8, 8, 0, 0]} />
-                  <Bar yAxisId="right" dataKey="averageStartupTime" name="Avg startup min" fill="#8b5cf6" radius={[8, 8, 0, 0]} />
+                  <Bar yAxisId="left" dataKey="averageDefectRate" name="Avg defect rate" fill="url(#freshMilkDefectBar)" radius={[8, 8, 0, 0]} />
+                  <Bar yAxisId="right" dataKey="averageStartupTime" name="Avg startup min" fill="url(#freshMilkStartupBar)" radius={[8, 8, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
-            </Box>
+            </ChartSurface>
           </SectionCard>
         </Stack>
 
@@ -472,7 +634,7 @@ export function FreshMilkSupervisorDashboard({ records }: { records: FreshMilkDa
           </SectionCard>
 
           <SectionCard title="Downtime reasons by operator" description="Grouped reason tallies to spot recurring film, seal, power, and supply issues.">
-            <Box sx={{ height: 220 }}>
+            <ChartSurface>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={downtimeBreakdown}>
                   <CartesianGrid {...chartGridProps} />
@@ -487,28 +649,38 @@ export function FreshMilkSupervisorDashboard({ records }: { records: FreshMilkDa
                   <Bar dataKey="Changeover / setup" stackId="reasons" fill="#8b5cf6" />
                 </BarChart>
               </ResponsiveContainer>
-            </Box>
+            </ChartSurface>
           </SectionCard>
         </Stack>
       </Box>
 
       <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', xl: '1fr 1fr' }, gap: 0.9 }}>
         <SectionCard title="Machine performance chart" description="Chart comparison for output, downtime, and startup efficiency by machine.">
-          <Box sx={{ height: 220 }}>
+          <ChartSurface>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={machineComparison}>
+                <defs>
+                  <linearGradient id="freshMilkMachinePouches" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#1d4ed8" />
+                    <stop offset="100%" stopColor="#123b8f" />
+                  </linearGradient>
+                  <linearGradient id="freshMilkMachineDowntime" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#fbbf24" />
+                    <stop offset="100%" stopColor="#f59e0b" />
+                  </linearGradient>
+                </defs>
                 <CartesianGrid {...chartGridProps} />
                 <XAxis dataKey="machineNumber" {...chartAxisProps} />
                 <YAxis yAxisId="left" {...chartAxisProps} />
                 <YAxis yAxisId="right" orientation="right" {...chartAxisProps} />
                 <Tooltip content={<ChartTooltip />} />
                 <Legend wrapperStyle={{ fontSize: 11 }} />
-                <Bar yAxisId="left" dataKey="totalPouches" name="Total pouches" fill="#123b8f" radius={[8, 8, 0, 0]} />
-                <Bar yAxisId="right" dataKey="totalDowntime" name="Downtime min" fill="#f59e0b" radius={[8, 8, 0, 0]} />
-                <Line yAxisId="right" type="monotone" dataKey="averageStartupTime" name="Avg startup min" stroke="#8b5cf6" strokeWidth={3} dot={false} />
+                <Bar yAxisId="left" dataKey="totalPouches" name="Total pouches" fill="url(#freshMilkMachinePouches)" radius={[8, 8, 0, 0]} />
+                <Bar yAxisId="right" dataKey="totalDowntime" name="Downtime min" fill="url(#freshMilkMachineDowntime)" radius={[8, 8, 0, 0]} />
+                <Line yAxisId="right" type="monotone" dataKey="averageStartupTime" name="Avg startup min" stroke="#8b5cf6" strokeWidth={3} dot={false} activeDot={{ r: 5, fill: '#8b5cf6', stroke: '#ffffff', strokeWidth: 2 }} />
               </BarChart>
             </ResponsiveContainer>
-          </Box>
+          </ChartSurface>
         </SectionCard>
 
         <SectionCard
