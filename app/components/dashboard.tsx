@@ -1314,65 +1314,72 @@ function AdminIntakePage({
   );
 }
 
-function DashboardOverview({ summary, chartData, ranking }: { summary: ReturnType<typeof buildMonthlySummary>; chartData: ReturnType<typeof buildChartData>; ranking: ReturnType<typeof buildOperatorRanking>; }) {
+function DashboardOverview({
+  summary,
+  chartData,
+  ranking,
+}: {
+  summary: ReturnType<typeof buildMonthlySummary>;
+  chartData: ReturnType<typeof buildChartData>;
+  ranking: ReturnType<typeof buildOperatorRanking>;
+}) {
   return (
-    <Stack spacing={0.9}>
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '1.4fr 1fr' }, gap: 0.9 }}>
-       <SectionCard
-  title="Milk movement"
-  description="Throughput profile across daily offloaded and pasteurized volume."
->
-  <Box sx={{ height: 180 }}>
-  <ResponsiveContainer width="100%" height="100%">
-    <LineChart
-      data={chartData}
-      margin={{ top: 5, right: 10, left: 0, bottom: 0 }}
-    >
-      <CartesianGrid
-        strokeDasharray="2 2"
-        vertical={false}
-        stroke="#f1f5f9"
-      />
+    <Stack spacing={1.1}>
+      <SectionCard
+        title="Throughput trend"
+        description="Daily offloaded and pasteurized volume for the active review window."
+      >
+        <Box sx={{ height: 260 }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart
+              data={chartData}
+              margin={{ top: 8, right: 10, left: 0, bottom: 0 }}
+            >
+              <CartesianGrid
+                strokeDasharray="3 3"
+                vertical={false}
+                stroke="#e5e7eb"
+              />
 
-      <XAxis
-        dataKey="date"
-        tick={{ fontSize: 10, fill: '#9ca3af' }}
-        axisLine={false}
-        tickLine={false}
-        interval="preserveStartEnd"
-      />
+              <XAxis
+                dataKey="date"
+                tick={{ fontSize: 10, fill: "#64748b" }}
+                axisLine={false}
+                tickLine={false}
+                interval="preserveStartEnd"
+              />
 
-      <YAxis
-        tick={{ fontSize: 10, fill: '#9ca3af' }}
-        axisLine={false}
-        tickLine={false}
-        width={35}
-      />
+              <YAxis
+                tick={{ fontSize: 10, fill: "#64748b" }}
+                axisLine={false}
+                tickLine={false}
+                width={40}
+              />
 
-      <Tooltip
-        content={<ChartTooltipCard />}
-      />
+              <Tooltip content={<ChartTooltipCard />} />
+              <Legend wrapperStyle={{ fontSize: 12, paddingTop: 8 }} />
 
-      <Line
-        type="monotone"
-        dataKey="offloaded"
-        stroke="#2563eb"
-        strokeWidth={2.5}
-        dot={false}
-      />
+              <Line
+                type="monotone"
+                dataKey="offloaded"
+                stroke="#2563eb"
+                strokeWidth={2.8}
+                dot={false}
+                activeDot={{ r: 5 }}
+              />
 
-      <Line
-        type="monotone"
-        dataKey="pasteurized"
-        stroke="#059669"
-        strokeWidth={2.5}
-        dot={false}
-      />
-    </LineChart>
-  </ResponsiveContainer>
-</Box>
+              <Line
+                type="monotone"
+                dataKey="pasteurized"
+                stroke="#0f766e"
+                strokeWidth={2.8}
+                dot={false}
+                activeDot={{ r: 5 }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </Box>
       </SectionCard>
-      </Box>
     </Stack>
   );
 }
