@@ -30,11 +30,18 @@ import { AppUser, UserRole } from '@/app/lib/types';
 import { supabase } from '@/app/lib/supabase';
 
 const demoUsers: Record<string, AppUser> = {
-  'admin@jesa.local': { name: 'JESA Supervisor', email: 'admin@jesa.local', role: 'admin' },
-  'mpima@jesa.local': { name: 'Mpima Abubakar', email: 'mpima@jesa.local', role: 'operator' },
-  'saadi@jesa.local': { name: 'Saadi Wakabi', email: 'saadi@jesa.local', role: 'operator' },
-  'robert@jesa.local': { name: 'Robert Bakwatanisa', email: 'robert@jesa.local', role: 'operator' },
-  'manano@jesa.local': { name: 'Manano Vicent', email: 'manano@jesa.local', role: 'operator' },
+  'admin@jesa.local': { name: 'JESA Supervisor', email: 'admin@jesa.local', role: 'admin', workspace: 'all' },
+  'mpima@jesa.local': { name: 'Mpima Abubakar', email: 'mpima@jesa.local', role: 'operator', workspace: 'pasteurization' },
+  'saadi@jesa.local': { name: 'Saadi Wakabi', email: 'saadi@jesa.local', role: 'operator', workspace: 'pasteurization' },
+  'robert@jesa.local': { name: 'Robert Bakwatanisa', email: 'robert@jesa.local', role: 'operator', workspace: 'pasteurization' },
+  'manano@jesa.local': { name: 'Manano Vicent', email: 'manano@jesa.local', role: 'operator', workspace: 'pasteurization' },
+  'kabogoza@jesa.local': { name: 'Kabogoza Eric', email: 'kabogoza@jesa.local', role: 'operator', workspace: 'fresh-milk' },
+  'njagala@jesa.local': { name: 'Njagala Robert', email: 'njagala@jesa.local', role: 'operator', workspace: 'fresh-milk' },
+  'semujju@jesa.local': { name: 'Semujju David', email: 'semujju@jesa.local', role: 'operator', workspace: 'fresh-milk' },
+  'asiimwe@jesa.local': { name: 'Asiimwe Richard', email: 'asiimwe@jesa.local', role: 'operator', workspace: 'fresh-milk' },
+  'eruchu@jesa.local': { name: 'Eruchu James', email: 'eruchu@jesa.local', role: 'operator', workspace: 'fresh-milk' },
+  'telly@jesa.local': { name: 'Telly Vicent', email: 'telly@jesa.local', role: 'operator', workspace: 'fresh-milk' },
+  'sentongo@jesa.local': { name: 'Sentongo Kassim', email: 'sentongo@jesa.local', role: 'operator', workspace: 'fresh-milk' },
 };
 
 export default function HomePage() {
@@ -284,7 +291,7 @@ export default function HomePage() {
                     <Stack spacing={1.2}>
                       <Typography fontWeight={800} variant="body2">Included demo identities</Typography>
                       <Typography variant="body2" color="text.secondary">
-                        admin@jesa.local, mpima@jesa.local, saadi@jesa.local, robert@jesa.local, manano@jesa.local
+                        admin@jesa.local, mpima@jesa.local, saadi@jesa.local, robert@jesa.local, manano@jesa.local, kabogoza@jesa.local, njagala@jesa.local, semujju@jesa.local, asiimwe@jesa.local, eruchu@jesa.local, telly@jesa.local, sentongo@jesa.local
                       </Typography>
                     </Stack>
                   </Box>
@@ -297,6 +304,7 @@ export default function HomePage() {
                       {[
                         'Live production intelligence for intake, pasteurization, and daily loss.',
                         'Cleaner operator accountability with role-specific entry views.',
+                        'Fresh Milk pouch machine logging and supervisor review with measurable KPIs only.',
                         'Sanitation visibility designed for realistic daily plant use.',
                       ].map((item) => (
                         <Stack key={item} direction="row" spacing={1.1} alignItems="center">

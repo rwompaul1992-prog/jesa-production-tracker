@@ -1,9 +1,11 @@
 export type UserRole = 'admin' | 'operator';
+export type Workspace = 'pasteurization' | 'fresh-milk' | 'all';
 
 export type AppUser = {
   name: string;
   email: string;
   role: UserRole;
+  workspace: Workspace;
 };
 
 export type Shift = 'Morning' | 'Afternoon' | 'Night';
@@ -93,4 +95,37 @@ export type OperatorPerformanceSummary = {
   worstOperator?: string;
   riskyOperators: string[];
   improvingOperators: string[];
+};
+
+export type FreshMilkShift = 'Day' | 'Night';
+export type FreshMilkMachine = 'Machine 1' | 'Machine 2' | 'Machine 3' | 'Machine 4';
+export type FreshMilkDowntimeReason =
+  | 'Film misalignment'
+  | 'Black mark / sensor failure'
+  | 'Seal failure'
+  | 'Power interruption'
+  | 'Product supply interruption'
+  | 'Mechanical issue'
+  | 'Changeover / setup'
+  | 'Cleaning'
+  | 'Other';
+
+export type FreshMilkDailyRecord = {
+  id: string;
+  date: string;
+  shift: FreshMilkShift;
+  operatorName: string;
+  machineNumber: FreshMilkMachine;
+  productPacked: string;
+  packSize: string;
+  totalPouchesProduced: number;
+  runningHours: number;
+  downtimeMinutes: number;
+  stoppageCount: number;
+  rejectedPouches: number;
+  startupTimeMinutes: number;
+  badPouchesBeforeStableProduction: number;
+  downtimeReason: FreshMilkDowntimeReason;
+  comment: string;
+  createdAt: string;
 };

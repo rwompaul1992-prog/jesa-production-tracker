@@ -58,7 +58,8 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import { demoOperatorEntries, operators } from '@/app/data/demo-data';
+import { demoFreshMilkRecords, demoOperatorEntries, operators } from '@/app/data/demo-data';
+import { FreshMilkWorkspace } from '@/app/components/fresh-milk-dashboard';
 import {
   buildChartData,
   buildChemicalUsageByOperator,
@@ -69,12 +70,12 @@ import {
   getLossPercentage,
   getMilkLoss,
 } from '@/app/lib/analytics';
-import { AppUser, CipRecord, CipType, EntryStatus, OperatorDailyEntry, OperatorPerformanceEntry, ProductionRecord, Shift } from '@/app/lib/types';
+import { AppUser, CipRecord, CipType, EntryStatus, FreshMilkDailyRecord, OperatorDailyEntry, OperatorPerformanceEntry, ProductionRecord, Shift } from '@/app/lib/types';
 
 const shifts: Shift[] = ['Morning', 'Afternoon', 'Night'];
 const cipTypes: CipType[] = ['Caustic wash', 'Caustic and Acid wash'];
 
-type SectionKey = 'dashboard' | 'intake' | 'cip' | 'operators' | 'operator-entry';
+type SectionKey = 'dashboard' | 'intake' | 'cip' | 'operators' | 'operator-entry' | 'fresh-milk';
 type KpiTone = 'good' | 'bad' | 'warning' | 'neutral';
 
 const toneMap: Record<KpiTone, { accent: string; chip: 'success' | 'error' | 'warning' | 'primary' }> = {
@@ -89,10 +90,15 @@ const adminSections: Array<{ key: SectionKey; label: string; description: string
   { key: 'intake', label: 'Production intelligence', description: 'Live production intelligence', icon: <LocalDrinkRounded fontSize="small" /> },
   { key: 'cip', label: 'Sanitation usage', description: 'CIP chemistry visibility', icon: <CleaningServicesRounded fontSize="small" /> },
   { key: 'operators', label: 'Operator ranking', description: 'Operator performance ranking', icon: <LeaderboardRounded fontSize="small" /> },
+  { key: 'fresh-milk', label: 'Fresh milk ops', description: 'Pouch machine operations', icon: <AssignmentTurnedInRounded fontSize="small" /> },
 ];
 
-const operatorSections: Array<{ key: SectionKey; label: string; description: string; icon: React.ReactNode }> = [
+const pasteurizationOperatorSections: Array<{ key: SectionKey; label: string; description: string; icon: React.ReactNode }> = [
   { key: 'operator-entry', label: 'Daily operator log', description: 'Production entry and CIP logging', icon: <AssignmentTurnedInRounded fontSize="small" /> },
+];
+
+const freshMilkOperatorSections: Array<{ key: SectionKey; label: string; description: string; icon: React.ReactNode }> = [
+  { key: 'fresh-milk', label: 'Fresh milk log', description: 'Pouch machine daily entry', icon: <AssignmentTurnedInRounded fontSize="small" /> },
 ];
 
 const chartAxisProps = {
@@ -1314,85 +1320,53 @@ function AdminIntakePage({
   );
 }
 
-function DashboardOverview({
-  summary,
-  chartData,
-  ranking,
-}: {
-  summary: ReturnType<typeof buildMonthlySummary>;
-  chartData: ReturnType<typeof buildChartData>;
-  ranking: ReturnType<typeof buildOperatorRanking>;
-}) {
+function DashboardOverview({ summary, chartData, ranking }: { summary: ReturnType<typeof buildMonthlySummary>; chartData: ReturnType<typeof buildChartData>; ranking: ReturnType<typeof buildOperatorRanking>; }) {
   return (
-    <Stack spacing={1.1}>
-      <SectionCard
-        title="Throughput trend"
-        description="Daily offloaded and pasteurized volume for the active review window."
-      >
-        <Box sx={{ height: 260 }}>
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart
-              data={chartData}
-              margin={{ top: 8, right: 10, left: 0, bottom: 0 }}
-            >
-              <CartesianGrid
-                strokeDasharray="3 3"
-                vertical={false}
-                stroke="#e5e7eb"
-              />
-
-              <XAxis
-                dataKey="date"
-                tick={{ fontSize: 10, fill: "#64748b" }}
-                axisLine={false}
-                tickLine={false}
-                interval="preserveStartEnd"
-              />
-
-              <YAxis
-                tick={{ fontSize: 10, fill: "#64748b" }}
-                axisLine={false}
-                tickLine={false}
-                width={40}
-              />
-
-              <Tooltip content={<ChartTooltipCard />} />
-              <Legend wrapperStyle={{ fontSize: 12, paddingTop: 8 }} />
-
-              <Line
-                type="monotone"
-                dataKey="offloaded"
-                stroke="#2563eb"
-                strokeWidth={2.8}
-                dot={false}
-                activeDot={{ r: 5 }}
-              />
-
-              <Line
-                type="monotone"
-                dataKey="pasteurized"
-                stroke="#0f766e"
-                strokeWidth={2.8}
-                dot={false}
-                activeDot={{ r: 5 }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </Box>
-      </SectionCard>
+    <Stack spacing={0.9}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '1.4fr 1fr' }, gap: 0.9 }}>
+        <SectionCard title="Milk movement" description="Throughput profile across daily offloaded and pasteurized volume.">
+          <Box sx={{ height: 168 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={chartData}>
+                <CartesianGrid {...chartGridProps} />
+                <XAxis dataKey="date" {...chartAxisProps} />
+                <YAxis {...chartAxisProps} />
+                <Tooltip content={<ChartTooltipCard />} />
+                <Legend wrapperStyle={{ fontSize: 11, paddingTop: 6 }} />
+                <Line type="monotone" dataKey="offloaded" stroke="#2563eb" strokeWidth={3.2} dot={false} activeDot={{ r: 5, fill: '#2563eb', strokeWidth: 0 }} />
+                <Line type="monotone" dataKey="pasteurized" stroke="#0f766e" strokeWidth={3.2} dot={false} activeDot={{ r: 5, fill: '#0f766e', strokeWidth: 0 }} />
+              </LineChart>
+            </ResponsiveContainer>
+          </Box>
+        </SectionCard>
+        <SectionCard title="Quick status" description="Top-level control signals for the current month.">
+          <Stack spacing={1.2}>
+            <CompactMetricCard title="Total offloaded" value={`${summary.totalOffloaded.toLocaleString()} L`} helper="Month-to-date" icon={<OpacityRounded />} tone="neutral" trend="Running" />
+            <CompactMetricCard title="Loss rate" value={`${summary.lossPercentage.toFixed(2)}%`} helper="Month-to-date" icon={<WarningAmberRounded />} tone={summary.lossPercentage > 2.6 ? 'bad' : 'good'} trend={summary.lossPercentage > 2.6 ? 'Escalated' : 'Controlled'} />
+            <Paper sx={{ p: 1.7, borderRadius: 4, background: 'linear-gradient(135deg, rgba(47,109,246,0.08), rgba(255,255,255,0.96))' }}><Typography variant="caption" fontWeight={800}>Top operator</Typography><Typography variant="body2" sx={{ mt: 0.4 }}>{ranking[0]?.operator ?? 'N/A'}</Typography></Paper>
+          </Stack>
+        </SectionCard>
+      </Box>
     </Stack>
   );
 }
 
 export function Dashboard({ user, onLogout }: { user: AppUser; onLogout: () => void }) {
   const [entries, setEntries] = useState<OperatorDailyEntry[]>(demoOperatorEntries);
+  const [freshMilkRecords, setFreshMilkRecords] = useState<FreshMilkDailyRecord[]>(demoFreshMilkRecords);
   const months = useMemo(() => getAvailableMonths(entries), [entries]);
   const [selectedMonth, setSelectedMonth] = useState(months[0] ?? '2026-03');
   const [operatorFilters, setOperatorFilters] = useState<string[]>([]);
   const [shiftFilters, setShiftFilters] = useState<string[]>([]);
-  const [activeSection, setActiveSection] = useState<SectionKey>(user.role === 'admin' ? 'dashboard' : 'operator-entry');
+  const [activeSection, setActiveSection] = useState<SectionKey>(
+    user.role === 'admin' ? 'dashboard' : user.workspace === 'fresh-milk' ? 'fresh-milk' : 'operator-entry',
+  );
 
-  const availableSections = user.role === 'admin' ? adminSections : operatorSections;
+  const availableSections = user.role === 'admin'
+    ? adminSections
+    : user.workspace === 'fresh-milk'
+      ? freshMilkOperatorSections
+      : pasteurizationOperatorSections;
   const visibleEntries = useMemo(() => {
     return entries.filter((entry) => {
       const matchesMonth = entry.date.startsWith(selectedMonth);
@@ -1418,6 +1392,9 @@ export function Dashboard({ user, onLogout }: { user: AppUser; onLogout: () => v
     const updates = new Map(updatedRows.map((row) => [row.id, row]));
     setEntries((current) => current.map((entry) => updates.get(entry.id) ?? entry));
   }, []);
+  const addFreshMilkRecord = useCallback((record: FreshMilkDailyRecord) => {
+    setFreshMilkRecords((current) => [record, ...current]);
+  }, []);
 
   useEffect(() => {
     if (!performance.operators.length) {
@@ -1431,7 +1408,6 @@ export function Dashboard({ user, onLogout }: { user: AppUser; onLogout: () => v
   }, [performance.operators, selectedPerformanceOperator]);
 
   return (
-
     <Box sx={{ minHeight: '100vh', background: '#f8f5f0' }}>
       <Box sx={{ maxWidth: 1660, mx: 'auto', px: { xs: 1, md: 1.5, xl: 1.8 }, pb: { xs: 1.6, md: 2.2 } }}>
         <Box
@@ -1445,220 +1421,164 @@ export function Dashboard({ user, onLogout }: { user: AppUser; onLogout: () => v
             bgcolor: '#f8f5f0',
           }}
         >
-<Box
-  sx={{
-    maxWidth: 1380,
-    mx: "auto",
-    px: { xs: 1.5, md: 2 },
-    py: 1.25,
-    borderRadius: 4,
-    border: "1px solid #f3e2d4",
-    background: "linear-gradient(180deg, #fffaf6 0%, #fff4eb 100%)",
-    boxShadow: "0 8px 24px rgba(120, 53, 15, 0.05)",
-  }}
->
-  <Stack spacing={1.5}>
-    <Box
-      sx={{
-        display: "grid",
-        gridTemplateColumns: { xs: "1fr", xl: "auto 1fr auto" },
-        gap: 1.5,
-        alignItems: "center",
-      }}
-    >
-      <Stack
-        direction={{ xs: "column", sm: "row" }}
-        spacing={1}
-        sx={{
-          minWidth: 0,
-          alignItems: { xs: "stretch", sm: "center" },
-          flexWrap: "wrap",
-        }}
-      >
-        <FormControl size="small" sx={{ minWidth: { xs: "100%", sm: 170 } }}>
-          <InputLabel>Month</InputLabel>
-          <Select
-            value={selectedMonth}
-            label="Month"
-            onChange={(event) => setSelectedMonth(event.target.value)}
+          <Box
             sx={{
-              bgcolor: "#ffffff",
-              borderRadius: 3,
-              "& .MuiOutlinedInput-notchedOutline": {
-                borderColor: "#ead7c8",
-              },
+              display: 'grid',
+              gridTemplateColumns: { xs: '1fr', xl: 'minmax(0, max-content) 1fr auto' },
+              alignItems: 'center',
+              columnGap: { xl: 0.9 },
+              rowGap: { xs: 0.55, xl: 0 },
+              maxWidth: 1380,
+              mx: 'auto',
+              minHeight: 40,
+              py: 0.18,
             }}
           >
-            {months.map((month) => (
-              <MenuItem key={month} value={month}>
-                {dayjs(`${month}-01`).format("MMMM YYYY")}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-
-        {user.role === "admin" ? (
-          <>
-            <FormControl size="small" sx={{ minWidth: { xs: "100%", sm: 200 } }}>
-              <InputLabel>Operators</InputLabel>
-              <Select
-                multiple
-                value={operatorFilters}
-                label="Operators"
-                onChange={(event) =>
-                  setOperatorFilters(
-                    typeof event.target.value === "string"
-                      ? event.target.value.split(",")
-                      : event.target.value
-                  )
-                }
-                renderValue={(selected) =>
-                  (selected as string[]).length === 0
-                    ? "All operators"
-                    : (selected as string[]).join(", ")
-                }
-                sx={{
-                  bgcolor: "#ffffff",
-                  borderRadius: 3,
-                  "& .MuiOutlinedInput-notchedOutline": {
-                    borderColor: "#ead7c8",
-                  },
-                }}
-              >
-                {operators.map((operator) => (
-                  <MenuItem key={operator} value={operator}>
-                    <Checkbox checked={operatorFilters.includes(operator)} />
-                    <ListItemText primary={operator} />
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-
-            <FormControl size="small" sx={{ minWidth: { xs: "100%", sm: 170 } }}>
-              <InputLabel>Shifts</InputLabel>
-              <Select
-                multiple
-                value={shiftFilters}
-                label="Shifts"
-                onChange={(event) =>
-                  setShiftFilters(
-                    typeof event.target.value === "string"
-                      ? event.target.value.split(",")
-                      : event.target.value
-                  )
-                }
-                renderValue={(selected) =>
-                  (selected as string[]).length === 0
-                    ? "All shifts"
-                    : (selected as string[]).join(", ")
-                }
-                sx={{
-                  bgcolor: "#ffffff",
-                  borderRadius: 3,
-                  "& .MuiOutlinedInput-notchedOutline": {
-                    borderColor: "#ead7c8",
-                  },
-                }}
-              >
-                {shifts.map((shift) => (
-                  <MenuItem key={shift} value={shift}>
-                    <Checkbox checked={shiftFilters.includes(shift)} />
-                    <ListItemText primary={shift} />
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </>
-        ) : null}
-      </Stack>
-
-      <Stack
-        direction="row"
-        spacing={1}
-        useFlexGap
-        sx={{
-          flexWrap: "wrap",
-          justifyContent: { xs: "flex-start", xl: "center" },
-          alignItems: "center",
-          minWidth: 0,
-        }}
-      >
-        {availableSections.map((section) => {
-          const active = section.key === activeSection;
-
-          return (
-            <Button
-              key={section.key}
-              onClick={() => setActiveSection(section.key)}
-              startIcon={section.icon}
-              size="small"
-              variant="outlined"
+            <Stack
+              direction="row"
+              alignItems="center"
+              spacing={0.5}
               sx={{
-                minHeight: 38,
-                px: 1.6,
-                borderRadius: 999,
-                textTransform: "none",
-                whiteSpace: "nowrap",
-                bgcolor: active ? "#fff0e4" : "#ffffff",
-                color: active ? "#9a3412" : "#6b7280",
-                borderColor: active ? "#f4b183" : "#ead7c8",
-                boxShadow: active ? "0 4px 10px rgba(234, 88, 12, 0.10)" : "none",
-                "& .MuiButton-startIcon": {
-                  mr: 0.7,
-                  color: active ? "#ea580c" : "#a8a29e",
-                },
-                "&:hover": {
-                  bgcolor: active ? "#ffe6d2" : "#fff8f2",
-                  borderColor: "#f4b183",
-                },
+                width: '100%',
+                maxWidth: { xs: '100%', xl: 540 },
+                flexWrap: 'wrap',
+                minWidth: 0,
+                justifySelf: { xl: 'start' },
               }}
             >
-              <Typography
+              <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 154 } }}>
+                <InputLabel>Month</InputLabel>
+                <Select
+                  value={selectedMonth}
+                  label="Month"
+                  onChange={(event) => setSelectedMonth(event.target.value)}
+                  sx={{ bgcolor: '#fffdf9', borderRadius: 1.2 }}
+                >
+                  {months.map((month) => (
+                    <MenuItem key={month} value={month}>{dayjs(`${month}-01`).format('MMMM YYYY')}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              {user.role === 'admin' && activeSection !== 'fresh-milk' ? (
+                <>
+                  <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 188 } }}>
+                    <InputLabel>Operators</InputLabel>
+                    <Select
+                      multiple
+                      value={operatorFilters}
+                      label="Operators"
+                      onChange={(event) => setOperatorFilters(typeof event.target.value === 'string' ? event.target.value.split(',') : event.target.value)}
+                      renderValue={(selected) => (selected as string[]).length === 0 ? 'All operators' : (selected as string[]).join(', ')}
+                      sx={{ bgcolor: '#fffdf9', borderRadius: 1.2 }}
+                    >
+                      {operators.map((operator) => (
+                        <MenuItem key={operator} value={operator}>
+                          <Checkbox checked={operatorFilters.includes(operator)} />
+                          <ListItemText primary={operator} />
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                  <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 164 } }}>
+                    <InputLabel>Shifts</InputLabel>
+                    <Select
+                      multiple
+                      value={shiftFilters}
+                      label="Shifts"
+                      onChange={(event) => setShiftFilters(typeof event.target.value === 'string' ? event.target.value.split(',') : event.target.value)}
+                      renderValue={(selected) => (selected as string[]).length === 0 ? 'All shifts' : (selected as string[]).join(', ')}
+                      sx={{ bgcolor: '#fffdf9', borderRadius: 1.2 }}
+                    >
+                      {shifts.map((shift) => (
+                        <MenuItem key={shift} value={shift}>
+                          <Checkbox checked={shiftFilters.includes(shift)} />
+                          <ListItemText primary={shift} />
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </>
+              ) : null}
+            </Stack>
+
+            <Stack
+              direction="row"
+              alignItems="center"
+              spacing={0.45}
+              justifyContent="center"
+              sx={{
+                flexWrap: 'wrap',
+                minWidth: 0,
+                width: '100%',
+                justifySelf: { xl: 'center' },
+              }}
+            >
+              {availableSections.map((section) => {
+                const active = section.key === activeSection;
+                return (
+                  <Button
+                    key={section.key}
+                    onClick={() => setActiveSection(section.key)}
+                    startIcon={section.icon}
+                    size="small"
+                    sx={{
+                      minHeight: 26,
+                      px: 0.92,
+                      borderRadius: 999,
+                      color: active ? '#9a3412' : '#78716c',
+                      bgcolor: active ? '#fff1e6' : '#ffffff',
+                      border: `1px solid ${active ? 'rgba(234,88,12,0.22)' : 'rgba(231,229,228,1)'}`,
+                      boxShadow: active ? '0 1px 0 rgba(234,88,12,0.08)' : 'none',
+                      '&:hover': {
+                        bgcolor: active ? '#ffe7d6' : '#fffaf5',
+                        color: active ? '#9a3412' : '#57534e',
+                      },
+                      '& .MuiButton-startIcon': {
+                        mr: 0.5,
+                        color: active ? '#ea580c' : '#a8a29e',
+                      },
+                    }}
+                  >
+                    <Typography variant="caption" fontWeight={800} sx={{ letterSpacing: '0.01em', fontSize: '0.68rem' }}>
+                      {section.label}
+                    </Typography>
+                  </Button>
+                );
+              })}
+            </Stack>
+
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: { xs: 'flex-start', xl: 'flex-end' },
+                minWidth: 0,
+                justifySelf: { xl: 'end' },
+              }}
+            >
+              <Button
+                onClick={onLogout}
+                size="small"
                 sx={{
-                  fontWeight: 700,
-                  fontSize: "0.82rem",
-                  letterSpacing: "0.01em",
+                  minWidth: 0,
+                  px: 0.88,
+                  py: 0.28,
+                  borderRadius: 999,
+                  color: '#44403c',
+                  border: '1px solid rgba(231,229,228,1)',
+                  bgcolor: '#ffffff',
+                  fontWeight: 800,
+                  '&:hover': {
+                    bgcolor: '#fffaf5',
+                  },
                 }}
               >
-                {section.label}
-              </Typography>
-            </Button>
-          );
-        })}
-      </Stack>
+                Sign out
+              </Button>
+            </Box>
+          </Box>
+        </Box>
 
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: { xs: "flex-start", xl: "flex-end" },
-          alignItems: "center",
-        }}
-      >
-        <Button
-          onClick={onLogout}
-          variant="contained"
-          size="small"
-          sx={{
-            minHeight: 38,
-            px: 2,
-            borderRadius: 999,
-            textTransform: "none",
-            fontWeight: 700,
-            bgcolor: "#f97316",
-            color: "#ffffff",
-            boxShadow: "none",
-            "&:hover": {
-              bgcolor: "#ea580c",
-              boxShadow: "none",
-            },
-          }}
-        >
-          Sign out
-        </Button>
-      </Box>
-    </Box>
-  </Stack>
-</Box>
         <Box sx={{ pt: 0.8 }}>
           {user.role === 'admin' && activeSection === 'dashboard' ? <DashboardOverview summary={summary} chartData={chartData} ranking={ranking} /> : null}
           {user.role === 'admin' && activeSection === 'intake' ? <AdminIntakePage summary={summary} chartData={chartData} chemicalByOperator={chemicalByOperator} ranking={ranking} insights={insights} productionRecords={productionRecords} /> : null}
@@ -1694,10 +1614,10 @@ export function Dashboard({ user, onLogout }: { user: AppUser; onLogout: () => v
               onSelectOperator={setSelectedPerformanceOperator}
             />
           ) : null}
-          {user.role === 'operator' && activeSection === 'operator-entry' ? <OperatorMonthlyEntryTable rows={operatorRows} onCommitRows={commitOperatorRows} operatorName={user.name} /> : null}
+          {activeSection === 'fresh-milk' ? <FreshMilkWorkspace user={user} records={freshMilkRecords} onAddRecord={addFreshMilkRecord} /> : null}
+          {user.role === 'operator' && user.workspace !== 'fresh-milk' && activeSection === 'operator-entry' ? <OperatorMonthlyEntryTable rows={operatorRows} onCommitRows={commitOperatorRows} operatorName={user.name} /> : null}
         </Box>
       </Box>
     </Box>
-  </Box>
-);  
+  );
 }

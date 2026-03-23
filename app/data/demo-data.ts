@@ -1,11 +1,31 @@
 import dayjs from 'dayjs';
-import { CipRecord, CipType, OperatorDailyEntry, ProductionRecord, Shift } from '@/app/lib/types';
+import {
+  CipRecord,
+  CipType,
+  FreshMilkDailyRecord,
+  FreshMilkDowntimeReason,
+  FreshMilkMachine,
+  FreshMilkShift,
+  OperatorDailyEntry,
+  ProductionRecord,
+  Shift,
+} from '@/app/lib/types';
 
 export const operators = [
   'Mpima Abubakar',
   'Saadi Wakabi',
   'Robert Bakwatanisa',
   'Manano Vicent',
+];
+
+export const freshMilkOperators = [
+  'Kabogoza Eric',
+  'Njagala Robert',
+  'Semujju David',
+  'Asiimwe Richard',
+  'Eruchu James',
+  'Telly Vicent',
+  'Sentongo Kassim',
 ];
 
 const shiftCycle: Shift[] = ['Morning', 'Afternoon', 'Night'];
@@ -87,3 +107,58 @@ export const demoCipData: CipRecord[] = demoOperatorEntries
     causticJerrycansUsed: entry.causticJerrycansUsed,
     nitricAcidJerrycansUsed: entry.nitricJerrycansUsed,
   }));
+
+const freshMilkShifts: FreshMilkShift[] = ['Day', 'Night'];
+const freshMilkMachines: FreshMilkMachine[] = ['Machine 1', 'Machine 2', 'Machine 3', 'Machine 4'];
+const freshMilkReasons: FreshMilkDowntimeReason[] = [
+  'Film misalignment',
+  'Black mark / sensor failure',
+  'Seal failure',
+  'Power interruption',
+  'Product supply interruption',
+  'Mechanical issue',
+  'Changeover / setup',
+  'Cleaning',
+  'Other',
+];
+const freshMilkProducts = ['Fresh Milk'];
+const packSizes = ['500 mL', '1 L', '2 L'];
+
+function buildFreshMilkRecord(operatorName: string, operatorIndex: number, day: number, machineIndex: number): FreshMilkDailyRecord {
+  const date = monthStart.date(day).format('YYYY-MM-DD');
+  const shift = freshMilkShifts[(day + operatorIndex + machineIndex) % freshMilkShifts.length];
+  const machineNumber = freshMilkMachines[machineIndex];
+  const packSize = packSizes[(day + operatorIndex + machineIndex) % packSizes.length];
+  const runningHours = Number((6.6 + ((day + machineIndex) % 5) * 0.32 + operatorIndex * 0.08).toFixed(1));
+  const totalPouchesProduced = Math.round(6200 + operatorIndex * 210 + machineIndex * 260 + day * 41 + ((day + 3) * (machineIndex + 2) * 13) % 360);
+  const downtimeMinutes = 18 + ((day + operatorIndex + machineIndex) % 6) * 11 + (machineIndex === 2 && day % 7 === 0 ? 20 : 0);
+  const stoppageCount = 1 + ((day + operatorIndex + machineIndex) % 5);
+  const rejectedPouches = Math.max(24, Math.round(totalPouchesProduced * (0.008 + ((operatorIndex + machineIndex + day) % 4) * 0.0025)));
+  const startupTimeMinutes = 9 + ((day + operatorIndex + machineIndex) % 5) * 3 + (machineIndex === 1 && day % 9 === 0 ? 6 : 0);
+  const badPouchesBeforeStableProduction = 18 + ((day + operatorIndex + machineIndex) % 6) * 5;
+  const downtimeReason = freshMilkReasons[(day + operatorIndex + machineIndex) % freshMilkReasons.length];
+
+  return {
+    id: `fresh-milk-${operatorName.toLowerCase().replace(/\s+/g, '-')}-${date}-${machineNumber.toLowerCase().replace(/\s+/g, '-')}`,
+    date,
+    shift,
+    operatorName,
+    machineNumber,
+    productPacked: freshMilkProducts[0],
+    packSize,
+    totalPouchesProduced,
+    runningHours,
+    downtimeMinutes,
+    stoppageCount,
+    rejectedPouches,
+    startupTimeMinutes,
+    badPouchesBeforeStableProduction,
+    downtimeReason,
+    comment: day % 8 === 0 ? 'Supervisor should review stoppage pattern.' : '',
+    createdAt: `${date}T${shift === 'Day' ? '07:15:00' : '19:15:00'}Z`,
+  };
+}
+
+export const demoFreshMilkRecords: FreshMilkDailyRecord[] = freshMilkOperators.flatMap((operatorName, operatorIndex) =>
+  Array.from({ length: 10 }, (_, index) => buildFreshMilkRecord(operatorName, operatorIndex, index + 1, index % freshMilkMachines.length)),
+);
