@@ -57,6 +57,7 @@ import {
 
 const shiftOptions: FreshMilkShift[] = ['Day', 'Night'];
 const machineOptions: FreshMilkMachine[] = ['Machine 1', 'Machine 2', 'Machine 3', 'Machine 4'];
+const packSizeOptions = ['500 mL', '1 L'];
 const downtimeReasonOptions: FreshMilkDowntimeReason[] = [
   'Film misalignment',
   'Black mark / sensor failure',
@@ -245,7 +246,9 @@ const FreshMilkOperatorForm = memo(function FreshMilkOperatorForm({ user, record
             {machineOptions.map((machine) => <MenuItem key={machine} value={machine}>{machine}</MenuItem>)}
           </TextField>
           <TextField label="Product packed" value={form.productPacked} onChange={(event) => update('productPacked', event.target.value)} size="small" />
-          <TextField label="Pack size" value={form.packSize} onChange={(event) => update('packSize', event.target.value)} size="small" />
+          <TextField select label="Pack size" value={form.packSize} onChange={(event) => update('packSize', event.target.value)} size="small">
+            {packSizeOptions.map((packSize) => <MenuItem key={packSize} value={packSize}>{packSize}</MenuItem>)}
+          </TextField>
           <TextField label="Total pouches produced" value={form.totalPouchesProduced} onChange={(event) => update('totalPouchesProduced', event.target.value)} size="small" />
           <TextField label="Running hours" value={form.runningHours} onChange={(event) => update('runningHours', event.target.value)} size="small" />
           <TextField label="Downtime minutes" value={form.downtimeMinutes} onChange={(event) => update('downtimeMinutes', event.target.value)} size="small" />

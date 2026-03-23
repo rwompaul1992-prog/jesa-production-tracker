@@ -122,7 +122,7 @@ const freshMilkReasons: FreshMilkDowntimeReason[] = [
   'Other',
 ];
 const freshMilkProducts = ['Fresh Milk'];
-const packSizes = ['500 mL', '1 L', '2 L'];
+const packSizes = ['500 mL', '1 L'];
 
 function buildFreshMilkRecord(operatorName: string, operatorIndex: number, day: number, machineIndex: number): FreshMilkDailyRecord {
   const date = monthStart.date(day).format('YYYY-MM-DD');
