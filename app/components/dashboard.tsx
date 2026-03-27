@@ -1637,32 +1637,7 @@ const handleExportMonthlyReport = async () => {
                   Sign out
                 </Button>
               </Stack>
-              <Button
-                onClick={onLogout}
-                size="small"
-                sx={{
-                  minWidth: 0,
-                  px: 0.88,
-                  py: 0.28,
-                  borderRadius: 999,
-                  color: '#44403c',
-                  border: '1px solid rgba(231,229,228,1)',
-                  bgcolor: '#ffffff',
-                  fontWeight: 800,
-                  '&:hover': {
-                    bgcolor: '#fffaf5',
-                  },
-                }}
-              >
-                Sign out
-              </Button>
-              <Button
-  variant="contained"
-  onClick={handleExportMonthlyReport}
-  sx={{ ml: 1, borderRadius: 999, px: 2.2, py: 1.1 }}
->
-  Export Monthly Report
-</Button>
+    
             </Box>
           </Box>
         </Box>
