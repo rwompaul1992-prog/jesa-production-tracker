@@ -17,7 +17,6 @@ import {
   MenuItem,
   Paper,
   Select,
-  Snackbar,
   Stack,
   Table,
   TableBody,
@@ -27,7 +26,6 @@ import {
   TableRow,
   TextField,
   Typography,
-  Alert,
 } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import OpacityRounded from '@mui/icons-material/OpacityRounded';
@@ -73,7 +71,6 @@ import {
   getMilkLoss,
 } from '@/app/lib/analytics';
 import { AppUser, CipRecord, CipType, EntryStatus, FreshMilkDailyRecord, OperatorDailyEntry, OperatorPerformanceEntry, ProductionRecord, Shift } from '@/app/lib/types';
-import { exportMonthlyReport } from '@/app/lib/report-export';
 
 const shifts: Shift[] = ['Morning', 'Afternoon', 'Night'];
 const cipTypes: CipType[] = ['Caustic wash', 'Caustic and Acid wash'];
@@ -1390,8 +1387,6 @@ export function Dashboard({ user, onLogout }: { user: AppUser; onLogout: () => v
   const insights = useMemo(() => buildInsights(productionRecords, cipRecords), [productionRecords, cipRecords]);
   const performance = useMemo(() => buildOperatorPerformance(entries, selectedMonth), [entries, selectedMonth]);
   const [selectedPerformanceOperator, setSelectedPerformanceOperator] = useState<string>('');
-  const [isExportingReport, setIsExportingReport] = useState(false);
-  const [exportFeedback, setExportFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const operatorRows = useMemo(() => getMonthlyDays(selectedMonth, user.name, entries), [entries, selectedMonth, user.name]);
   const commitOperatorRows = useCallback((updatedRows: OperatorDailyEntry[]) => {
     const updates = new Map(updatedRows.map((row) => [row.id, row]));
@@ -1400,43 +1395,9 @@ export function Dashboard({ user, onLogout }: { user: AppUser; onLogout: () => v
   const addFreshMilkRecord = useCallback((record: FreshMilkDailyRecord) => {
     setFreshMilkRecords((current) => [record, ...current]);
   }, []);
-  const handleExportMonthlyReport = useCallback(async () => {
-    if (isExportingReport) return;
-    setIsExportingReport(true);
-    try {
-      await exportMonthlyReport({
-        selectedMonth,
-        generatedAt: new Date().toISOString(),
-        summary,
-        chartData: chartData.map((point) => ({
-          date: point.date,
-          offloaded: point.offloaded,
-          pasteurized: point.pasteurized,
-          loss: point.loss,
-        })),
-        chemicalByOperator,
-        ranking: ranking.map((entry) => ({
-          operator: entry.operator,
-          score: entry.score,
-          lossRate: entry.lossRate,
-          chemicalIntensity: entry.chemicalIntensity,
-          completeness: entry.completeness,
-        })),
-        totalCipCycles: cipRecords.length,
-        topOperator: ranking[0]?.operator,
-        filters: {
-          operators: operatorFilters,
-          shifts: shiftFilters,
-        },
-      });
-      setExportFeedback({ type: 'success', message: 'Monthly PowerPoint report downloaded successfully.' });
-    } catch (error) {
-      console.error(error);
-      setExportFeedback({ type: 'error', message: 'Unable to export the monthly report. Please try again.' });
-    } finally {
-      setIsExportingReport(false);
-    }
-  }, [chartData, chemicalByOperator, cipRecords.length, isExportingReport, operatorFilters, ranking, selectedMonth, shiftFilters, summary]);
+  const handleExportMonthlyReport = useCallback(() => {
+    alert('Export button works');
+  }, []);
 
   useEffect(() => {
     if (!performance.operators.length) {
@@ -1602,26 +1563,23 @@ export function Dashboard({ user, onLogout }: { user: AppUser; onLogout: () => v
                 {user.role === 'admin' ? (
                   <Button
                     onClick={handleExportMonthlyReport}
+                    variant="contained"
                     size="small"
-                    disabled={isExportingReport}
                     sx={{
                       minWidth: 0,
-                      px: 0.95,
-                      py: 0.3,
+                      px: 1.05,
+                      py: 0.36,
                       borderRadius: 999,
-                      color: '#002d72',
-                      border: '1px solid rgba(0,45,114,0.2)',
-                      bgcolor: '#ffffff',
+                      color: '#ffffff',
+                      border: '1px solid rgba(0,45,114,0.22)',
+                      bgcolor: '#002d72',
                       fontWeight: 800,
                       '&:hover': {
-                        bgcolor: '#f8fbff',
-                      },
-                      '&.Mui-disabled': {
-                        color: 'rgba(0,45,114,0.55)',
+                        bgcolor: '#123b8f',
                       },
                     }}
                   >
-                    {isExportingReport ? 'Generating report…' : 'Export Monthly Report'}
+                    Export Monthly Report
                   </Button>
                 ) : null}
                 <Button
@@ -1687,18 +1645,6 @@ export function Dashboard({ user, onLogout }: { user: AppUser; onLogout: () => v
           {user.role === 'operator' && user.workspace !== 'fresh-milk' && activeSection === 'operator-entry' ? <OperatorMonthlyEntryTable rows={operatorRows} onCommitRows={commitOperatorRows} operatorName={user.name} /> : null}
         </Box>
       </Box>
-      <Snackbar
-        open={Boolean(exportFeedback)}
-        autoHideDuration={4600}
-        onClose={() => setExportFeedback(null)}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-      >
-        {exportFeedback ? (
-          <Alert onClose={() => setExportFeedback(null)} severity={exportFeedback.type} variant="filled" sx={{ width: '100%' }}>
-            {exportFeedback.message}
-          </Alert>
-        ) : <Box />}
-      </Snackbar>
     </Box>
   );
 }
