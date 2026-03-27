@@ -5,6 +5,18 @@ html, body {
   background: linear-gradient(180deg, #f6f9ff 0%, #eef5ff 35%, #fdfdff 100%);
 }
 
+:root {
+  --bg-main: #f8fafc;
+  --card-bg: #ffffff;
+  --border-color: #e2e8f0;
+  --text-primary: #0f172a;
+  --text-muted: #64748b;
+  --accent-blue: #002d72;
+  --accent-gold: #ffc107;
+  --positive-green: #10b981;
+  --negative-red: #ef4444;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -12,4 +24,63 @@ html, body {
 a {
   color: inherit;
   text-decoration: none;
+}
+
+.dashboard-container {
+  background-color: var(--bg-main);
+  padding: 40px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 24px;
+  font-family: 'Inter', 'Segoe UI', sans-serif;
+}
+
+.chart-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+}
+
+.chart-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 20px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.kpi-value {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.kpi-trend {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.chart-axis-label {
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+.chart-grid-line {
+  stroke: #f1f5f9;
+  stroke-width: 1px;
+}
+
+.custom-tooltip {
+  background: #1e293b !important;
+  color: white !important;
+  border-radius: 6px;
+  padding: 10px;
+  font-size: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
