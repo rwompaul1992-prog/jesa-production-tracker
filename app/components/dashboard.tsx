@@ -1231,7 +1231,7 @@ function AdminIntakePage({
           </SectionCard>
 
           <SectionCard title="Loss surveillance" description="Trendline for milk loss and fast anomaly recognition.">
-            <Box sx={{ height: 172 }}>
+            <Box sx={{ height: 260 }}>
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={chartData}>
                   <defs>
@@ -1251,7 +1251,7 @@ function AdminIntakePage({
           </SectionCard>
 
           <SectionCard title="Chemical intensity" description="Caustic and nitric consumption by operator for the selected month.">
-            <Box sx={{ height: 172 }}>
+            <Box sx={{ height: 210 }}>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chemicalByOperator}>
                   <CartesianGrid {...chartGridProps} />
@@ -1322,35 +1322,62 @@ function AdminIntakePage({
 
 function DashboardOverview({ summary, chartData, ranking }: { summary: ReturnType<typeof buildMonthlySummary>; chartData: ReturnType<typeof buildChartData>; ranking: ReturnType<typeof buildOperatorRanking>; }) {
   return (
-    <Stack spacing={0.9}>
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '1.4fr 1fr' }, gap: 0.9 }}>
-        <SectionCard title="Milk movement" description="Throughput profile across daily offloaded and pasteurized volume.">
-          <Box sx={{ height: 168 }}>
+    <Stack spacing={1.2}>
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', lg: '0.8fr 1.8fr' },
+          gap: 1.2,
+        }}
+      >
+        <SectionCard title="Quick status">
+          <Stack spacing={1.2}>
+            <CompactMetricCard
+              title="Total offloaded"
+              value={`${summary.totalOffloaded.toLocaleString()} L`}
+              helper="Month-to-date"
+              icon={<OpacityRounded />}
+              tone="neutral"
+              trend="Running"
+            />
+            <CompactMetricCard
+              title="Loss rate"
+              value={`${summary.lossPercentage.toFixed(2)}%`}
+              helper="Month-to-date"
+              icon={<WarningAmberRounded />}
+              tone={summary.lossPercentage > 2.6 ? 'bad' : 'good'}
+              trend={summary.lossPercentage > 2.6 ? 'Escalated' : 'Controlled'}
+            />
+            <Paper sx={{ p: 1.7, borderRadius: 4 }}>
+              <Typography variant="caption" fontWeight={800}>
+                Top operator
+              </Typography>
+              <Typography variant="body2">
+                {ranking[0]?.operator ?? 'N/A'}
+              </Typography>
+            </Paper>
+          </Stack>
+        </SectionCard>
+
+        <SectionCard title="Milk movement">
+          <Box sx={{ height: 260 }}>
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={chartData}>
                 <CartesianGrid {...chartGridProps} />
                 <XAxis dataKey="date" {...chartAxisProps} />
                 <YAxis {...chartAxisProps} />
                 <Tooltip content={<ChartTooltipCard />} />
-                <Legend wrapperStyle={{ fontSize: 11, paddingTop: 6 }} />
-                <Line type="monotone" dataKey="offloaded" stroke="#2563eb" strokeWidth={3.2} dot={false} activeDot={{ r: 5, fill: '#2563eb', strokeWidth: 0 }} />
-                <Line type="monotone" dataKey="pasteurized" stroke="#0f766e" strokeWidth={3.2} dot={false} activeDot={{ r: 5, fill: '#0f766e', strokeWidth: 0 }} />
+                <Legend />
+                <Line type="monotone" dataKey="offloaded" stroke="#2563eb" strokeWidth={3} dot={false} />
+                <Line type="monotone" dataKey="pasteurized" stroke="#0f766e" strokeWidth={3} dot={false} />
               </LineChart>
             </ResponsiveContainer>
           </Box>
-        </SectionCard>
-        <SectionCard title="Quick status" description="Top-level control signals for the current month.">
-          <Stack spacing={1.2}>
-            <CompactMetricCard title="Total offloaded" value={`${summary.totalOffloaded.toLocaleString()} L`} helper="Month-to-date" icon={<OpacityRounded />} tone="neutral" trend="Running" />
-            <CompactMetricCard title="Loss rate" value={`${summary.lossPercentage.toFixed(2)}%`} helper="Month-to-date" icon={<WarningAmberRounded />} tone={summary.lossPercentage > 2.6 ? 'bad' : 'good'} trend={summary.lossPercentage > 2.6 ? 'Escalated' : 'Controlled'} />
-            <Paper sx={{ p: 1.7, borderRadius: 4, background: 'linear-gradient(135deg, rgba(47,109,246,0.08), rgba(255,255,255,0.96))' }}><Typography variant="caption" fontWeight={800}>Top operator</Typography><Typography variant="body2" sx={{ mt: 0.4 }}>{ranking[0]?.operator ?? 'N/A'}</Typography></Paper>
-          </Stack>
         </SectionCard>
       </Box>
     </Stack>
   );
 }
-
 export function Dashboard({ user, onLogout }: { user: AppUser; onLogout: () => void }) {
   const [entries, setEntries] = useState<OperatorDailyEntry[]>(demoOperatorEntries);
   const [freshMilkRecords, setFreshMilkRecords] = useState<FreshMilkDailyRecord[]>(demoFreshMilkRecords);
@@ -1409,7 +1436,19 @@ export function Dashboard({ user, onLogout }: { user: AppUser; onLogout: () => v
       setSelectedPerformanceOperator(performance.operators[0].operator);
     }
   }, [performance.operators, selectedPerformanceOperator]);
+const handleExportMonthlyReport = async () => {
+  try {
+    const { exportMonthlyReport } = await import('../lib/report-export');
 
+    await exportMonthlyReport({
+      totalOffloaded: summary.totalOffloaded,
+      lossRate: summary.lossPercentage ?? 0,
+    });
+  } catch (error) {
+    console.error(error);
+    alert('Export failed');
+  }
+};
   return (
     <Box sx={{ minHeight: '100vh', background: '#f8f5f0' }}>
       <Box sx={{ maxWidth: 1660, mx: 'auto', px: { xs: 1, md: 1.5, xl: 1.8 }, pb: { xs: 1.6, md: 2.2 } }}>
@@ -1559,6 +1598,7 @@ export function Dashboard({ user, onLogout }: { user: AppUser; onLogout: () => v
                 justifySelf: { xl: 'end' },
               }}
             >
+<<<<<<< HEAD
               <Stack direction="row" spacing={0.6} alignItems="center">
                 {user.role === 'admin' ? (
                   <Button
@@ -1602,6 +1642,34 @@ export function Dashboard({ user, onLogout }: { user: AppUser; onLogout: () => v
                   Sign out
                 </Button>
               </Stack>
+=======
+              <Button
+                onClick={onLogout}
+                size="small"
+                sx={{
+                  minWidth: 0,
+                  px: 0.88,
+                  py: 0.28,
+                  borderRadius: 999,
+                  color: '#44403c',
+                  border: '1px solid rgba(231,229,228,1)',
+                  bgcolor: '#ffffff',
+                  fontWeight: 800,
+                  '&:hover': {
+                    bgcolor: '#fffaf5',
+                  },
+                }}
+              >
+                Sign out
+              </Button>
+              <Button
+  variant="contained"
+  onClick={handleExportMonthlyReport}
+  sx={{ ml: 1, borderRadius: 999, px: 2.2, py: 1.1 }}
+>
+  Export Monthly Report
+</Button>
+>>>>>>> 2d1b616 (Working dashboard, fixing ppt export issue)
             </Box>
           </Box>
         </Box>
