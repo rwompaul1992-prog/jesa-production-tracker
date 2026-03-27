@@ -1360,7 +1360,7 @@ function DashboardOverview({ summary, chartData, ranking }: { summary: ReturnTyp
         </SectionCard>
 
         <SectionCard title="Milk movement">
-          <Box sx={{ height: 260 }}>
+          <Box id="milk-movement-chart" sx={{ height: 260 }}>
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={chartData}>
                 <CartesianGrid {...chartGridProps} />
@@ -1436,10 +1436,19 @@ const handleExportMonthlyReport = async () => {
   try {
     const { exportMonthlyReport } = await import('../lib/report-export');
 
-    await exportMonthlyReport({
-      totalOffloaded: summary.totalOffloaded,
-      lossRate: summary.lossPercentage ?? 0,
-    });
+ await exportMonthlyReport({
+  month: selectedMonth,
+  totalOffloaded: summary.totalOffloaded ?? 0,
+  totalPasteurized: summary.totalPasteurized ?? 0,
+  lossRate: summary.lossPercentage ?? 0,
+  topOperator: ranking?.[0]?.operator ?? 'N/A',
+  chartElementId: 'milk-movement-chart',
+  chartData: chartData.map((row: any) => ({
+    date: row.date ?? row.label ?? '',
+    offloaded: Number(row.offloaded ?? 0),
+    pasteurized: Number(row.pasteurized ?? 0),
+  })),
+});
   } catch (error) {
     console.error(error);
     alert('Export failed');
