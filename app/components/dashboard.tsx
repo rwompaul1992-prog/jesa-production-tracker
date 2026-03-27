@@ -1422,10 +1422,6 @@ export function Dashboard({ user, onLogout }: { user: AppUser; onLogout: () => v
   const addFreshMilkRecord = useCallback((record: FreshMilkDailyRecord) => {
     setFreshMilkRecords((current) => [record, ...current]);
   }, []);
-  const handleExportMonthlyReport = useCallback(() => {
-    alert('Export button works');
-  }, []);
-
   useEffect(() => {
     if (!performance.operators.length) {
       setSelectedPerformanceOperator('');
@@ -1598,7 +1594,6 @@ const handleExportMonthlyReport = async () => {
                 justifySelf: { xl: 'end' },
               }}
             >
-<<<<<<< HEAD
               <Stack direction="row" spacing={0.6} alignItems="center">
                 {user.role === 'admin' ? (
                   <Button
@@ -1642,7 +1637,6 @@ const handleExportMonthlyReport = async () => {
                   Sign out
                 </Button>
               </Stack>
-=======
               <Button
                 onClick={onLogout}
                 size="small"
@@ -1669,7 +1663,6 @@ const handleExportMonthlyReport = async () => {
 >
   Export Monthly Report
 </Button>
->>>>>>> 2d1b616 (Working dashboard, fixing ppt export issue)
             </Box>
           </Box>
         </Box>
