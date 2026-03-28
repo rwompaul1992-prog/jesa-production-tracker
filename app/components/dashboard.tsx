@@ -23,8 +23,9 @@ import {
   TableCell,
   TableContainer,
   TableHead,
-  TableRow,
+    TableRow,
   TextField,
+  InputBase,
   Typography,
 } from '@mui/material';
 import { alpha } from '@mui/material/styles';
@@ -1319,69 +1320,480 @@ function AdminIntakePage({
     </Stack>
   );
 }
+const MILK_ACCOUNTING_STORAGE_KEY = 'jesa-milk-accounting';
 
-function DashboardOverview({ summary, chartData, ranking }: { summary: ReturnType<typeof buildMonthlySummary>; chartData: ReturnType<typeof buildChartData>; ranking: ReturnType<typeof buildOperatorRanking>; }) {
+type MilkAccountingRow = {
+  date: string;
+  offloaded: number;
+  fresh: number;
+  uht: number;
+  yoghurt: number;
+  cream: number;
+  other: number;
+  actualClosing: number;
+};
+
+function loadMilkAccountingRows() {
+  if (typeof window === 'undefined') return null;
+
+  try {
+    const raw = localStorage.getItem(MILK_ACCOUNTING_STORAGE_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw) as MilkAccountingRow[];
+  } catch (error) {
+    console.error('Failed to load milk accounting rows', error);
+    return null;
+  }
+}
+
+function saveMilkAccountingRows(rows: MilkAccountingRow[]) {
+  if (typeof window === 'undefined') return;
+
+  try {
+    localStorage.setItem(MILK_ACCOUNTING_STORAGE_KEY, JSON.stringify(rows));
+  } catch (error) {
+    console.error('Failed to save milk accounting rows', error);
+  }
+}
+function DashboardOverview({
+  summary,
+  selectedMonth,
+}: {
+  summary: any;
+  selectedMonth: string;
+}) {
+   const [monthOpeningBalance, setMonthOpeningBalance] = useState(0);
+  const [rows, setRows] = useState(() => {
+  const start = dayjs(`${selectedMonth}-01`);
+  const days = start.daysInMonth();
+
+  return Array.from({ length: days }, (_, i) => ({
+    date: start.date(i + 1).format('DD MMM'),
+    offloaded: 0,
+    fresh: 0,
+    uht: 0,
+    yoghurt: 0,
+    cream: 0,
+    other: 0,
+    actualClosing: 0,
+  }));
+});
+  useEffect(() => {
+    const savedRows = loadMilkAccountingRows();
+    if (savedRows && savedRows.length > 0) {
+      setRows(savedRows);
+    }
+  }, []);
+  useEffect(() => {
+  const start = dayjs(`${selectedMonth}-01`);
+  const days = start.daysInMonth();
+
+  setRows(
+    Array.from({ length: days }, (_, i) => ({
+      date: start.date(i + 1).format('DD MMM'),
+      offloaded: 0,
+      fresh: 0,
+      uht: 0,
+      yoghurt: 0,
+      cream: 0,
+      other: 0,
+      actualClosing: 0,
+    }))
+  );
+}, [selectedMonth]);
+ useEffect(() => {
+  const timeout = setTimeout(() => {
+    saveMilkAccountingRows(rows);
+  }, 1000);
+
+  return () => clearTimeout(timeout);
+}, [rows]);
+  const handleChange = (
+  index: number,
+  field:
+    | 'offloaded'
+    | 'fresh'
+    | 'uht'
+    | 'yoghurt'
+    | 'cream'
+    | 'other'
+    | 'actualClosing',
+  value: number
+) => {
+  setRows((prev) => {
+    const updated = [...prev];
+    updated[index] = {
+      ...updated[index],
+      [field]: value,
+    };
+    return updated;
+  });
+};
+
+  const computed = rows.map((row, index) => {
+  const openingBalance =
+    index === 0 ? monthOpeningBalance : rows[index - 1].actualClosing;
+
+  const milkAvailable = openingBalance + row.offloaded;
+
+  const totalUsed =
+    row.fresh + row.uht + row.yoghurt + row.cream + row.other;
+
+  const expectedClosing = milkAvailable - totalUsed;
+
+  const variance = row.actualClosing - expectedClosing;
+
+  const variancePercent =
+    expectedClosing !== 0 ? (variance / expectedClosing) * 100 : 0;
+
+  return {
+    ...row,
+    openingBalance,
+    milkAvailable,
+    totalUsed,
+    expectedClosing,
+    variance,
+    variancePercent,
+  };
+});
+  const totals = computed.reduce(
+    (acc, row) => {
+      acc.offloaded += row.offloaded;
+      acc.used += row.totalUsed;
+      acc.variance += row.variance;
+      return acc;
+    },
+    { offloaded: 0, used: 0, variance: 0 }
+  );
+
+  const lossRate =
+    totals.offloaded > 0
+      ? (totals.variance / totals.offloaded) * 100
+      : 0;
+
   return (
     <Stack spacing={1.2}>
+        <Box
+    sx={{
+      display: 'flex',
+      alignItems: 'center',
+      gap: 1.5,
+      flexWrap: 'wrap',
+      p: 1.5,
+      border: '1px solid rgba(148,163,184,0.2)',
+      borderRadius: 2,
+      bgcolor: '#fff',
+    }}
+  >
+    <Typography sx={{ fontWeight: 700 }}>
+      Opening balance for {selectedMonth}
+    </Typography>
+
+    <Box
+      sx={{
+        border: '1px solid rgba(148,163,184,0.35)',
+        borderRadius: 1.5,
+        px: 1.5,
+        py: 0.5,
+        minHeight: 40,
+        display: 'flex',
+        alignItems: 'center',
+        bgcolor: '#fff',
+        minWidth: 180,
+      }}
+    >
+      <InputBase
+        type="text"
+        inputMode="numeric"
+        defaultValue={monthOpeningBalance === 0 ? '' : monthOpeningBalance}
+        onBlur={(e) =>
+          setMonthOpeningBalance(
+            e.target.value.trim() === '' ? 0 : Number(e.target.value)
+          )
+        }
+        sx={{
+          width: '100%',
+          fontSize: '1rem',
+        }}
+      />
+    </Box>
+
+    <Typography variant="body2" color="text.secondary">
+      This is the balance brought forward into day 1 of the month.
+    </Typography>
+  </Box>
+      {/* Summary */}
       <Box
         sx={{
           display: 'grid',
-          gridTemplateColumns: { xs: '1fr', lg: '0.8fr 1.8fr' },
-          gap: 1.2,
+          gridTemplateColumns: 'repeat(4, 1fr)',
+          gap: 1,
         }}
       >
-        <SectionCard title="Quick status">
-          <Stack spacing={1.2}>
-            <CompactMetricCard
-              title="Total offloaded"
-              value={`${summary.totalOffloaded.toLocaleString()} L`}
-              helper="Month-to-date"
-              icon={<OpacityRounded />}
-              tone="neutral"
-              trend="Running"
-            />
-            <CompactMetricCard
-              title="Loss rate"
-              value={`${summary.lossPercentage.toFixed(2)}%`}
-              helper="Month-to-date"
-              icon={<WarningAmberRounded />}
-              tone={summary.lossPercentage > 2.6 ? 'bad' : 'good'}
-              trend={summary.lossPercentage > 2.6 ? 'Escalated' : 'Controlled'}
-            />
-            <Paper sx={{ p: 1.7, borderRadius: 4 }}>
-              <Typography variant="caption" fontWeight={800}>
-                Top operator
-              </Typography>
-              <Typography variant="body2">
-                {ranking[0]?.operator ?? 'N/A'}
-              </Typography>
-            </Paper>
-          </Stack>
-        </SectionCard>
-
-        <SectionCard title="Milk movement">
-          <Box id="milk-movement-chart" sx={{ height: 260 }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chartData}>
-                <CartesianGrid {...chartGridProps} />
-                <XAxis dataKey="date" {...chartAxisProps} />
-                <YAxis {...chartAxisProps} />
-                <Tooltip content={<ChartTooltipCard />} />
-                <Legend />
-                <Line type="monotone" dataKey="offloaded" stroke="#2563eb" strokeWidth={3} dot={false} />
-                <Line type="monotone" dataKey="pasteurized" stroke="#0f766e" strokeWidth={3} dot={false} />
-              </LineChart>
-            </ResponsiveContainer>
-          </Box>
-        </SectionCard>
+        <CompactMetricCard
+          title="Total Offloaded"
+          value={totals.offloaded.toLocaleString()}
+          helper="Monthly intake"
+          icon={<OpacityRounded />}
+          tone="neutral"
+          trend=""
+        />
+        <CompactMetricCard
+          title="Total Used"
+          value={totals.used.toLocaleString()}
+          helper="Total consumption"
+          icon={<LocalDrinkRounded />}
+          tone="good"
+          trend=""
+        />
+        <CompactMetricCard
+          title="Variance"
+          value={totals.variance.toLocaleString()}
+          helper="Loss / Gain"
+          icon={<WarningAmberRounded />}
+          tone={totals.variance > 0 ? 'bad' : 'good'}
+          trend=""
+        />
+        <CompactMetricCard
+          title="Loss %"
+          value={`${lossRate.toFixed(2)}%`}
+          helper="Efficiency"
+          icon={<InsightsRounded />}
+          tone={lossRate > 2 ? 'bad' : 'good'}
+          trend=""
+        />
       </Box>
+
+      {/* TABLE */}
+      <SectionCard
+        title="Milk Accounting Table"
+        description="Daily milk intake, usage and variance tracking"
+      >
+        <TableContainer component={Paper}>
+          <Table size="small">
+            <TableHead>
+              <TableRow>
+                {[
+  'Date',
+  'Opening',
+  'Offloaded',
+  'Fresh STD',
+  'UHT STD',
+  'Yoghurt STD',
+  'Cream',
+  'Other',
+  'Used',
+  'Expected Closing',
+  'Actual Closing',
+  'Variance',
+  '%',
+].map((h) => (
+                  <TableCell key={h} sx={{ fontWeight: 800 }}>
+                    {h}
+                  </TableCell>
+                ))}
+              </TableRow>
+            </TableHead>
+
+            <TableBody>
+              {computed.map((row, i) => (
+  <TableRow key={i}>
+    <TableCell sx={{ whiteSpace: 'nowrap', fontWeight: 700 }}>
+      {row.date}
+    </TableCell>
+
+    <TableCell>
+      <Box
+        sx={{
+          border: '1px solid rgba(148,163,184,0.22)',
+          borderRadius: 1.5,
+          px: 1.5,
+          py: 0.9,
+          minHeight: 42,
+          minWidth: 90,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'flex-start',
+          bgcolor: '#f8fafc',
+          fontWeight: 700,
+        }}
+      >
+        {row.openingBalance.toLocaleString()}
+      </Box>
+    </TableCell>
+
+    {([
+      'offloaded',
+      'fresh',
+      'uht',
+      'yoghurt',
+      'cream',
+      'other',
+    ] as const).map((field) => (
+      <TableCell key={field}>
+        <Box
+          sx={{
+            border: '1px solid rgba(148,163,184,0.35)',
+            borderRadius: 1.5,
+            px: 1.5,
+            py: 0.5,
+            minHeight: 42,
+            minWidth: 90,
+            display: 'flex',
+            alignItems: 'center',
+            bgcolor: '#fff',
+          }}
+        >
+          <InputBase
+            type="text"
+            inputMode="numeric"
+            defaultValue={(row as any)[field] === 0 ? '' : (row as any)[field]}
+            onBlur={(e) =>
+              handleChange(
+                i,
+                field,
+                e.target.value.trim() === '' ? 0 : Number(e.target.value)
+              )
+            }
+            sx={{
+              width: '100%',
+              fontSize: '0.98rem',
+            }}
+          />
+        </Box>
+      </TableCell>
+    ))}
+
+    <TableCell>
+      <Box
+        sx={{
+          border: '1px solid rgba(148,163,184,0.22)',
+          borderRadius: 1.5,
+          px: 1.5,
+          py: 0.9,
+          minHeight: 42,
+          minWidth: 90,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'flex-start',
+          bgcolor: '#f8fafc',
+          fontWeight: 700,
+        }}
+      >
+        {row.totalUsed.toLocaleString()}
+      </Box>
+    </TableCell>
+
+    <TableCell>
+      <Box
+        sx={{
+          border: '1px solid rgba(148,163,184,0.22)',
+          borderRadius: 1.5,
+          px: 1.5,
+          py: 0.9,
+          minHeight: 42,
+          minWidth: 100,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'flex-start',
+          bgcolor: '#f8fafc',
+          fontWeight: 700,
+        }}
+      >
+        {row.expectedClosing.toLocaleString()}
+      </Box>
+    </TableCell>
+
+    <TableCell>
+      <Box
+        sx={{
+          border: '1px solid rgba(148,163,184,0.35)',
+          borderRadius: 1.5,
+          px: 1.5,
+          py: 0.5,
+          minHeight: 42,
+          minWidth: 100,
+          display: 'flex',
+          alignItems: 'center',
+          bgcolor: '#fff',
+        }}
+      >
+        <InputBase
+          type="text"
+          inputMode="numeric"
+          defaultValue={row.actualClosing === 0 ? '' : row.actualClosing}
+          onBlur={(e) =>
+            handleChange(
+              i,
+              'actualClosing',
+              e.target.value.trim() === '' ? 0 : Number(e.target.value)
+            )
+          }
+          sx={{
+            width: '100%',
+            fontSize: '0.98rem',
+          }}
+        />
+      </Box>
+    </TableCell>
+
+    <TableCell>
+      <Box
+        sx={{
+          border: '1px solid rgba(148,163,184,0.22)',
+          borderRadius: 1.5,
+          px: 1.5,
+          py: 0.9,
+          minHeight: 42,
+          minWidth: 90,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'flex-start',
+          bgcolor: row.variance > 0 ? 'rgba(22,163,74,0.08)' : row.variance < 0 ? 'rgba(220,38,38,0.08)' : '#f8fafc',
+          color: row.variance > 0 ? '#16a34a' : row.variance < 0 ? '#dc2626' : 'inherit',
+          fontWeight: 800,
+        }}
+      >
+        {row.variance.toLocaleString()}
+      </Box>
+    </TableCell>
+
+    <TableCell>
+      <Box
+        sx={{
+          border: '1px solid rgba(148,163,184,0.22)',
+          borderRadius: 1.5,
+          px: 1.5,
+          py: 0.9,
+          minHeight: 42,
+          minWidth: 90,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'flex-start',
+          bgcolor: row.variance > 0 ? 'rgba(22,163,74,0.08)' : row.variance < 0 ? 'rgba(220,38,38,0.08)' : '#f8fafc',
+          color: row.variance > 0 ? '#16a34a' : row.variance < 0 ? '#dc2626' : 'inherit',
+          fontWeight: 800,
+        }}
+      >
+        {row.variancePercent.toFixed(2)}%
+      </Box>
+    </TableCell>
+  </TableRow>
+))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </SectionCard>
     </Stack>
   );
 }
 export function Dashboard({ user, onLogout }: { user: AppUser; onLogout: () => void }) {
   const [entries, setEntries] = useState<OperatorDailyEntry[]>(demoOperatorEntries);
   const [freshMilkRecords, setFreshMilkRecords] = useState<FreshMilkDailyRecord[]>(demoFreshMilkRecords);
-  const months = useMemo(() => getAvailableMonths(entries), [entries]);
+  const months = useMemo(() => {
+  const start = dayjs('2026-01-01');
+  return Array.from({ length: 12 }, (_, i) => start.add(i, 'month').format('YYYY-MM'));
+}, []);
   const [selectedMonth, setSelectedMonth] = useState(months[0] ?? '2026-03');
   const [operatorFilters, setOperatorFilters] = useState<string[]>([]);
   const [shiftFilters, setShiftFilters] = useState<string[]>([]);
@@ -1652,7 +2064,7 @@ const handleExportMonthlyReport = async () => {
         </Box>
 
         <Box sx={{ pt: 0.8 }}>
-          {user.role === 'admin' && activeSection === 'dashboard' ? <DashboardOverview summary={summary} chartData={chartData} ranking={ranking} /> : null}
+          {user.role === 'admin' && activeSection === 'dashboard' ? <DashboardOverview summary={summary} selectedMonth={selectedMonth} /> : null}
           {user.role === 'admin' && activeSection === 'intake' ? <AdminIntakePage summary={summary} chartData={chartData} chemicalByOperator={chemicalByOperator} ranking={ranking} insights={insights} productionRecords={productionRecords} /> : null}
           {user.role === 'admin' && activeSection === 'cip' ? (
             <SectionCard title="Sanitation chemistry ledger" description="CIP chemistry records for the selected month.">
