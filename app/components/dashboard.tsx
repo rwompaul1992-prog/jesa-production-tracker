@@ -76,8 +76,43 @@ import { AppUser, CipRecord, CipType, EntryStatus, FreshMilkDailyRecord, Operato
 const shifts: Shift[] = ['Morning', 'Afternoon', 'Night'];
 const cipTypes: CipType[] = ['Caustic wash', 'Caustic and Acid wash'];
 
-type SectionKey = 'dashboard' | 'intake' | 'cip' | 'operators' | 'operator-entry' | 'fresh-milk';
+type SectionKey =
+  | 'dashboard'
+  | 'intake'
+  | 'cip'
+  | 'operators'
+  | 'operator-entry'
+  | 'fresh-milk'
+  | 'yoghurt-processing';
+
 type KpiTone = 'good' | 'bad' | 'warning' | 'neutral';
+
+type YoghurtProcessingDailyRecord = {
+  id: string;
+  date: string;
+  operatorName: string;
+  yoghurtMilkStdLitres: number;
+  sugarKg: number;
+  stabiliserKg: number;
+  sourceGrams: number;
+  freshQCulture: number;
+  colourMl: number;
+  flavourLitres: number;
+  delvoFreshCulture: number;
+};
+
+type YoghurtProcessingDraft = {
+  yoghurtMilkStdLitres: string;
+  sugarKg: string;
+  stabiliserKg: string;
+  sourceGrams: string;
+  freshQCulture: string;
+  colourMl: string;
+  flavourLitres: string;
+  delvoFreshCulture: string;
+};
+
+const YOGHURT_OPERATORS = ['Semakula Francis', 'Opidi Lawrence'] as const;
 
 const toneMap: Record<KpiTone, { accent: string; chip: 'success' | 'error' | 'warning' | 'primary' }> = {
   good: { accent: '#16a34a', chip: 'success' },
@@ -92,6 +127,7 @@ const adminSections: Array<{ key: SectionKey; label: string; description: string
   { key: 'cip', label: 'Sanitation usage', description: 'CIP chemistry visibility', icon: <CleaningServicesRounded fontSize="small" /> },
   { key: 'operators', label: 'Operator ranking', description: 'Operator performance ranking', icon: <LeaderboardRounded fontSize="small" /> },
   { key: 'fresh-milk', label: 'Fresh milk ops', description: 'Pouch machine operations', icon: <AssignmentTurnedInRounded fontSize="small" /> },
+  { key: 'yoghurt-processing', label: 'Yoghurt inputs', description: 'Yoghurt processing input usage', icon: <ScienceRounded fontSize="small" /> },
 ];
 
 const pasteurizationOperatorSections: Array<{ key: SectionKey; label: string; description: string; icon: React.ReactNode }> = [
@@ -101,6 +137,94 @@ const pasteurizationOperatorSections: Array<{ key: SectionKey; label: string; de
 const freshMilkOperatorSections: Array<{ key: SectionKey; label: string; description: string; icon: React.ReactNode }> = [
   { key: 'fresh-milk', label: 'Fresh milk log', description: 'Pouch machine daily entry', icon: <AssignmentTurnedInRounded fontSize="small" /> },
 ];
+
+const yoghurtOperatorSections: Array<{ key: SectionKey; label: string; description: string; icon: React.ReactNode }> = [
+  { key: 'yoghurt-processing', label: 'Yoghurt daily log', description: 'Daily yoghurt input entry', icon: <ScienceRounded fontSize="small" /> },
+];
+
+function createEmptyYoghurtRecord(operatorName: string, date: string): YoghurtProcessingDailyRecord {
+  return {
+    id: `yoghurt-${operatorName.toLowerCase().replace(/\s+/g, '-')}-${date}`,
+    date,
+    operatorName,
+    yoghurtMilkStdLitres: 0,
+    sugarKg: 0,
+    stabiliserKg: 0,
+    sourceGrams: 0,
+    freshQCulture: 0,
+    colourMl: 0,
+    flavourLitres: 0,
+    delvoFreshCulture: 0,
+  };
+}
+
+function createYoghurtDraftFromRecord(record: YoghurtProcessingDailyRecord): YoghurtProcessingDraft {
+  return {
+    yoghurtMilkStdLitres: String(record.yoghurtMilkStdLitres),
+    sugarKg: String(record.sugarKg),
+    stabiliserKg: String(record.stabiliserKg),
+    sourceGrams: String(record.sourceGrams),
+    freshQCulture: String(record.freshQCulture),
+    colourMl: String(record.colourMl),
+    flavourLitres: String(record.flavourLitres),
+    delvoFreshCulture: String(record.delvoFreshCulture),
+  };
+}
+
+function getMonthlyYoghurtDays(
+  monthKey: string,
+  operatorName: string,
+  records: YoghurtProcessingDailyRecord[],
+): YoghurtProcessingDailyRecord[] {
+  const start = dayjs(`${monthKey}-01`);
+  const days = start.daysInMonth();
+
+  return Array.from({ length: days }, (_, index) => {
+    const date = start.date(index + 1).format('YYYY-MM-DD');
+    const existing = records.find((record) => record.operatorName === operatorName && record.date === date);
+    return existing ?? createEmptyYoghurtRecord(operatorName, date);
+  });
+}
+
+function buildYoghurtMonthlyTotals(records: YoghurtProcessingDailyRecord[]) {
+  return records.reduce(
+    (acc, record) => {
+      acc.yoghurtMilkStdLitres += record.yoghurtMilkStdLitres;
+      acc.sugarKg += record.sugarKg;
+      acc.stabiliserKg += record.stabiliserKg;
+      acc.sourceGrams += record.sourceGrams;
+      acc.freshQCulture += record.freshQCulture;
+      acc.colourMl += record.colourMl;
+      acc.flavourLitres += record.flavourLitres;
+      acc.delvoFreshCulture += record.delvoFreshCulture;
+      return acc;
+    },
+    {
+      yoghurtMilkStdLitres: 0,
+      sugarKg: 0,
+      stabiliserKg: 0,
+      sourceGrams: 0,
+      freshQCulture: 0,
+      colourMl: 0,
+      flavourLitres: 0,
+      delvoFreshCulture: 0,
+    },
+  );
+}
+
+function buildYoghurtTotalsByOperator(records: YoghurtProcessingDailyRecord[], monthKey: string) {
+  const monthRecords = records.filter((record) => record.date.startsWith(monthKey));
+
+  return YOGHURT_OPERATORS.map((operatorName) => {
+    const operatorRecords = monthRecords.filter((record) => record.operatorName === operatorName);
+    return {
+      operatorName,
+      ...buildYoghurtMonthlyTotals(operatorRecords),
+    };
+  });
+}
+
+
 
 const chartAxisProps = {
   axisLine: false,
@@ -116,15 +240,63 @@ const chartGridProps = {
 };
 
 function getSectionAccent(title: string) {
-  if (/loss|signal|alert|surveillance/i.test(title)) {
-    return { bar: '#f5b63d', tint: 'rgba(245,182,61,0.08)', text: '#7c4a03' };
+  // EXECUTIVE / KPI
+  if (/executive|control|summary/i.test(title)) {
+    return {
+      bar: '#1e3a8a', // deep blue
+      bg: '#f0f4ff',
+      border: '#c7d2fe',
+      text: '#1e3a8a',
+    };
   }
 
-  if (/chemical|sanitation|cip/i.test(title)) {
-    return { bar: '#123b8f', tint: 'rgba(18,59,143,0.08)', text: '#123b8f' };
+  // MILK RECONCILIATION
+  if (/milk|reconciliation/i.test(title)) {
+    return {
+      bar: '#065f46', // deep green
+      bg: '#ecfdf5',
+      border: '#6ee7b7',
+      text: '#065f46',
+    };
   }
 
-  return { bar: '#123b8f', tint: 'rgba(18,59,143,0.08)', text: '#123b8f' };
+  // YOGHURT PROCESSING INPUTS
+  if (/yoghurt|input/i.test(title)) {
+    return {
+      bar: '#7c2d12', // brown/orange
+      bg: '#fff7ed',
+      border: '#fdba74',
+      text: '#7c2d12',
+    };
+  }
+
+  // PRODUCTION / OUTPUT
+  if (/production|pouch/i.test(title)) {
+    return {
+      bar: '#5b21b6', // purple
+      bg: '#f5f3ff',
+      border: '#c4b5fd',
+      text: '#5b21b6',
+    };
+  }
+
+  // YIELD / ANALYTICS
+  if (/yield|analysis|performance/i.test(title)) {
+    return {
+      bar: '#92400e', // amber
+      bg: '#fffbeb',
+      border: '#fcd34d',
+      text: '#92400e',
+    };
+  }
+
+  // DEFAULT
+  return {
+    bar: '#334155',
+    bg: '#f8fafc',
+    border: '#cbd5f5',
+    text: '#334155',
+  };
 }
 
 function ChartTooltipCard({
@@ -335,49 +507,147 @@ function CompactMetricCard({
   tone: KpiTone;
   trend: string;
 }) {
-  const colors = toneMap[tone];
+  const styles: Record<
+    KpiTone,
+    {
+      border: string;
+      headerBg: string;
+      iconBg: string;
+      iconColor: string;
+      textColor: string;
+      chipBg: string;
+      chipColor: string;
+    }
+  > = {
+    good: {
+      border: '#86efac',
+      headerBg: '#ecfdf5',
+      iconBg: '#dcfce7',
+      iconColor: '#166534',
+      textColor: '#166534',
+      chipBg: '#dcfce7',
+      chipColor: '#166534',
+    },
+    bad: {
+      border: '#fca5a5',
+      headerBg: '#fef2f2',
+      iconBg: '#fee2e2',
+      iconColor: '#b91c1c',
+      textColor: '#b91c1c',
+      chipBg: '#fee2e2',
+      chipColor: '#b91c1c',
+    },
+    warning: {
+      border: '#fcd34d',
+      headerBg: '#fffbeb',
+      iconBg: '#fef3c7',
+      iconColor: '#92400e',
+      textColor: '#92400e',
+      chipBg: '#fef3c7',
+      chipColor: '#92400e',
+    },
+    neutral: {
+      border: '#93c5fd',
+      headerBg: '#eff6ff',
+      iconBg: '#dbeafe',
+      iconColor: '#1d4ed8',
+      textColor: '#1e3a8a',
+      chipBg: '#dbeafe',
+      chipColor: '#1d4ed8',
+    },
+  };
+
+  const current = styles[tone];
+
   return (
-    <Card
+    <Box
       sx={{
-        border: '1px solid',
-        borderColor: alpha(colors.accent, 0.22),
-        position: 'relative',
-        overflow: 'hidden',
-        borderRadius: 1.25,
+        border: `1px solid ${current.border}`,
+        borderRadius: 1,
         background: '#ffffff',
-        transition: 'transform 0.16s ease, border-color 0.16s ease, background-color 0.16s ease',
-        '&::before': {
-          content: '""',
-          position: 'absolute',
-          inset: '0 auto 0 0',
-          width: 3,
-          background: colors.accent,
-        },
-        '&:hover': { transform: 'translateY(-1px)', borderColor: alpha(colors.accent, 0.34), backgroundColor: alpha(colors.accent, 0.025) },
+        overflow: 'hidden',
+        minHeight: 96,
       }}
     >
-      <CardContent sx={{ p: 1.15 }}>
-        <Stack spacing={0.75}>
-          <Stack direction="row" justifyContent="space-between" alignItems="center">
-            <Box>
-              <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 800, letterSpacing: '0.07em', textTransform: 'uppercase', fontSize: '0.68rem' }}>
-                {title}
-              </Typography>
-              <Typography variant="h6" sx={{ mt: 0.35, fontWeight: 900, letterSpacing: '-0.03em', lineHeight: 1.05 }}>
-                {value}
-              </Typography>
-            </Box>
-            <Avatar sx={{ width: 30, height: 30, borderRadius: 0.9, bgcolor: alpha(colors.accent, 0.12), color: colors.accent }}>{icon}</Avatar>
-          </Stack>
-          <Stack direction="row" justifyContent="space-between" alignItems="center">
-            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700, fontSize: '0.72rem' }}>
-              {helper}
-            </Typography>
-            <Chip size="small" color={colors.chip} label={trend} sx={{ height: 19, borderRadius: 0.8, fontWeight: 800, bgcolor: alpha(colors.accent, 0.12), color: colors.accent }} />
-          </Stack>
-        </Stack>
-      </CardContent>
-    </Card>
+      <Box
+        sx={{
+          px: 1.2,
+          py: 0.7,
+          borderBottom: `1px solid ${current.border}`,
+          background: current.headerBg,
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+        }}
+      >
+        <Typography
+          sx={{
+            fontSize: '0.72rem',
+            fontWeight: 800,
+            textTransform: 'uppercase',
+            letterSpacing: '0.06em',
+            color: current.textColor,
+            lineHeight: 1.1,
+          }}
+        >
+          {title}
+        </Typography>
+
+        <Avatar
+          sx={{
+            width: 28,
+            height: 28,
+            borderRadius: 1,
+            bgcolor: current.iconBg,
+            color: current.iconColor,
+          }}
+        >
+          {icon}
+        </Avatar>
+      </Box>
+
+      <Box sx={{ px: 1.2, py: 0.9 }}>
+        <Typography
+          sx={{
+            fontSize: '1.05rem',
+            fontWeight: 900,
+            color: '#0f172a',
+            lineHeight: 1.1,
+            mb: 0.45,
+          }}
+        >
+          {value}
+        </Typography>
+
+        <Typography
+          sx={{
+            fontSize: '0.72rem',
+            fontWeight: 600,
+            color: '#64748b',
+            mb: 0.8,
+          }}
+        >
+          {helper}
+        </Typography>
+
+        <Box
+          sx={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            px: 0.9,
+            py: 0.35,
+            borderRadius: 999,
+            bgcolor: current.chipBg,
+            color: current.chipColor,
+            fontSize: '0.68rem',
+            fontWeight: 800,
+            lineHeight: 1,
+          }}
+        >
+          {trend}
+        </Box>
+      </Box>
+    </Box>
   );
 }
 
@@ -395,49 +665,67 @@ function SectionCard({
   const accent = getSectionAccent(title);
 
   return (
-    <Card
-      sx={{
-        border: '1px solid rgba(148,163,184,0.16)',
-        borderRadius: 1.25,
-        background: '#ffffff',
-        boxShadow: 'none',
-      }}
+    <Box
+     sx={{
+  border: `1px solid ${accent.border}`,
+  borderRadius: 2,
+  background: accent.bg,
+  boxShadow: '0 10px 24px rgba(15, 23, 42, 0.06)',
+  transition: 'all 0.2s ease',
+  '&:hover': {
+    transform: 'translateY(-2px)',
+    boxShadow: '0 16px 32px rgba(15, 23, 42, 0.10)',
+  },
+}}
     >
-      <CardContent sx={{ p: 1.15 }}>
-        <Stack spacing={1.05}>
-          <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" spacing={0.8}>
-            <Box>
-              <Box
-                sx={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  px: 1.05,
-                  py: 0.32,
-                  mb: 0.5,
-                  borderRadius: 0.75,
-                  bgcolor: accent.bar,
-                  color: '#ffffff',
-                }}
-              >
-                <Typography variant="caption" sx={{ fontSize: '0.69rem', fontWeight: 900, letterSpacing: '0.02em', lineHeight: 1 }}>
-                  {title}
-                </Typography>
-              </Box>
-              {description ? (
-                <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700, fontSize: '0.67rem', lineHeight: 1.15 }}>
-                  {description}
-                </Typography>
-              ) : null}
-            </Box>
-            {action}
-          </Stack>
-          <Box sx={{ pt: 0.1, borderTop: '1px solid rgba(226,232,240,0.9)' }}>{children}</Box>
-        </Stack>
-      </CardContent>
-    </Card>
+      {/* HEADER */}
+      <Box
+        sx={{
+          px: 1.2,
+          py: 0.6,
+          borderBottom: `1px solid ${accent.border}`,
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          background: alpha(accent.bg, 0.4),
+        }}
+      >
+        <Box>
+          <Typography
+            sx={{
+              fontSize: '0.75rem',
+              fontWeight: 800,
+              color: accent.text,
+              letterSpacing: '0.04em',
+              textTransform: 'uppercase',
+            }}
+          >
+            {title}
+          </Typography>
+
+          {description && (
+            <Typography
+              sx={{
+                fontSize: '0.65rem',
+                color: '#64748b',
+                fontWeight: 600,
+              }}
+            >
+              {description}
+            </Typography>
+          )}
+        </Box>
+
+        {action}
+      </Box>
+
+      {/* BODY */}
+      <Box sx={{ p: 1.4 }}>
+        {children}
+      </Box>
+    </Box>
   );
 }
-
 function getPerformanceBadgeMeta(badge: OperatorPerformanceEntry['badge']) {
   switch (badge) {
     case 'best':
@@ -1321,6 +1609,7 @@ function AdminIntakePage({
   );
 }
 const MILK_ACCOUNTING_STORAGE_KEY = 'jesa-milk-accounting';
+const POUCH_YOGHURT_STORAGE_KEY = 'jesa-pouch-yoghurt-production';
 
 type MilkAccountingRow = {
   date: string;
@@ -1331,6 +1620,14 @@ type MilkAccountingRow = {
   cream: number;
   other: number;
   actualClosing: number;
+};
+
+type PouchYoghurtProductionRow = {
+  date: string;
+  vanilla200g: number;
+  vanilla400g: number;
+  strawberry200g: number;
+  strawberry400g: number;
 };
 
 function loadMilkAccountingRows() {
@@ -1355,240 +1652,714 @@ function saveMilkAccountingRows(rows: MilkAccountingRow[]) {
     console.error('Failed to save milk accounting rows', error);
   }
 }
+
+function loadPouchYoghurtMonthMap(): Record<string, PouchYoghurtProductionRow[]> {
+  if (typeof window === 'undefined') return {};
+
+  try {
+    const raw = localStorage.getItem(POUCH_YOGHURT_STORAGE_KEY);
+    if (!raw) return {};
+
+    const parsed = JSON.parse(raw);
+
+    if (Array.isArray(parsed)) {
+      return {};
+    }
+
+    const normalized: Record<string, PouchYoghurtProductionRow[]> = {};
+
+    Object.entries(parsed ?? {}).forEach(([key, value]) => {
+      normalized[key] = Array.isArray(value) ? (value as PouchYoghurtProductionRow[]) : [];
+    });
+
+    return normalized;
+  } catch (error) {
+    console.error('Failed to load pouch yoghurt month map', error);
+    return {};
+  }
+}
+
+function loadPouchYoghurtRows(monthKey: string) {
+  if (typeof window === 'undefined') return null;
+
+  try {
+    const raw = localStorage.getItem(POUCH_YOGHURT_STORAGE_KEY);
+    if (!raw) return null;
+
+    const parsed = JSON.parse(raw);
+
+    if (Array.isArray(parsed)) {
+      return parsed as PouchYoghurtProductionRow[];
+    }
+
+    if (parsed && typeof parsed === 'object' && Array.isArray(parsed[monthKey])) {
+      return parsed[monthKey] as PouchYoghurtProductionRow[];
+    }
+
+    return null;
+  } catch (error) {
+    console.error('Failed to load pouch yoghurt rows', error);
+    return null;
+  }
+}
+
+function savePouchYoghurtRows(monthKey: string, rows: PouchYoghurtProductionRow[]) {
+  if (typeof window === 'undefined') return;
+
+  try {
+    const monthMap = loadPouchYoghurtMonthMap();
+    monthMap[monthKey] = rows;
+    localStorage.setItem(POUCH_YOGHURT_STORAGE_KEY, JSON.stringify(monthMap));
+  } catch (error) {
+    console.error('Failed to save pouch yoghurt rows', error);
+  }
+}
 function DashboardOverview({
   summary,
   selectedMonth,
+  yoghurtRecords,
 }: {
   summary: any;
   selectedMonth: string;
+  yoghurtRecords: YoghurtProcessingDailyRecord[];
 }) {
-   const [monthOpeningBalance, setMonthOpeningBalance] = useState(0);
-  const [rows, setRows] = useState(() => {
-  const start = dayjs(`${selectedMonth}-01`);
-  const days = start.daysInMonth();
+  const [monthOpeningBalance, setMonthOpeningBalance] = useState(0);
+  const [rows, setRows] = useState<MilkAccountingRow[]>([]);
+  const [pouchRows, setPouchRows] = useState<PouchYoghurtProductionRow[]>([]);
 
-  return Array.from({ length: days }, (_, i) => ({
-    date: start.date(i + 1).format('DD MMM'),
-    offloaded: 0,
-    fresh: 0,
-    uht: 0,
-    yoghurt: 0,
-    cream: 0,
-    other: 0,
-    actualClosing: 0,
-  }));
-});
   useEffect(() => {
+    const start = dayjs(`${selectedMonth}-01`);
+    const days = start.daysInMonth();
+
     const savedRows = loadMilkAccountingRows();
-    if (savedRows && savedRows.length > 0) {
+
+    if (savedRows && savedRows.length === days) {
       setRows(savedRows);
+    } else {
+      setRows(
+        Array.from({ length: days }, (_, i) => ({
+          date: start.date(i + 1).format('DD MMM'),
+          offloaded: 0,
+          fresh: 0,
+          uht: 0,
+          yoghurt: 0,
+          cream: 0,
+          other: 0,
+          actualClosing: 0,
+        }))
+      );
     }
-  }, []);
+
+    const savedPouchRows = loadPouchYoghurtRows(selectedMonth);
+
+    if (savedPouchRows && savedPouchRows.length === days) {
+      setPouchRows(savedPouchRows);
+    } else {
+      setPouchRows(
+        Array.from({ length: days }, (_, i) => ({
+          date: start.date(i + 1).format('DD MMM'),
+          vanilla200g: 0,
+          vanilla400g: 0,
+          strawberry200g: 0,
+          strawberry400g: 0,
+        }))
+      );
+    }
+  }, [selectedMonth]);
+
   useEffect(() => {
-  const start = dayjs(`${selectedMonth}-01`);
-  const days = start.daysInMonth();
+    const timeout = setTimeout(() => {
+      saveMilkAccountingRows(rows);
+    }, 400);
 
-  setRows(
-    Array.from({ length: days }, (_, i) => ({
-      date: start.date(i + 1).format('DD MMM'),
-      offloaded: 0,
-      fresh: 0,
-      uht: 0,
-      yoghurt: 0,
-      cream: 0,
-      other: 0,
-      actualClosing: 0,
-    }))
-  );
-}, [selectedMonth]);
- useEffect(() => {
-  const timeout = setTimeout(() => {
-    saveMilkAccountingRows(rows);
-  }, 1000);
+    return () => clearTimeout(timeout);
+  }, [rows]);
 
-  return () => clearTimeout(timeout);
-}, [rows]);
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      savePouchYoghurtRows(selectedMonth, pouchRows);
+    }, 400);
+
+    return () => clearTimeout(timeout);
+  }, [pouchRows, selectedMonth]);
+
   const handleChange = (
-  index: number,
-  field:
-    | 'offloaded'
-    | 'fresh'
-    | 'uht'
-    | 'yoghurt'
-    | 'cream'
-    | 'other'
-    | 'actualClosing',
-  value: number
-) => {
-  setRows((prev) => {
-    const updated = [...prev];
-    updated[index] = {
-      ...updated[index],
-      [field]: value,
-    };
-    return updated;
-  });
-};
-
-  const computed = rows.map((row, index) => {
-  const openingBalance =
-    index === 0 ? monthOpeningBalance : rows[index - 1].actualClosing;
-
-  const milkAvailable = openingBalance + row.offloaded;
-
-  const totalUsed =
-    row.fresh + row.uht + row.yoghurt + row.cream + row.other;
-
-  const expectedClosing = milkAvailable - totalUsed;
-
-  const variance = row.actualClosing - expectedClosing;
-
-  const variancePercent =
-    expectedClosing !== 0 ? (variance / expectedClosing) * 100 : 0;
-
-  return {
-    ...row,
-    openingBalance,
-    milkAvailable,
-    totalUsed,
-    expectedClosing,
-    variance,
-    variancePercent,
+    index: number,
+    field:
+      | 'offloaded'
+      | 'fresh'
+      | 'uht'
+      | 'yoghurt'
+      | 'cream'
+      | 'other'
+      | 'actualClosing',
+    value: number
+  ) => {
+    setRows((prev) => {
+      const updated = [...prev];
+      updated[index] = {
+        ...updated[index],
+        [field]: value,
+      };
+      return updated;
+    });
   };
-});
-  const totals = computed.reduce(
-    (acc, row) => {
-      acc.offloaded += row.offloaded;
-      acc.used += row.totalUsed;
-      acc.variance += row.variance;
-      return acc;
-    },
-    { offloaded: 0, used: 0, variance: 0 }
-  );
 
-  const lossRate =
-    totals.offloaded > 0
-      ? (totals.variance / totals.offloaded) * 100
-      : 0;
+  const handlePouchChange = (
+    index: number,
+    field: 'vanilla200g' | 'vanilla400g' | 'strawberry200g' | 'strawberry400g',
+    value: number
+  ) => {
+    setPouchRows((prev) => {
+      const updated = [...prev];
+      updated[index] = {
+        ...updated[index],
+        [field]: value,
+      };
+      return updated;
+    });
+  };
+
+  const computed = useMemo(() => {
+    return rows.map((row, index) => {
+      const openingBalance =
+        index === 0 ? monthOpeningBalance : rows[index - 1]?.actualClosing ?? 0;
+
+      const milkAvailable = openingBalance + row.offloaded;
+      const totalUsed = row.fresh + row.uht + row.yoghurt + row.cream + row.other;
+      const expectedClosing = milkAvailable - totalUsed;
+      const variance = row.actualClosing - expectedClosing;
+      const variancePercent =
+        expectedClosing !== 0 ? (variance / expectedClosing) * 100 : 0;
+
+      return {
+        ...row,
+        openingBalance,
+        milkAvailable,
+        totalUsed,
+        expectedClosing,
+        variance,
+        variancePercent,
+      };
+    });
+  }, [rows, monthOpeningBalance]);
+
+  const totals = useMemo(() => {
+    const totalOffloaded = computed.reduce((sum, row) => sum + row.offloaded, 0);
+    const totalUsed = computed.reduce((sum, row) => sum + row.totalUsed, 0);
+
+    const finalExpectedClosing =
+      computed.length > 0 ? computed[computed.length - 1].expectedClosing : 0;
+
+    const finalActualClosing =
+      computed.length > 0 ? computed[computed.length - 1].actualClosing : 0;
+
+    const totalVariance = finalActualClosing - finalExpectedClosing;
+
+    const variancePercent =
+      finalExpectedClosing !== 0
+        ? (totalVariance / finalExpectedClosing) * 100
+        : 0;
+
+    return {
+      totalOffloaded,
+      totalUsed,
+      finalExpectedClosing,
+      finalActualClosing,
+      totalVariance,
+      variancePercent,
+    };
+  }, [computed]);
+
+  const pouchTotals = useMemo(() => {
+    const vanilla200g = pouchRows.reduce((sum, row) => sum + row.vanilla200g, 0);
+    const vanilla400g = pouchRows.reduce((sum, row) => sum + row.vanilla400g, 0);
+    const strawberry200g = pouchRows.reduce((sum, row) => sum + row.strawberry200g, 0);
+    const strawberry400g = pouchRows.reduce((sum, row) => sum + row.strawberry400g, 0);
+
+    return {
+      vanilla200g,
+      vanilla400g,
+      strawberry200g,
+      strawberry400g,
+      vanillaTotal: vanilla200g + vanilla400g,
+      strawberryTotal: strawberry200g + strawberry400g,
+      grandTotal: vanilla200g + vanilla400g + strawberry200g + strawberry400g,
+    };
+  }, [pouchRows]);
+
+  const selectedMonthYoghurtRecords = useMemo(() => {
+    return yoghurtRecords.filter((record) => record.date.startsWith(selectedMonth));
+  }, [yoghurtRecords, selectedMonth]);
+
+  const baseTotals = useMemo(() => {
+    return selectedMonthYoghurtRecords.reduce(
+      (acc, record) => {
+        acc.milkStd += record.yoghurtMilkStdLitres;
+        acc.sugar += record.sugarKg;
+        acc.stabiliser += record.stabiliserKg;
+        acc.source += record.sourceGrams;
+        return acc;
+      },
+      {
+        milkStd: 0,
+        sugar: 0,
+        stabiliser: 0,
+        source: 0,
+      },
+    );
+  }, [selectedMonthYoghurtRecords]);
+
+  const baseTotal = useMemo(() => {
+    return baseTotals.milkStd + baseTotals.sugar + baseTotals.stabiliser + baseTotals.source;
+  }, [baseTotals]);
+
+  const yieldSummary = useMemo(() => {
+    const vanillaYield = baseTotal > 0 ? pouchTotals.vanillaTotal / baseTotal : 0;
+    const strawberryYield = baseTotal > 0 ? pouchTotals.strawberryTotal / baseTotal : 0;
+
+    return {
+      baseTotal,
+      vanillaProduced: pouchTotals.vanillaTotal,
+      strawberryProduced: pouchTotals.strawberryTotal,
+      vanillaYield,
+      strawberryYield,
+      vanillaYieldPercent: vanillaYield * 100,
+      strawberryYieldPercent: strawberryYield * 100,
+    };
+  }, [baseTotal, pouchTotals]);
+
+  const monthlyYieldComparison = useMemo(() => {
+  const pouchMonthMap = loadPouchYoghurtMonthMap();
+
+  const monthKeys = Array.from(
+    new Set([
+      
+      ...Object.keys(pouchMonthMap),
+      ...yoghurtRecords.map((record) => record.date.slice(0, 7)),
+    ]),
+  ).sort();
+
+  return monthKeys.map((monthKey) => {
+    const monthPouchRows = pouchMonthMap[monthKey] ?? [];
+
+    const vanillaProduced = monthPouchRows.reduce(
+      (sum, row) => sum + row.vanilla200g + row.vanilla400g,
+      0,
+    );
+
+    const strawberryProduced = monthPouchRows.reduce(
+      (sum, row) => sum + row.strawberry200g + row.strawberry400g,
+      0,
+    );
+
+    const monthInputTotals = yoghurtRecords
+      .filter((record) => record.date.startsWith(monthKey))
+      .reduce(
+        (acc, record) => {
+          acc.milkStd += record.yoghurtMilkStdLitres;
+          acc.sugar += record.sugarKg;
+          acc.stabiliser += record.stabiliserKg;
+          acc.source += record.sourceGrams;
+          return acc;
+        },
+        {
+          milkStd: 0,
+          sugar: 0,
+          stabiliser: 0,
+          source: 0,
+        },
+      );
+
+    const monthBase =
+      monthInputTotals.milkStd +
+      monthInputTotals.sugar +
+      monthInputTotals.stabiliser +
+      monthInputTotals.source;
+
+    const vanillaYieldPercent = monthBase > 0 ? (vanillaProduced / monthBase) * 100 : 0;
+    const strawberryYieldPercent = monthBase > 0 ? (strawberryProduced / monthBase) * 100 : 0;
+    const averageYieldPercent = (vanillaYieldPercent + strawberryYieldPercent) / 2;
+
+    return {
+      monthKey,
+      month: dayjs(`${monthKey}-01`).format('MMM YY'),
+      vanillaYield: Number(vanillaYieldPercent.toFixed(2)),
+      strawberryYield: Number(strawberryYieldPercent.toFixed(2)),
+      averageYield: Number(averageYieldPercent.toFixed(2)),
+    };
+  });
+}, [yoghurtRecords, selectedMonth]);
+
+const averageYieldMonthComparison = useMemo(() => {
+  const currentMonth = monthlyYieldComparison.find((item) => item.monthKey === selectedMonth);
+
+  const previousMonthKey = dayjs(`${selectedMonth}-01`)
+    .subtract(1, 'month')
+    .format('YYYY-MM');
+
+  const previousMonth = monthlyYieldComparison.find((item) => item.monthKey === previousMonthKey);
+
+  return [
+    {
+      label: previousMonth ? previousMonth.month : dayjs(`${previousMonthKey}-01`).format('MMM YY'),
+      averageYield: previousMonth?.averageYield ?? 0,
+    },
+    {
+      label: currentMonth ? currentMonth.month : dayjs(`${selectedMonth}-01`).format('MMM YY'),
+      averageYield: currentMonth?.averageYield ?? 0,
+    },
+  ];
+}, [monthlyYieldComparison, selectedMonth]);
+  const varianceToneColor =
+    totals.totalVariance > 0 ? '#15803d' : totals.totalVariance < 0 ? '#b91c1c' : '#334155';
+
+  const varianceBg =
+    totals.totalVariance > 0
+      ? 'rgba(22,163,74,0.08)'
+      : totals.totalVariance < 0
+        ? 'rgba(220,38,38,0.08)'
+        : '#f8fafc';
+
+  const spreadsheetInputSx = {
+    width: '100%',
+    fontSize: '0.82rem',
+    fontWeight: 600,
+    '& input': {
+      px: 1,
+      py: 0.8,
+      textAlign: 'right' as const,
+    },
+  };
+
+  const readonlyCellSx = {
+    border: '1px solid #d7dee7',
+    borderRadius: 0.8,
+    px: 1,
+    py: 0.8,
+    minHeight: 34,
+    minWidth: 86,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    bgcolor: '#f8fafc',
+    fontWeight: 700,
+    fontSize: '0.8rem',
+    color: '#0f172a',
+  };
+
+  const editableCellWrapSx = {
+    border: '1px solid #d7dee7',
+    borderRadius: 0.8,
+    minHeight: 34,
+    minWidth: 86,
+    display: 'flex',
+    alignItems: 'center',
+    bgcolor: '#ffffff',
+  };
+
+  const compactCard = (
+  title: string,
+  value: string,
+  subtext: string,
+  color: string = '#0f172a',
+  bg: string = '#ffffff',
+) => {
+  const normalizedTitle = title.toLowerCase();
+
+  let borderColor = '#d8dee8';
+  let headerBg = '#f8fafc';
+  let bodyBg = '#ffffff';
+  let titleColor = '#64748b';
+  let valueColor = color;
+  let chipBg = '#eef2f7';
+  let chipColor = '#475569';
+
+  if (normalizedTitle.includes('offloaded')) {
+    borderColor = '#93c5fd';
+    headerBg = '#eff6ff';
+    bodyBg = '#fafdff';
+    titleColor = '#1d4ed8';
+    chipBg = '#dbeafe';
+    chipColor = '#1d4ed8';
+  } else if (normalizedTitle.includes('used')) {
+    borderColor = '#fcd34d';
+    headerBg = '#fffbeb';
+    bodyBg = '#fffdf5';
+    titleColor = '#b45309';
+    chipBg = '#fef3c7';
+    chipColor = '#92400e';
+  } else if (normalizedTitle.includes('variance')) {
+    borderColor = '#fca5a5';
+    headerBg = '#fef2f2';
+    bodyBg = '#fff7f7';
+    titleColor = '#b91c1c';
+    chipBg = '#fee2e2';
+    chipColor = '#b91c1c';
+  } else if (normalizedTitle.includes('base')) {
+    borderColor = '#86efac';
+    headerBg = '#ecfdf5';
+    bodyBg = '#f7fff9';
+    titleColor = '#15803d';
+    chipBg = '#dcfce7';
+    chipColor = '#166534';
+  } else if (normalizedTitle.includes('vanilla')) {
+    borderColor = '#c4b5fd';
+    headerBg = '#f5f3ff';
+    bodyBg = '#faf8ff';
+    titleColor = '#6d28d9';
+    chipBg = '#ede9fe';
+    chipColor = '#6d28d9';
+  } else if (normalizedTitle.includes('strawberry')) {
+    borderColor = '#f9a8d4';
+    headerBg = '#fdf2f8';
+    bodyBg = '#fff8fb';
+    titleColor = '#be185d';
+    chipBg = '#fce7f3';
+    chipColor = '#be185d';
+  } else if (normalizedTitle.includes('produced')) {
+    borderColor = '#67e8f9';
+    headerBg = '#ecfeff';
+    bodyBg = '#f7feff';
+    titleColor = '#0f766e';
+    chipBg = '#cffafe';
+    chipColor = '#0f766e';
+  }
 
   return (
-    <Stack spacing={1.2}>
-        <Box
-    sx={{
-      display: 'flex',
-      alignItems: 'center',
-      gap: 1.5,
-      flexWrap: 'wrap',
-      p: 1.5,
-      border: '1px solid rgba(148,163,184,0.2)',
-      borderRadius: 2,
-      bgcolor: '#fff',
-    }}
-  >
-    <Typography sx={{ fontWeight: 700 }}>
-      Opening balance for {selectedMonth}
-    </Typography>
-
     <Box
       sx={{
-        border: '1px solid rgba(148,163,184,0.35)',
-        borderRadius: 1.5,
-        px: 1.5,
-        py: 0.5,
-        minHeight: 40,
-        display: 'flex',
-        alignItems: 'center',
-        bgcolor: '#fff',
-        minWidth: 180,
+        border: `1px solid ${borderColor}`,
+        borderRadius: 2,
+        overflow: 'hidden',
+        bgcolor: bodyBg,
+        minHeight: 96,
+        boxShadow: '0 6px 18px rgba(15, 23, 42, 0.05)',
       }}
     >
-      <InputBase
-        type="text"
-        inputMode="numeric"
-        defaultValue={monthOpeningBalance === 0 ? '' : monthOpeningBalance}
-        onBlur={(e) =>
-          setMonthOpeningBalance(
-            e.target.value.trim() === '' ? 0 : Number(e.target.value)
-          )
-        }
+      <Box
         sx={{
-          width: '100%',
-          fontSize: '1rem',
+          px: 1.2,
+          py: 0.65,
+          borderBottom: `1px solid ${borderColor}`,
+          bgcolor: headerBg,
         }}
-      />
-    </Box>
+      >
+        <Typography
+          sx={{
+            fontSize: '0.72rem',
+            fontWeight: 900,
+            letterSpacing: '0.08em',
+            textTransform: 'uppercase',
+            color: titleColor,
+            lineHeight: 1.1,
+          }}
+        >
+          {title}
+        </Typography>
+      </Box>
 
-    <Typography variant="body2" color="text.secondary">
-      This is the balance brought forward into day 1 of the month.
-    </Typography>
-  </Box>
-      {/* Summary */}
+      <Box sx={{ px: 1.2, py: 0.95, bgcolor: bodyBg }}>
+        <Typography
+          sx={{
+            fontSize: '1.05rem',
+            fontWeight: 900,
+            lineHeight: 1,
+            color: valueColor,
+            mb: 0.55,
+          }}
+        >
+          {value}
+        </Typography>
+
+        <Box
+          sx={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            px: 0.8,
+            py: 0.3,
+            borderRadius: 999,
+            bgcolor: chipBg,
+            mb: 0.35,
+          }}
+        >
+          <Typography
+            sx={{
+              fontSize: '0.7rem',
+              color: chipColor,
+              fontWeight: 700,
+              lineHeight: 1,
+            }}
+          >
+            {subtext}
+          </Typography>
+        </Box>
+      </Box>
+    </Box>
+  );
+};
+ return (
+  <Box
+    sx={{
+      minHeight: '100vh',
+      bgcolor: '#f6f3ee',
+      px: 2,
+      py: 2,
+    }}
+  >
+    <Box
+      sx={{
+        maxWidth: 1600,
+        mx: 'auto',
+        bgcolor: '#ffffff',
+        borderRadius: 2,
+        px: 2,
+        py: 2,
+        boxShadow: '0 10px 30px rgba(0,0,0,0.06)',
+      }}
+    >
+      <Stack spacing={1.1}>
+      <Box
+        sx={{
+          border: '1px solid #d7dee7',
+          borderRadius: 1,
+          bgcolor: '#ffffff',
+          px: 1.2,
+          py: 1,
+        }}
+      >
+        <Stack
+          direction={{ xs: 'column', md: 'row' }}
+          spacing={1}
+          alignItems={{ xs: 'stretch', md: 'center' }}
+          justifyContent="space-between"
+        >
+          <Typography
+            sx={{
+              fontSize: '0.8rem',
+              fontWeight: 800,
+              color: '#334155',
+              letterSpacing: '0.02em',
+            }}
+          >
+            Month opening balance
+          </Typography>
+
+          <Box
+            sx={{
+              width: { xs: '100%', md: 180 },
+              border: '1px solid #d7dee7',
+              borderRadius: 0.8,
+              bgcolor: '#f8fafc',
+            }}
+          >
+            <InputBase
+              type="number"
+              value={monthOpeningBalance}
+              onChange={(e) =>
+                setMonthOpeningBalance(
+                  e.target.value === '' ? 0 : Number(e.target.value)
+                )
+              }
+              sx={{
+                width: '100%',
+                fontSize: '0.85rem',
+                fontWeight: 700,
+                '& input': {
+                  px: 1,
+                  py: 0.9,
+                  textAlign: 'right',
+                },
+              }}
+            />
+          </Box>
+        </Stack>
+      </Box>
+
       <Box
         sx={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(4, 1fr)',
-          gap: 1,
+          gridTemplateColumns: { xs: '1fr 1fr', xl: 'repeat(4, 1fr)' },
+          gap: 0.8,
         }}
       >
-        <CompactMetricCard
-          title="Total Offloaded"
-          value={totals.offloaded.toLocaleString()}
-          helper="Monthly intake"
-          icon={<OpacityRounded />}
-          tone="neutral"
-          trend=""
-        />
-        <CompactMetricCard
-          title="Total Used"
-          value={totals.used.toLocaleString()}
-          helper="Total consumption"
-          icon={<LocalDrinkRounded />}
-          tone="good"
-          trend=""
-        />
-        <CompactMetricCard
-          title="Variance"
-          value={totals.variance.toLocaleString()}
-          helper="Loss / Gain"
-          icon={<WarningAmberRounded />}
-          tone={totals.variance > 0 ? 'bad' : 'good'}
-          trend=""
-        />
-        <CompactMetricCard
-          title="Loss %"
-          value={`${lossRate.toFixed(2)}%`}
-          helper="Efficiency"
-          icon={<InsightsRounded />}
-          tone={lossRate > 2 ? 'bad' : 'good'}
-          trend=""
-        />
+        {compactCard('Total Offloaded', `${totals.totalOffloaded.toLocaleString()} L`, 'Monthly intake')}
+        {compactCard('Total Used', `${totals.totalUsed.toLocaleString()} L`, 'All consumption')}
+        {compactCard(
+          'Final Variance',
+          `${totals.totalVariance.toLocaleString()} L`,
+          'Actual vs expected',
+          varianceToneColor,
+          varianceBg,
+        )}
+        {compactCard(
+          'Variance %',
+          `${totals.variancePercent.toFixed(2)}%`,
+          'Month close variance',
+          varianceToneColor,
+          varianceBg,
+        )}
       </Box>
 
-      {/* TABLE */}
-      <SectionCard
-        title="Milk Accounting Table"
-        description="Daily milk intake, usage and variance tracking"
+      <Box
+        sx={{
+          border: '1px solid #d7dee7',
+          borderRadius: 1,
+          bgcolor: '#ffffff',
+          overflow: 'hidden',
+        }}
       >
-        <TableContainer component={Paper}>
-          <Table size="small">
+        <Box
+          sx={{
+            px: 1.2,
+            py: 0.9,
+            borderBottom: '1px solid #d7dee7',
+            bgcolor: '#f8fafc',
+          }}
+        >
+          <Typography
+            sx={{
+              fontSize: '0.8rem',
+              fontWeight: 900,
+              letterSpacing: '0.03em',
+              color: '#0f172a',
+            }}
+          >
+            Milk Reconciliation
+          </Typography>
+        </Box>
+
+        <TableContainer sx={{ maxHeight: 520 }}>
+          <Table size="small" stickyHeader>
             <TableHead>
               <TableRow>
                 {[
-  'Date',
-  'Opening',
-  'Offloaded',
-  'Fresh STD',
-  'UHT STD',
-  'Yoghurt STD',
-  'Cream',
-  'Other',
-  'Used',
-  'Expected Closing',
-  'Actual Closing',
-  'Variance',
-  '%',
-].map((h) => (
-                  <TableCell key={h} sx={{ fontWeight: 800 }}>
+                  'Date',
+                  'Opening',
+                  'Offloaded',
+                  'Fresh STD',
+                  'UHT STD',
+                  'Yoghurt STD',
+                  'Cream',
+                  'Other',
+                  'Used',
+                  'Expected',
+                  'Actual',
+                  'Variance',
+                  'Var %',
+                ].map((h) => (
+                  <TableCell
+                    key={h}
+                    sx={{
+                      fontWeight: 900,
+                      fontSize: '0.72rem',
+                      color: '#334155',
+                      bgcolor: '#eef2f7',
+                      borderBottom: '1px solid #d7dee7',
+                      py: 0.8,
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
                     {h}
                   </TableCell>
                 ))}
@@ -1597,222 +2368,491 @@ function DashboardOverview({
 
             <TableBody>
               {computed.map((row, i) => (
-  <TableRow key={i}>
-    <TableCell sx={{ whiteSpace: 'nowrap', fontWeight: 700 }}>
-      {row.date}
-    </TableCell>
+                <TableRow
+                  key={i}
+                  hover
+                  sx={{
+                    '& td': {
+                      borderBottom: '1px solid #edf2f7',
+                      py: 0.55,
+                    },
+                  }}
+                >
+                  <TableCell sx={{ fontWeight: 800, fontSize: '0.8rem', whiteSpace: 'nowrap' }}>
+                    {row.date}
+                  </TableCell>
 
-    <TableCell>
-      <Box
-        sx={{
-          border: '1px solid rgba(148,163,184,0.22)',
-          borderRadius: 1.5,
-          px: 1.5,
-          py: 0.9,
-          minHeight: 42,
-          minWidth: 90,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'flex-start',
-          bgcolor: '#f8fafc',
-          fontWeight: 700,
-        }}
-      >
-        {row.openingBalance.toLocaleString()}
-      </Box>
-    </TableCell>
+                  <TableCell>
+                    <Box sx={readonlyCellSx}>{row.openingBalance.toLocaleString()}</Box>
+                  </TableCell>
 
-    {([
-      'offloaded',
-      'fresh',
-      'uht',
-      'yoghurt',
-      'cream',
-      'other',
-    ] as const).map((field) => (
-      <TableCell key={field}>
-        <Box
-          sx={{
-            border: '1px solid rgba(148,163,184,0.35)',
-            borderRadius: 1.5,
-            px: 1.5,
-            py: 0.5,
-            minHeight: 42,
-            minWidth: 90,
-            display: 'flex',
-            alignItems: 'center',
-            bgcolor: '#fff',
-          }}
-        >
-          <InputBase
-            type="text"
-            inputMode="numeric"
-            defaultValue={(row as any)[field] === 0 ? '' : (row as any)[field]}
-            onBlur={(e) =>
-              handleChange(
-                i,
-                field,
-                e.target.value.trim() === '' ? 0 : Number(e.target.value)
-              )
-            }
-            sx={{
-              width: '100%',
-              fontSize: '0.98rem',
-            }}
-          />
-        </Box>
-      </TableCell>
-    ))}
+                  {(['offloaded', 'fresh', 'uht', 'yoghurt', 'cream', 'other'] as const).map((field) => (
+                    <TableCell key={field}>
+                      <Box sx={editableCellWrapSx}>
+                        <InputBase
+                          type="number"
+                          defaultValue={row[field]}
+                          onBlur={(e) =>
+                            handleChange(
+                              i,
+                              field,
+                              e.target.value === '' ? 0 : Number(e.target.value)
+                            )
+                          }
+                          sx={spreadsheetInputSx}
+                        />
+                      </Box>
+                    </TableCell>
+                  ))}
 
-    <TableCell>
-      <Box
-        sx={{
-          border: '1px solid rgba(148,163,184,0.22)',
-          borderRadius: 1.5,
-          px: 1.5,
-          py: 0.9,
-          minHeight: 42,
-          minWidth: 90,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'flex-start',
-          bgcolor: '#f8fafc',
-          fontWeight: 700,
-        }}
-      >
-        {row.totalUsed.toLocaleString()}
-      </Box>
-    </TableCell>
+                  <TableCell>
+                    <Box sx={readonlyCellSx}>{row.totalUsed.toLocaleString()}</Box>
+                  </TableCell>
 
-    <TableCell>
-      <Box
-        sx={{
-          border: '1px solid rgba(148,163,184,0.22)',
-          borderRadius: 1.5,
-          px: 1.5,
-          py: 0.9,
-          minHeight: 42,
-          minWidth: 100,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'flex-start',
-          bgcolor: '#f8fafc',
-          fontWeight: 700,
-        }}
-      >
-        {row.expectedClosing.toLocaleString()}
-      </Box>
-    </TableCell>
+                  <TableCell>
+                    <Box sx={readonlyCellSx}>{row.expectedClosing.toLocaleString()}</Box>
+                  </TableCell>
 
-    <TableCell>
-      <Box
-        sx={{
-          border: '1px solid rgba(148,163,184,0.35)',
-          borderRadius: 1.5,
-          px: 1.5,
-          py: 0.5,
-          minHeight: 42,
-          minWidth: 100,
-          display: 'flex',
-          alignItems: 'center',
-          bgcolor: '#fff',
-        }}
-      >
-        <InputBase
-          type="text"
-          inputMode="numeric"
-          defaultValue={row.actualClosing === 0 ? '' : row.actualClosing}
-          onBlur={(e) =>
-            handleChange(
-              i,
-              'actualClosing',
-              e.target.value.trim() === '' ? 0 : Number(e.target.value)
-            )
-          }
-          sx={{
-            width: '100%',
-            fontSize: '0.98rem',
-          }}
-        />
-      </Box>
-    </TableCell>
+                  <TableCell>
+                    <Box sx={editableCellWrapSx}>
+                      <InputBase
+                        type="number"
+                        defaultValue={row.actualClosing}
+                        onBlur={(e) =>
+                          handleChange(
+                            i,
+                            'actualClosing',
+                            e.target.value === '' ? 0 : Number(e.target.value)
+                          )
+                        }
+                        sx={spreadsheetInputSx}
+                      />
+                    </Box>
+                  </TableCell>
 
-    <TableCell>
-      <Box
-        sx={{
-          border: '1px solid rgba(148,163,184,0.22)',
-          borderRadius: 1.5,
-          px: 1.5,
-          py: 0.9,
-          minHeight: 42,
-          minWidth: 90,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'flex-start',
-          bgcolor: row.variance > 0 ? 'rgba(22,163,74,0.08)' : row.variance < 0 ? 'rgba(220,38,38,0.08)' : '#f8fafc',
-          color: row.variance > 0 ? '#16a34a' : row.variance < 0 ? '#dc2626' : 'inherit',
-          fontWeight: 800,
-        }}
-      >
-        {row.variance.toLocaleString()}
-      </Box>
-    </TableCell>
+                  <TableCell>
+                    <Box
+                      sx={{
+                        ...readonlyCellSx,
+                        bgcolor:
+                          row.variance > 0
+                            ? 'rgba(22,163,74,0.08)'
+                            : row.variance < 0
+                              ? 'rgba(220,38,38,0.08)'
+                              : '#f8fafc',
+                        color:
+                          row.variance > 0
+                            ? '#15803d'
+                            : row.variance < 0
+                              ? '#b91c1c'
+                              : '#0f172a',
+                      }}
+                    >
+                      {row.variance.toLocaleString()}
+                    </Box>
+                  </TableCell>
 
-    <TableCell>
-      <Box
-        sx={{
-          border: '1px solid rgba(148,163,184,0.22)',
-          borderRadius: 1.5,
-          px: 1.5,
-          py: 0.9,
-          minHeight: 42,
-          minWidth: 90,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'flex-start',
-          bgcolor: row.variance > 0 ? 'rgba(22,163,74,0.08)' : row.variance < 0 ? 'rgba(220,38,38,0.08)' : '#f8fafc',
-          color: row.variance > 0 ? '#16a34a' : row.variance < 0 ? '#dc2626' : 'inherit',
-          fontWeight: 800,
-        }}
-      >
-        {row.variancePercent.toFixed(2)}%
-      </Box>
-    </TableCell>
-  </TableRow>
-))}
+                  <TableCell>
+                    <Box
+                      sx={{
+                        ...readonlyCellSx,
+                        bgcolor:
+                          row.variancePercent > 0
+                            ? 'rgba(22,163,74,0.08)'
+                            : row.variancePercent < 0
+                              ? 'rgba(220,38,38,0.08)'
+                              : '#f8fafc',
+                        color:
+                          row.variancePercent > 0
+                            ? '#15803d'
+                            : row.variancePercent < 0
+                              ? '#b91c1c'
+                              : '#0f172a',
+                      }}
+                    >
+                      {row.variancePercent.toFixed(2)}%
+                    </Box>
+                  </TableCell>
+                </TableRow>
+              ))}
+
+              <TableRow
+                sx={{
+                  '& td': {
+                    bgcolor: '#f8fafc',
+                    borderTop: '1px solid #d7dee7',
+                    borderBottom: 'none',
+                    py: 0.8,
+                    fontWeight: 900,
+                  },
+                }}
+              >
+                <TableCell>TOTAL</TableCell>
+                <TableCell />
+                <TableCell>{totals.totalOffloaded.toLocaleString()}</TableCell>
+                <TableCell />
+                <TableCell />
+                <TableCell />
+                <TableCell />
+                <TableCell />
+                <TableCell>{totals.totalUsed.toLocaleString()}</TableCell>
+                <TableCell>{totals.finalExpectedClosing.toLocaleString()}</TableCell>
+                <TableCell>{totals.finalActualClosing.toLocaleString()}</TableCell>
+                <TableCell sx={{ color: varianceToneColor }}>{totals.totalVariance.toLocaleString()}</TableCell>
+                <TableCell sx={{ color: varianceToneColor }}>{totals.variancePercent.toFixed(2)}%</TableCell>
+              </TableRow>
             </TableBody>
           </Table>
         </TableContainer>
-      </SectionCard>
-    </Stack>
-  );
+      </Box>
+
+      <Box
+        sx={{
+          border: '1px solid #d7dee7',
+          borderRadius: 1,
+          bgcolor: '#ffffff',
+          overflow: 'hidden',
+        }}
+      >
+        <Box
+          sx={{
+            px: 1.2,
+            py: 0.9,
+            borderBottom: '1px solid #d7dee7',
+            bgcolor: '#f8fafc',
+          }}
+        >
+          <Typography
+            sx={{
+              fontSize: '0.8rem',
+              fontWeight: 900,
+              letterSpacing: '0.03em',
+              color: '#0f172a',
+            }}
+          >
+            Pouch Yoghurt Production
+          </Typography>
+        </Box>
+
+        <Box
+          sx={{
+            px: 1,
+            py: 0.9,
+            borderBottom: '1px solid #e8edf3',
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr 1fr', xl: 'repeat(4, 1fr)' },
+            gap: 0.8,
+          }}
+        >
+          {compactCard('Vanilla Total', pouchTotals.vanillaTotal.toLocaleString(), '200g + 400g')}
+          {compactCard('Strawberry Total', pouchTotals.strawberryTotal.toLocaleString(), '200g + 400g')}
+          {compactCard('Vanilla 200g', pouchTotals.vanilla200g.toLocaleString(), 'Monthly total')}
+          {compactCard('Strawberry 200g', pouchTotals.strawberry200g.toLocaleString(), 'Monthly total')}
+        </Box>
+
+        <TableContainer sx={{ maxHeight: 520 }}>
+          <Table size="small" stickyHeader>
+            <TableHead>
+              <TableRow>
+                {[
+                  'Date',
+                  'Vanilla 200g',
+                  'Vanilla 400g',
+                  'Strawberry 200g',
+                  'Strawberry 400g',
+                  'Vanilla Total',
+                  'Strawberry Total',
+                  'Daily Total',
+                ].map((h) => (
+                  <TableCell
+                    key={h}
+                    sx={{
+                      fontWeight: 900,
+                      fontSize: '0.72rem',
+                      color: '#334155',
+                      bgcolor: '#eef2f7',
+                      borderBottom: '1px solid #d7dee7',
+                      py: 0.8,
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {h}
+                  </TableCell>
+                ))}
+              </TableRow>
+            </TableHead>
+
+            <TableBody>
+              {pouchRows.map((row, i) => {
+                const vanillaTotal = row.vanilla200g + row.vanilla400g;
+                const strawberryTotal = row.strawberry200g + row.strawberry400g;
+                const dailyTotal = vanillaTotal + strawberryTotal;
+
+                return (
+                  <TableRow
+                    key={i}
+                    hover
+                    sx={{
+                      '& td': {
+                        borderBottom: '1px solid #edf2f7',
+                        py: 0.55,
+                      },
+                    }}
+                  >
+                    <TableCell sx={{ fontWeight: 800, fontSize: '0.8rem', whiteSpace: 'nowrap' }}>
+                      {row.date}
+                    </TableCell>
+
+                    {(['vanilla200g', 'vanilla400g', 'strawberry200g', 'strawberry400g'] as const).map((field) => (
+                      <TableCell key={field}>
+                        <Box sx={editableCellWrapSx}>
+                          <InputBase
+                            type="number"
+                            defaultValue={row[field]}
+                            onBlur={(e) =>
+                              handlePouchChange(
+                                i,
+                                field,
+                                e.target.value === '' ? 0 : Number(e.target.value)
+                              )
+                            }
+                            sx={spreadsheetInputSx}
+                          />
+                        </Box>
+                      </TableCell>
+                    ))}
+
+                    <TableCell>
+                      <Box sx={readonlyCellSx}>{vanillaTotal.toLocaleString()}</Box>
+                    </TableCell>
+
+                    <TableCell>
+                      <Box sx={readonlyCellSx}>{strawberryTotal.toLocaleString()}</Box>
+                    </TableCell>
+
+                    <TableCell>
+                      <Box
+                        sx={{
+                          ...readonlyCellSx,
+                          fontWeight: 900,
+                          bgcolor: '#f1f5f9',
+                        }}
+                      >
+                        {dailyTotal.toLocaleString()}
+                      </Box>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+
+              <TableRow
+                sx={{
+                  '& td': {
+                    bgcolor: '#f8fafc',
+                    borderTop: '1px solid #d7dee7',
+                    borderBottom: 'none',
+                    py: 0.8,
+                    fontWeight: 900,
+                  },
+                }}
+              >
+                <TableCell>TOTAL</TableCell>
+                <TableCell>{pouchTotals.vanilla200g.toLocaleString()}</TableCell>
+                <TableCell>{pouchTotals.vanilla400g.toLocaleString()}</TableCell>
+                <TableCell>{pouchTotals.strawberry200g.toLocaleString()}</TableCell>
+                <TableCell>{pouchTotals.strawberry400g.toLocaleString()}</TableCell>
+                <TableCell>{pouchTotals.vanillaTotal.toLocaleString()}</TableCell>
+                <TableCell>{pouchTotals.strawberryTotal.toLocaleString()}</TableCell>
+                <TableCell>{pouchTotals.grandTotal.toLocaleString()}</TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Box>
+
+      <Box
+        sx={{
+          border: '1px solid #d7dee7',
+          borderRadius: 1,
+          bgcolor: '#ffffff',
+          overflow: 'hidden',
+        }}
+      >
+        <Box
+          sx={{
+            px: 1.2,
+            py: 0.9,
+            borderBottom: '1px solid #d7dee7',
+            bgcolor: '#f8fafc',
+          }}
+        >
+          <Typography
+            sx={{
+              fontSize: '0.8rem',
+              fontWeight: 900,
+              letterSpacing: '0.03em',
+              color: '#0f172a',
+            }}
+          >
+            Yoghurt Yield
+          </Typography>
+        </Box>
+
+        <Box
+          sx={{
+            px: 1,
+            py: 0.9,
+            borderBottom: '1px solid #e8edf3',
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr 1fr', xl: 'repeat(4, 1fr)' },
+            gap: 0.8,
+          }}
+        >
+          {compactCard('Base Total', yieldSummary.baseTotal.toLocaleString(), 'Milk STD + sugar + stabiliser + source')}
+          {compactCard('Vanilla Yield', `${yieldSummary.vanillaYieldPercent.toFixed(2)}%`, `${yieldSummary.vanillaProduced.toLocaleString()} / ${yieldSummary.baseTotal.toLocaleString()}`)}
+          {compactCard('Strawberry Yield', `${yieldSummary.strawberryYieldPercent.toFixed(2)}%`, `${yieldSummary.strawberryProduced.toLocaleString()} / ${yieldSummary.baseTotal.toLocaleString()}`)}
+          {compactCard('Total Produced', pouchTotals.grandTotal.toLocaleString(), 'Vanilla + Strawberry')}
+        </Box>
+
+        <TableContainer>
+          <Table size="small">
+            <TableHead>
+              <TableRow>
+                {[
+                  'Metric',
+                  'Vanilla',
+                  'Strawberry',
+                ].map((h) => (
+                  <TableCell
+                    key={h}
+                    sx={{
+                      fontWeight: 900,
+                      fontSize: '0.72rem',
+                      color: '#334155',
+                      bgcolor: '#eef2f7',
+                      borderBottom: '1px solid #d7dee7',
+                      py: 0.8,
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {h}
+                  </TableCell>
+                ))}
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              <TableRow>
+                <TableCell sx={{ fontWeight: 800 }}>Produced</TableCell>
+                <TableCell>{yieldSummary.vanillaProduced.toLocaleString()}</TableCell>
+                <TableCell>{yieldSummary.strawberryProduced.toLocaleString()}</TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell sx={{ fontWeight: 800 }}>Base</TableCell>
+                <TableCell>{yieldSummary.baseTotal.toLocaleString()}</TableCell>
+                <TableCell>{yieldSummary.baseTotal.toLocaleString()}</TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell sx={{ fontWeight: 800 }}>Yield Ratio</TableCell>
+                <TableCell>{yieldSummary.vanillaYield.toFixed(4)}</TableCell>
+                <TableCell>{yieldSummary.strawberryYield.toFixed(4)}</TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell sx={{ fontWeight: 800 }}>Yield %</TableCell>
+                <TableCell>{yieldSummary.vanillaYieldPercent.toFixed(2)}%</TableCell>
+                <TableCell>{yieldSummary.strawberryYieldPercent.toFixed(2)}%</TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
+        </TableContainer>
+
+        <Box sx={{ p: 1 }}>
+          <Box sx={{ height: 280 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={monthlyYieldComparison}>
+                <CartesianGrid {...chartGridProps} />
+                <XAxis dataKey="month" {...chartAxisProps} />
+                <YAxis {...chartAxisProps} />
+                <Tooltip content={<ChartTooltipCard />} />
+                <Legend wrapperStyle={{ fontSize: 12 }} />
+                <Bar dataKey="vanillaYield" name="Vanilla Yield %" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="strawberryYield" name="Strawberry Yield %" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </Box>
+        </Box>
+      </Box>
+         </Stack>
+    </Box>
+  </Box>
+);
 }
 export function Dashboard({ user, onLogout }: { user: AppUser; onLogout: () => void }) {
+  const YOGHURT_STORAGE_KEY = 'jesa-yoghurt-processing-records';
+
   const [entries, setEntries] = useState<OperatorDailyEntry[]>(demoOperatorEntries);
   const [freshMilkRecords, setFreshMilkRecords] = useState<FreshMilkDailyRecord[]>(demoFreshMilkRecords);
+  const [yoghurtRecords, setYoghurtRecords] = useState<YoghurtProcessingDailyRecord[]>(() => {
+    if (typeof window === 'undefined') return [];
+    try {
+      const raw = localStorage.getItem(YOGHURT_STORAGE_KEY);
+      return raw ? (JSON.parse(raw) as YoghurtProcessingDailyRecord[]) : [];
+    } catch (error) {
+      console.error('Failed to load yoghurt processing records', error);
+      return [];
+    }
+  });
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      localStorage.setItem(YOGHURT_STORAGE_KEY, JSON.stringify(yoghurtRecords));
+    } catch (error) {
+      console.error('Failed to save yoghurt processing records', error);
+    }
+  }, [yoghurtRecords]);
+
   const months = useMemo(() => {
-  const start = dayjs('2026-01-01');
-  return Array.from({ length: 12 }, (_, i) => start.add(i, 'month').format('YYYY-MM'));
-}, []);
+    const start = dayjs('2026-01-01');
+    return Array.from({ length: 12 }, (_, i) => start.add(i, 'month').format('YYYY-MM'));
+  }, []);
+
+  const isYoghurtOperator =
+    user.role === 'operator' &&
+    YOGHURT_OPERATORS.includes(user.name as (typeof YOGHURT_OPERATORS)[number]);
+
   const [selectedMonth, setSelectedMonth] = useState(months[0] ?? '2026-03');
   const [operatorFilters, setOperatorFilters] = useState<string[]>([]);
   const [shiftFilters, setShiftFilters] = useState<string[]>([]);
   const [activeSection, setActiveSection] = useState<SectionKey>(
-    user.role === 'admin' ? 'dashboard' : user.workspace === 'fresh-milk' ? 'fresh-milk' : 'operator-entry',
+    user.role === 'admin'
+      ? 'dashboard'
+      : user.workspace === 'fresh-milk'
+        ? 'fresh-milk'
+        : isYoghurtOperator
+          ? 'yoghurt-processing'
+          : 'operator-entry',
   );
 
   const availableSections = user.role === 'admin'
     ? adminSections
     : user.workspace === 'fresh-milk'
       ? freshMilkOperatorSections
-      : pasteurizationOperatorSections;
+      : isYoghurtOperator
+        ? yoghurtOperatorSections
+        : pasteurizationOperatorSections;
+
   const visibleEntries = useMemo(() => {
     return entries.filter((entry) => {
       const matchesMonth = entry.date.startsWith(selectedMonth);
-      const matchesOperator = user.role === 'operator'
-        ? entry.operatorName === user.name
-        : operatorFilters.length === 0 || operatorFilters.includes(entry.operatorName);
-      const matchesShift = shiftFilters.length === 0 || shiftFilters.includes(entry.offloadingShift) || shiftFilters.includes(entry.pasteurizationShift);
+      const matchesOperator =
+        user.role === 'operator'
+          ? entry.operatorName === user.name
+          : operatorFilters.length === 0 || operatorFilters.includes(entry.operatorName);
+      const matchesShift =
+        shiftFilters.length === 0 ||
+        shiftFilters.includes(entry.offloadingShift) ||
+        shiftFilters.includes(entry.pasteurizationShift);
+
       return matchesMonth && matchesOperator && matchesShift;
     });
   }, [entries, operatorFilters, selectedMonth, shiftFilters, user.name, user.role]);
@@ -1826,253 +2866,699 @@ export function Dashboard({ user, onLogout }: { user: AppUser; onLogout: () => v
   const insights = useMemo(() => buildInsights(productionRecords, cipRecords), [productionRecords, cipRecords]);
   const performance = useMemo(() => buildOperatorPerformance(entries, selectedMonth), [entries, selectedMonth]);
   const [selectedPerformanceOperator, setSelectedPerformanceOperator] = useState<string>('');
-  const operatorRows = useMemo(() => getMonthlyDays(selectedMonth, user.name, entries), [entries, selectedMonth, user.name]);
+
+  useEffect(() => {
+    if (!selectedPerformanceOperator && performance.operators.length > 0) {
+      setSelectedPerformanceOperator(performance.operators[0].operator);
+    }
+  }, [performance, selectedPerformanceOperator]);
+
+  const operatorRows = useMemo(
+    () => getMonthlyDays(selectedMonth, user.name, entries),
+    [entries, selectedMonth, user.name],
+  );
+
+  const yoghurtOperatorRows = useMemo(
+    () => getMonthlyYoghurtDays(selectedMonth, user.name, yoghurtRecords),
+    [selectedMonth, user.name, yoghurtRecords],
+  );
+
+  const yoghurtTotalsByOperator = useMemo(
+    () => buildYoghurtTotalsByOperator(yoghurtRecords, selectedMonth),
+    [yoghurtRecords, selectedMonth],
+  );
+
+  const totalYoghurtInputs = useMemo(() => {
+    const monthRecords = yoghurtRecords.filter((record) => record.date.startsWith(selectedMonth));
+    return buildYoghurtMonthlyTotals(monthRecords);
+  }, [yoghurtRecords, selectedMonth]);
+
   const commitOperatorRows = useCallback((updatedRows: OperatorDailyEntry[]) => {
-    const updates = new Map(updatedRows.map((row) => [row.id, row]));
-    setEntries((current) => current.map((entry) => updates.get(entry.id) ?? entry));
+    setEntries((current) => {
+      const next = [...current];
+
+      updatedRows.forEach((updatedRow) => {
+        const index = next.findIndex((entry) => entry.id === updatedRow.id);
+        if (index >= 0) {
+          next[index] = updatedRow;
+        } else {
+          next.push(updatedRow);
+        }
+      });
+
+      return next;
+    });
   }, []);
+
+  const commitYoghurtRecord = useCallback((updatedRecord: YoghurtProcessingDailyRecord) => {
+    setYoghurtRecords((current) => {
+      const index = current.findIndex((record) => record.id === updatedRecord.id);
+      if (index >= 0) {
+        const next = [...current];
+        next[index] = updatedRecord;
+        return next;
+      }
+      return [...current, updatedRecord];
+    });
+  }, []);
+
   const addFreshMilkRecord = useCallback((record: FreshMilkDailyRecord) => {
     setFreshMilkRecords((current) => [record, ...current]);
   }, []);
-  useEffect(() => {
-    if (!performance.operators.length) {
-      setSelectedPerformanceOperator('');
-      return;
-    }
 
-    if (!selectedPerformanceOperator || !performance.operators.some((entry) => entry.operator === selectedPerformanceOperator)) {
-      setSelectedPerformanceOperator(performance.operators[0].operator);
-    }
-  }, [performance.operators, selectedPerformanceOperator]);
-const handleExportMonthlyReport = async () => {
-  try {
-    const { exportMonthlyReport } = await import('../lib/report-export');
+      const handleExportMonthlyReport = useCallback(async () => {
+    try {
+      const { exportMonthlyReport } = await import('@/app/lib/report-export');
 
- await exportMonthlyReport({
-  month: selectedMonth,
-  totalOffloaded: summary.totalOffloaded ?? 0,
-  totalPasteurized: summary.totalPasteurized ?? 0,
-  lossRate: summary.lossPercentage ?? 0,
-  topOperator: ranking?.[0]?.operator ?? 'N/A',
-  chartElementId: 'milk-movement-chart',
-  chartData: chartData.map((row: any) => ({
-    date: row.date ?? row.label ?? '',
-    offloaded: Number(row.offloaded ?? 0),
-    pasteurized: Number(row.pasteurized ?? 0),
-  })),
-});
-  } catch (error) {
-    console.error(error);
-    alert('Export failed');
-  }
-};
-  return (
-    <Box sx={{ minHeight: '100vh', background: '#f8f5f0' }}>
-      <Box sx={{ maxWidth: 1660, mx: 'auto', px: { xs: 1, md: 1.5, xl: 1.8 }, pb: { xs: 1.6, md: 2.2 } }}>
+      await exportMonthlyReport({
+        month: selectedMonth,
+        totalOffloaded: Number(summary?.totalOffloaded ?? 0),
+        totalPasteurized: Number(summary?.totalPasteurized ?? 0),
+        lossRate: Number(summary?.lossPercentage ?? 0),
+        topOperator: ranking?.[0]?.operator ?? 'N/A',
+        chartElementId: 'milk-movement-chart',
+        chartData: (chartData ?? []).map((row: any) => ({
+          date: row.date ?? row.label ?? '',
+          offloaded: Number(row.offloaded ?? 0),
+          pasteurized: Number(row.pasteurized ?? row.used ?? 0),
+        })),
+      });
+    } catch (error) {
+      console.error('Export failed:', error);
+      alert('PowerPoint export failed. Check report-export.ts.');
+    }
+  }, [selectedMonth, summary, ranking, chartData]);
+  const YoghurtInputCell = ({
+    defaultValue,
+    onCommit,
+  }: {
+    defaultValue: number;
+    onCommit: (value: number) => void;
+  }) => {
+    return (
+      <Box
+        sx={{
+          border: '1px solid rgba(148,163,184,0.35)',
+          borderRadius: 1.5,
+          px: 1.2,
+          py: 0.35,
+          minHeight: 42,
+          minWidth: 90,
+          display: 'flex',
+          alignItems: 'center',
+          bgcolor: '#fff',
+        }}
+      >
+        <InputBase
+          type="number"
+          defaultValue={defaultValue}
+          onBlur={(event) => {
+            const value = event.target.value === '' ? 0 : Number(event.target.value);
+            onCommit(Number.isFinite(value) ? value : 0);
+          }}
+          sx={{ width: '100%', fontSize: '0.95rem' }}
+        />
+      </Box>
+    );
+  };
+
+  const YoghurtOperatorPage = () => {
+    return (
+      <SectionCard
+        title="Yoghurt processing daily inputs"
+        description={`Daily input capture for ${user.name}. Monthly totals will flow to executive control automatically.`}
+      >
+        <TableContainer component={Paper} sx={{ borderRadius: 2, border: '1px solid rgba(148,163,184,0.16)' }}>
+          <Table size="small">
+            <TableHead>
+              <TableRow>
+                {[
+                  'Date',
+                  'Yoghurt Milk STD (L)',
+                  'Sugar (kg)',
+                  'Stabiliser (kg)',
+                  'Source (g)',
+                  'Fresh Q Culture',
+                  'Colour (ml)',
+                  'Flavour (L)',
+                  'Delvo Fresh Culture',
+                ].map((header) => (
+                  <TableCell key={header} sx={{ fontWeight: 800, py: 1.1, whiteSpace: 'nowrap' }}>
+                    {header}
+                  </TableCell>
+                ))}
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {yoghurtOperatorRows.map((row) => (
+                <TableRow key={row.id} hover>
+                  <TableCell sx={{ fontWeight: 700, whiteSpace: 'nowrap' }}>
+                    {dayjs(row.date).format('DD MMM')}
+                  </TableCell>
+
+                  <TableCell>
+                    <YoghurtInputCell
+                      defaultValue={row.yoghurtMilkStdLitres}
+                      onCommit={(value) => commitYoghurtRecord({ ...row, yoghurtMilkStdLitres: value })}
+                    />
+                  </TableCell>
+
+                  <TableCell>
+                    <YoghurtInputCell
+                      defaultValue={row.sugarKg}
+                      onCommit={(value) => commitYoghurtRecord({ ...row, sugarKg: value })}
+                    />
+                  </TableCell>
+
+                  <TableCell>
+                    <YoghurtInputCell
+                      defaultValue={row.stabiliserKg}
+                      onCommit={(value) => commitYoghurtRecord({ ...row, stabiliserKg: value })}
+                    />
+                  </TableCell>
+
+                  <TableCell>
+                    <YoghurtInputCell
+                      defaultValue={row.sourceGrams}
+                      onCommit={(value) => commitYoghurtRecord({ ...row, sourceGrams: value })}
+                    />
+                  </TableCell>
+
+                  <TableCell>
+                    <YoghurtInputCell
+                      defaultValue={row.freshQCulture}
+                      onCommit={(value) => commitYoghurtRecord({ ...row, freshQCulture: value })}
+                    />
+                  </TableCell>
+
+                  <TableCell>
+                    <YoghurtInputCell
+                      defaultValue={row.colourMl}
+                      onCommit={(value) => commitYoghurtRecord({ ...row, colourMl: value })}
+                    />
+                  </TableCell>
+
+                  <TableCell>
+                    <YoghurtInputCell
+                      defaultValue={row.flavourLitres}
+                      onCommit={(value) => commitYoghurtRecord({ ...row, flavourLitres: value })}
+                    />
+                  </TableCell>
+
+                  <TableCell>
+                    <YoghurtInputCell
+                      defaultValue={row.delvoFreshCulture}
+                      onCommit={(value) => commitYoghurtRecord({ ...row, delvoFreshCulture: value })}
+                    />
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+
         <Box
           sx={{
-            position: 'sticky',
-            top: 0,
-            zIndex: 10,
-            pt: { xs: 0.2, md: 0.28 },
-            pb: 0.24,
-            borderBottom: '1px solid rgba(234,88,12,0.08)',
-            bgcolor: '#f8f5f0',
+            mt: 1.2,
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)', xl: 'repeat(4, 1fr)' },
+            gap: 1,
           }}
         >
-          <Box
+          <CompactMetricCard
+            title="Milk STD"
+            value={`${buildYoghurtMonthlyTotals(yoghurtOperatorRows).yoghurtMilkStdLitres.toLocaleString()} L`}
+            helper="This month"
+            icon={<OpacityRounded />}
+            tone="neutral"
+            trend="Captured"
+          />
+          <CompactMetricCard
+            title="Sugar"
+            value={`${buildYoghurtMonthlyTotals(yoghurtOperatorRows).sugarKg.toLocaleString()} kg`}
+            helper="This month"
+            icon={<ScienceRounded />}
+            tone="neutral"
+            trend="Captured"
+          />
+          <CompactMetricCard
+            title="Flavour"
+            value={`${buildYoghurtMonthlyTotals(yoghurtOperatorRows).flavourLitres.toLocaleString()} L`}
+            helper="This month"
+            icon={<LocalDrinkRounded />}
+            tone="neutral"
+            trend="Captured"
+          />
+          <CompactMetricCard
+            title="Colour"
+            value={`${buildYoghurtMonthlyTotals(yoghurtOperatorRows).colourMl.toLocaleString()} ml`}
+            helper="This month"
+            icon={<InsightsRounded />}
+            tone="neutral"
+            trend="Captured"
+          />
+        </Box>
+      </SectionCard>
+    );
+  };
+
+  return (
+    <Box
+      sx={{
+        minHeight: '100vh',
+        background: 'linear-gradient(180deg, #fff7ed 0%, #fffaf5 45%, #f8fbff 100%)',
+        px: { xs: 1, md: 1.4 },
+        py: 1.1,
+      }}
+    >
+      <Box
+        sx={{
+          maxWidth: 1600,
+          mx: 'auto',
+        }}
+      >
+                <Box
+  sx={{
+    borderRadius: 2,
+    border: '1px solid #eadfcb',
+    bgcolor: '#fffaf2',
+    px: 1.2,
+    py: 1.1,
+    boxShadow: '0 8px 24px rgba(148, 110, 58, 0.08)',
+  }}
+>
+  <Stack spacing={1.1}>
+    <Box
+      sx={{
+        display: 'grid',
+        gridTemplateColumns: { xs: '1fr', xl: 'auto 1fr auto' },
+        gap: 1,
+        alignItems: 'center',
+      }}
+    >
+      <Stack direction="row" spacing={0.8} alignItems="center" flexWrap="wrap" useFlexGap>
+        <Box
+          sx={{
+            px: 1.1,
+            py: 0.5,
+            borderRadius: 999,
+            bgcolor: '#fff1cc',
+            border: '1px solid #f1d38a',
+          }}
+        >
+          <Typography
             sx={{
-              display: 'grid',
-              gridTemplateColumns: { xs: '1fr', xl: 'minmax(0, max-content) 1fr auto' },
-              alignItems: 'center',
-              columnGap: { xl: 0.9 },
-              rowGap: { xs: 0.55, xl: 0 },
-              maxWidth: 1380,
-              mx: 'auto',
-              minHeight: 40,
-              py: 0.18,
+              fontSize: '0.72rem',
+              fontWeight: 900,
+              color: '#7c5a10',
+              lineHeight: 1,
+              letterSpacing: '0.02em',
             }}
           >
-            <Stack
-              direction="row"
-              alignItems="center"
-              spacing={0.5}
-              sx={{
-                width: '100%',
-                maxWidth: { xs: '100%', xl: 540 },
-                flexWrap: 'wrap',
-                minWidth: 0,
-                justifySelf: { xl: 'start' },
-              }}
-            >
-              <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 154 } }}>
-                <InputLabel>Month</InputLabel>
-                <Select
-                  value={selectedMonth}
-                  label="Month"
-                  onChange={(event) => setSelectedMonth(event.target.value)}
-                  sx={{ bgcolor: '#fffdf9', borderRadius: 1.2 }}
-                >
-                  {months.map((month) => (
-                    <MenuItem key={month} value={month}>{dayjs(`${month}-01`).format('MMMM YYYY')}</MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-              {user.role === 'admin' && activeSection !== 'fresh-milk' ? (
-                <>
-                  <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 188 } }}>
-                    <InputLabel>Operators</InputLabel>
-                    <Select
-                      multiple
-                      value={operatorFilters}
-                      label="Operators"
-                      onChange={(event) => setOperatorFilters(typeof event.target.value === 'string' ? event.target.value.split(',') : event.target.value)}
-                      renderValue={(selected) => (selected as string[]).length === 0 ? 'All operators' : (selected as string[]).join(', ')}
-                      sx={{ bgcolor: '#fffdf9', borderRadius: 1.2 }}
-                    >
-                      {operators.map((operator) => (
-                        <MenuItem key={operator} value={operator}>
-                          <Checkbox checked={operatorFilters.includes(operator)} />
-                          <ListItemText primary={operator} />
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                  <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 164 } }}>
-                    <InputLabel>Shifts</InputLabel>
-                    <Select
-                      multiple
-                      value={shiftFilters}
-                      label="Shifts"
-                      onChange={(event) => setShiftFilters(typeof event.target.value === 'string' ? event.target.value.split(',') : event.target.value)}
-                      renderValue={(selected) => (selected as string[]).length === 0 ? 'All shifts' : (selected as string[]).join(', ')}
-                      sx={{ bgcolor: '#fffdf9', borderRadius: 1.2 }}
-                    >
-                      {shifts.map((shift) => (
-                        <MenuItem key={shift} value={shift}>
-                          <Checkbox checked={shiftFilters.includes(shift)} />
-                          <ListItemText primary={shift} />
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </>
-              ) : null}
-            </Stack>
-
-            <Stack
-              direction="row"
-              alignItems="center"
-              spacing={0.45}
-              justifyContent="center"
-              sx={{
-                flexWrap: 'wrap',
-                minWidth: 0,
-                width: '100%',
-                justifySelf: { xl: 'center' },
-              }}
-            >
-              {availableSections.map((section) => {
-                const active = section.key === activeSection;
-                return (
-                  <Button
-                    key={section.key}
-                    onClick={() => setActiveSection(section.key)}
-                    startIcon={section.icon}
-                    size="small"
-                    sx={{
-                      minHeight: 26,
-                      px: 0.92,
-                      borderRadius: 999,
-                      color: active ? '#9a3412' : '#78716c',
-                      bgcolor: active ? '#fff1e6' : '#ffffff',
-                      border: `1px solid ${active ? 'rgba(234,88,12,0.22)' : 'rgba(231,229,228,1)'}`,
-                      boxShadow: active ? '0 1px 0 rgba(234,88,12,0.08)' : 'none',
-                      '&:hover': {
-                        bgcolor: active ? '#ffe7d6' : '#fffaf5',
-                        color: active ? '#9a3412' : '#57534e',
-                      },
-                      '& .MuiButton-startIcon': {
-                        mr: 0.5,
-                        color: active ? '#ea580c' : '#a8a29e',
-                      },
-                    }}
-                  >
-                    <Typography variant="caption" fontWeight={800} sx={{ letterSpacing: '0.01em', fontSize: '0.68rem' }}>
-                      {section.label}
-                    </Typography>
-                  </Button>
-                );
-              })}
-            </Stack>
-
-            <Box
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: { xs: 'flex-start', xl: 'flex-end' },
-                minWidth: 0,
-                justifySelf: { xl: 'end' },
-              }}
-            >
-              <Stack direction="row" spacing={0.6} alignItems="center">
-                {user.role === 'admin' ? (
-                  <Button
-                    onClick={handleExportMonthlyReport}
-                    variant="contained"
-                    size="small"
-                    sx={{
-                      minWidth: 0,
-                      px: 1.05,
-                      py: 0.36,
-                      borderRadius: 999,
-                      color: '#ffffff',
-                      border: '1px solid rgba(0,45,114,0.22)',
-                      bgcolor: '#002d72',
-                      fontWeight: 800,
-                      '&:hover': {
-                        bgcolor: '#123b8f',
-                      },
-                    }}
-                  >
-                    Export Monthly Report
-                  </Button>
-                ) : null}
-                <Button
-                  onClick={onLogout}
-                  size="small"
-                  sx={{
-                    minWidth: 0,
-                    px: 0.88,
-                    py: 0.28,
-                    borderRadius: 999,
-                    color: '#44403c',
-                    border: '1px solid rgba(231,229,228,1)',
-                    bgcolor: '#ffffff',
-                    fontWeight: 800,
-                    '&:hover': {
-                      bgcolor: '#fffaf5',
-                    },
-                  }}
-                >
-                  Sign out
-                </Button>
-              </Stack>
-    
-            </Box>
-          </Box>
+            {user.role === 'admin' ? 'Executive control' : user.name}
+          </Typography>
         </Box>
 
+        <Typography
+          sx={{
+            fontSize: '0.9rem',
+            fontWeight: 900,
+            color: '#3f3426',
+            letterSpacing: '0.01em',
+          }}
+        >
+          Jesa production tracker
+        </Typography>
+      </Stack>
+
+      <Box
+        sx={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: 0.55,
+          alignItems: 'center',
+          justifyContent: { xs: 'flex-start', xl: 'center' },
+          minWidth: 0,
+        }}
+      >
+        {availableSections.map((section) => {
+          const active = section.key === activeSection;
+
+          const sectionStyles: Record<
+            SectionKey,
+            {
+              activeBg: string;
+              activeBorder: string;
+              activeColor: string;
+              idleBg: string;
+              idleBorder: string;
+            }
+          > = {
+            dashboard: {
+              activeBg: '#dbeafe',
+              activeBorder: '#93c5fd',
+              activeColor: '#1d4ed8',
+              idleBg: '#f8fafc',
+              idleBorder: '#d7dee7',
+            },
+            intake: {
+              activeBg: '#dcfce7',
+              activeBorder: '#86efac',
+              activeColor: '#15803d',
+              idleBg: '#f8fafc',
+              idleBorder: '#d7dee7',
+            },
+            cip: {
+              activeBg: '#fef3c7',
+              activeBorder: '#fcd34d',
+              activeColor: '#b45309',
+              idleBg: '#f8fafc',
+              idleBorder: '#d7dee7',
+            },
+            operators: {
+              activeBg: '#ede9fe',
+              activeBorder: '#c4b5fd',
+              activeColor: '#6d28d9',
+              idleBg: '#f8fafc',
+              idleBorder: '#d7dee7',
+            },
+            'operator-entry': {
+              activeBg: '#fee2e2',
+              activeBorder: '#fca5a5',
+              activeColor: '#b91c1c',
+              idleBg: '#f8fafc',
+              idleBorder: '#d7dee7',
+            },
+            'fresh-milk': {
+              activeBg: '#cffafe',
+              activeBorder: '#67e8f9',
+              activeColor: '#0f766e',
+              idleBg: '#f8fafc',
+              idleBorder: '#d7dee7',
+            },
+            'yoghurt-processing': {
+              activeBg: '#ffedd5',
+              activeBorder: '#fdba74',
+              activeColor: '#c2410c',
+              idleBg: '#f8fafc',
+              idleBorder: '#d7dee7',
+            },
+          };
+
+          const palette = sectionStyles[section.key];
+
+          return (
+            <Button
+              key={section.key}
+              onClick={() => setActiveSection(section.key)}
+              startIcon={section.icon}
+              size="small"
+              sx={{
+                minHeight: 32,
+                px: 1.05,
+                borderRadius: 999,
+                textTransform: 'none',
+                color: active ? palette.activeColor : '#475569',
+                bgcolor: active ? palette.activeBg : palette.idleBg,
+                border: `1px solid ${active ? palette.activeBorder : palette.idleBorder}`,
+                boxShadow: active ? '0 3px 10px rgba(15, 23, 42, 0.06)' : 'none',
+                '&:hover': {
+                  bgcolor: active ? palette.activeBg : '#f1f5f9',
+                  boxShadow: 'none',
+                },
+                '& .MuiButton-startIcon': {
+                  mr: 0.45,
+                  color: active ? palette.activeColor : '#64748b',
+                },
+              }}
+            >
+              <Typography
+                sx={{
+                  fontSize: '0.72rem',
+                  fontWeight: 800,
+                  letterSpacing: '0.01em',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {section.label}
+              </Typography>
+            </Button>
+          );
+        })}
+      </Box>
+
+      <Stack
+        direction="row"
+        spacing={0.65}
+        alignItems="center"
+        justifyContent={{ xs: 'flex-start', xl: 'flex-end' }}
+        flexWrap="wrap"
+        useFlexGap
+      >
+        <FormControl size="small" sx={{ minWidth: 170 }}>
+          <InputLabel>Month</InputLabel>
+          <Select
+            value={selectedMonth}
+            label="Month"
+            onChange={(event) => setSelectedMonth(event.target.value)}
+            sx={{
+              bgcolor: '#ffffff',
+              borderRadius: 1.2,
+              '& .MuiOutlinedInput-notchedOutline': {
+                borderColor: '#d9cdb8',
+              },
+              '&:hover .MuiOutlinedInput-notchedOutline': {
+                borderColor: '#c9b89b',
+              },
+              '& .MuiSelect-select': {
+                py: 0.82,
+                fontSize: '0.82rem',
+                fontWeight: 800,
+                color: '#3f3426',
+              },
+            }}
+          >
+            {months.map((month) => (
+              <MenuItem key={month} value={month}>
+                {dayjs(`${month}-01`).format('MMMM YYYY')}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+
+        {user.role === 'admin' ? (
+          <Button
+            onClick={handleExportMonthlyReport}
+            size="small"
+            sx={{
+              minHeight: 36,
+              px: 1.2,
+              borderRadius: 999,
+              color: '#ffffff',
+              bgcolor: '#2563eb',
+              fontWeight: 900,
+              textTransform: 'none',
+              boxShadow: '0 6px 14px rgba(37, 99, 235, 0.22)',
+              '&:hover': {
+                bgcolor: '#1d4ed8',
+              },
+            }}
+          >
+            Export report
+          </Button>
+        ) : null}
+
+        <Button
+          onClick={onLogout}
+          size="small"
+          sx={{
+            minHeight: 36,
+            px: 1.1,
+            borderRadius: 999,
+            color: '#3f3426',
+            border: '1px solid #d9cdb8',
+            bgcolor: '#fffdf8',
+            fontWeight: 900,
+            textTransform: 'none',
+            '&:hover': {
+              bgcolor: '#f8f1e4',
+            },
+          }}
+        >
+          Sign out
+        </Button>
+      </Stack>
+    </Box>
+  </Stack>
+</Box>
         <Box sx={{ pt: 0.8 }}>
-          {user.role === 'admin' && activeSection === 'dashboard' ? <DashboardOverview summary={summary} selectedMonth={selectedMonth} /> : null}
-          {user.role === 'admin' && activeSection === 'intake' ? <AdminIntakePage summary={summary} chartData={chartData} chemicalByOperator={chemicalByOperator} ranking={ranking} insights={insights} productionRecords={productionRecords} /> : null}
+          {user.role === 'admin' && activeSection === 'dashboard' ? (
+            <Stack spacing={1.1}>
+              <DashboardOverview
+  summary={summary}
+  selectedMonth={selectedMonth}
+  yoghurtRecords={yoghurtRecords}
+/>
+                            <SectionCard
+                title="Yoghurt processing monthly totals"
+                description="Monthly yoghurt input totals for Semakula Francis and Opidi Lawrence, visible on executive control."
+              >
+                <Box
+                  sx={{
+                    display: 'grid',
+                    gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)', xl: 'repeat(5, 1fr)' },
+                    gap: 1,
+                    mb: 1.1,
+                  }}
+                >
+                  <CompactMetricCard
+                    title="Milk STD"
+                    value={`${totalYoghurtInputs.yoghurtMilkStdLitres.toLocaleString()} L`}
+                    helper="All yoghurt operators"
+                    icon={<OpacityRounded />}
+                    tone="neutral"
+                    trend="Monthly total"
+                  />
+                  <CompactMetricCard
+                    title="Sugar"
+                    value={`${totalYoghurtInputs.sugarKg.toLocaleString()} kg`}
+                    helper="All yoghurt operators"
+                    icon={<ScienceRounded />}
+                    tone="neutral"
+                    trend="Monthly total"
+                  />
+                  <CompactMetricCard
+                    title="Stabiliser"
+                    value={`${totalYoghurtInputs.stabiliserKg.toLocaleString()} kg`}
+                    helper="All yoghurt operators"
+                    icon={<ScienceRounded />}
+                    tone="neutral"
+                    trend="Monthly total"
+                  />
+                  <CompactMetricCard
+                    title="Source"
+                    value={`${totalYoghurtInputs.sourceGrams.toLocaleString()} g`}
+                    helper="All yoghurt operators"
+                    icon={<InsightsRounded />}
+                    tone="neutral"
+                    trend="Monthly total"
+                  />
+                  <CompactMetricCard
+                    title="Base Total"
+                    value={`${(
+                      totalYoghurtInputs.yoghurtMilkStdLitres +
+                      totalYoghurtInputs.sugarKg +
+                      totalYoghurtInputs.stabiliserKg +
+                      totalYoghurtInputs.sourceGrams
+                    ).toLocaleString()}`}
+                    helper="Milk STD + sugar + stabiliser + source"
+                    icon={<LocalDrinkRounded />}
+                    tone="good"
+                    trend="Base"
+                  />
+                </Box>
+
+                <TableContainer component={Paper} sx={{ borderRadius: 2, border: '1px solid rgba(148,163,184,0.16)' }}>
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow>
+                        {[
+                          'Operator',
+                          'Yoghurt Milk STD (L)',
+                          'Sugar (kg)',
+                          'Stabiliser (kg)',
+                          'Source (g)',
+                          'Fresh Q Culture',
+                          'Colour (ml)',
+                          'Flavour (L)',
+                          'Delvo Fresh Culture',
+                          'Base Total',
+                        ].map((header) => (
+                          <TableCell key={header} sx={{ fontWeight: 800, py: 1.1, whiteSpace: 'nowrap' }}>
+                            {header}
+                          </TableCell>
+                        ))}
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {yoghurtTotalsByOperator.map((row) => {
+                        const baseTotal =
+                          row.yoghurtMilkStdLitres +
+                          row.sugarKg +
+                          row.stabiliserKg +
+                          row.sourceGrams;
+
+                        return (
+                          <TableRow key={row.operatorName} hover>
+                            <TableCell sx={{ fontWeight: 800 }}>{row.operatorName}</TableCell>
+                            <TableCell>{row.yoghurtMilkStdLitres.toLocaleString()}</TableCell>
+                            <TableCell>{row.sugarKg.toLocaleString()}</TableCell>
+                            <TableCell>{row.stabiliserKg.toLocaleString()}</TableCell>
+                            <TableCell>{row.sourceGrams.toLocaleString()}</TableCell>
+                            <TableCell>{row.freshQCulture.toLocaleString()}</TableCell>
+                            <TableCell>{row.colourMl.toLocaleString()}</TableCell>
+                            <TableCell>{row.flavourLitres.toLocaleString()}</TableCell>
+                            <TableCell>{row.delvoFreshCulture.toLocaleString()}</TableCell>
+                            <TableCell sx={{ fontWeight: 800 }}>{baseTotal.toLocaleString()}</TableCell>
+                          </TableRow>
+                        );
+                      })}
+
+                      <TableRow
+                        sx={{
+                          '& td': {
+                            fontWeight: 900,
+                            bgcolor: 'rgba(241,245,249,0.95)',
+                          },
+                        }}
+                      >
+                        <TableCell>TOTAL</TableCell>
+                        <TableCell>{totalYoghurtInputs.yoghurtMilkStdLitres.toLocaleString()}</TableCell>
+                        <TableCell>{totalYoghurtInputs.sugarKg.toLocaleString()}</TableCell>
+                        <TableCell>{totalYoghurtInputs.stabiliserKg.toLocaleString()}</TableCell>
+                        <TableCell>{totalYoghurtInputs.sourceGrams.toLocaleString()}</TableCell>
+                        <TableCell>{totalYoghurtInputs.freshQCulture.toLocaleString()}</TableCell>
+                        <TableCell>{totalYoghurtInputs.colourMl.toLocaleString()}</TableCell>
+                        <TableCell>{totalYoghurtInputs.flavourLitres.toLocaleString()}</TableCell>
+                        <TableCell>{totalYoghurtInputs.delvoFreshCulture.toLocaleString()}</TableCell>
+                        <TableCell>
+                          {(
+                            totalYoghurtInputs.yoghurtMilkStdLitres +
+                            totalYoghurtInputs.sugarKg +
+                            totalYoghurtInputs.stabiliserKg +
+                            totalYoghurtInputs.sourceGrams
+                          ).toLocaleString()}
+                        </TableCell>
+                      </TableRow>
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </SectionCard>
+            </Stack>
+          ) : null}
+
+          {user.role === 'admin' && activeSection === 'intake' ? (
+            <AdminIntakePage
+              summary={summary}
+              chartData={chartData}
+              chemicalByOperator={chemicalByOperator}
+              ranking={ranking}
+              insights={insights}
+              productionRecords={productionRecords}
+            />
+          ) : null}
+
           {user.role === 'admin' && activeSection === 'cip' ? (
             <SectionCard title="Sanitation chemistry ledger" description="CIP chemistry records for the selected month.">
               <TableContainer component={Paper} sx={{ borderRadius: 3, border: '1px solid rgba(148,163,184,0.16)' }}>
                 <Table size="small">
                   <TableHead>
                     <TableRow>
-                      {['Date', 'Operator', 'CIP type', 'Chemical used', 'Caustic', 'Nitric'].map((header) => <TableCell key={header} sx={{ fontWeight: 800, py: 1.1 }}>{header}</TableCell>)}
+                      {['Date', 'Operator', 'CIP type', 'Chemical used', 'Caustic', 'Nitric'].map((header) => (
+                        <TableCell key={header} sx={{ fontWeight: 800, py: 1.1 }}>
+                          {header}
+                        </TableCell>
+                      ))}
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -2091,6 +3577,7 @@ const handleExportMonthlyReport = async () => {
               </TableContainer>
             </SectionCard>
           ) : null}
+
           {user.role === 'admin' && activeSection === 'operators' ? (
             <OperatorPerformancePage
               performance={performance}
@@ -2098,8 +3585,26 @@ const handleExportMonthlyReport = async () => {
               onSelectOperator={setSelectedPerformanceOperator}
             />
           ) : null}
-          {activeSection === 'fresh-milk' ? <FreshMilkWorkspace user={user} records={freshMilkRecords} onAddRecord={addFreshMilkRecord} /> : null}
-          {user.role === 'operator' && user.workspace !== 'fresh-milk' && activeSection === 'operator-entry' ? <OperatorMonthlyEntryTable rows={operatorRows} onCommitRows={commitOperatorRows} operatorName={user.name} /> : null}
+
+          {activeSection === 'fresh-milk' ? (
+            <FreshMilkWorkspace
+              user={user}
+              records={freshMilkRecords}
+              onAddRecord={addFreshMilkRecord}
+            />
+          ) : null}
+
+          {user.role === 'operator' && !isYoghurtOperator && user.workspace !== 'fresh-milk' && activeSection === 'operator-entry' ? (
+            <OperatorMonthlyEntryTable
+              rows={operatorRows}
+              onCommitRows={commitOperatorRows}
+              operatorName={user.name}
+            />
+          ) : null}
+
+          {user.role === 'operator' && isYoghurtOperator && activeSection === 'yoghurt-processing' ? (
+            <YoghurtOperatorPage />
+          ) : null}
         </Box>
       </Box>
     </Box>

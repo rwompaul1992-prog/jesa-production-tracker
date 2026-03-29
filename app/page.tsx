@@ -42,6 +42,8 @@ const demoUsers: Record<string, AppUser> = {
   'eruchu@jesa.local': { name: 'Eruchu James', email: 'eruchu@jesa.local', role: 'operator', workspace: 'fresh-milk' },
   'telly@jesa.local': { name: 'Telly Vicent', email: 'telly@jesa.local', role: 'operator', workspace: 'fresh-milk' },
   'sentongo@jesa.local': { name: 'Sentongo Kassim', email: 'sentongo@jesa.local', role: 'operator', workspace: 'fresh-milk' },
+  'semakula@jesa.local': { name: 'Semakula Francis', email: 'semakula@jesa.local', role: 'operator', workspace: 'pasteurization' },
+'opidi@jesa.local': { name: 'Opidi Lawrence', email: 'opidi@jesa.local', role: 'operator', workspace: 'pasteurization' },
 };
 
 export default function HomePage() {
